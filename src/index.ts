@@ -1,3 +1,4 @@
+export * from './common/index.js';
 export * from './ast/index.js';
 export * from './dialect/index.js';
 export * from './lexer/index.js';

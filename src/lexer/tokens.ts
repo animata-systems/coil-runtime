@@ -1,12 +1,7 @@
 import type { AbstractId } from '../dialect/types.js';
+import type { SourceSpan, ChannelSegment } from '../common/types.js';
 
-/** Source location for diagnostics */
-export interface SourceSpan {
-  line: number;   // 1-based
-  col: number;    // 1-based
-  offset: number; // 0-based char offset in source
-  length: number;
-}
+export type { SourceSpan, ChannelSegment } from '../common/types.js';
 
 // ─── Token types ─────────────────────────────────────────
 
@@ -67,10 +62,6 @@ export interface ChannelRefToken {
   segments: ChannelSegment[];
   span: SourceSpan;
 }
-
-export type ChannelSegment =
-  | { kind: 'literal'; value: string }
-  | { kind: 'dynamic'; name: string; path: string[] };
 
 /** ?name */
 export interface PromiseRefToken {

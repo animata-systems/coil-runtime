@@ -1,2 +1,1 @@
-// TODO: Phase 4 — Parser, parseReceive, parseSend, parseExit, skipBlock
-export {};
+export { parse, ParseError, formatError } from './parser.js';
