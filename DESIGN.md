@@ -154,3 +154,14 @@
 | **Решение** | Единый `ValidationDiagnostic { severity: 'error' \| 'warning', ruleId: string, message: string, span: SourceSpan }`. Результат: `ValidationResult { diagnostics: ValidationDiagnostic[] }`. CLI: `diagnostics.filter(d => d.severity === 'error').length > 0` → exit 1. |
 | **Альтернативы** | (A) Два массива `{ errors: [], warnings: [] }` — по сути тот же фильтр, зашитый в структуру. Менее расширяемо (для `'info'`, `'hint'` нужен ещё массив). |
 | **Последствия** | Один массив: проще сортировать по span, выводить в единый поток, расширять severity без изменения структуры. |
+
+## R-0013 — Диалектные таблицы: git-зависимость на coil
+
+| | |
+|---|---|
+| **Статус** | принят |
+| **Решено** | 2026-03-24 |
+| **Контекст** | Тесты coil-runtime используют JSON-таблицы диалектов из `coil/dialects/`. |
+| **Решение** | Добавить `coil` как git-зависимость в `devDependencies`: `"coil": "github:animata-systems/coil"`. Тесты берут диалекты из `node_modules/coil/dialects/`. Никаких `../` путей за пределы репозитория. |
+| **Альтернативы** | (A) Копировать JSON в `test/fixtures/` — дубль, рассинхронизация. (B) npm-пакет `@coil/dialects` — overhead для двух JSON-файлов. |
+| **Последствия** | `npm install` клонирует публичный `coil`, тесты работают автономно. Один источник истины для диалектов. Версионирование: пока пиннинг на main, при стабилизации спеки — перейти на теги. |
