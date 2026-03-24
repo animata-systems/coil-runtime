@@ -19,18 +19,19 @@ Parser, AST, semantic validator, execution engine, and SDK interfaces for embedd
 
 | Component | Status |
 |---|---|
-| Parser + AST | Planned |
-| Semantic validator | Planned |
-| Executor | Planned |
-| SDK interfaces | Planned |
+| Parser + AST | RECEIVE, SEND (all modifiers), EXIT; unsupported operators → UnsupportedOperatorNode |
+| Semantic validator | exit-required, unreachable-after-exit, unsupported-operator |
+| Executor | RECEIVE → stdin, SEND (no modifiers) → stdout, EXIT → return |
+| SDK interfaces | Planned (`Environment` interface exists) |
 | Reference implementations | Planned |
+| CLI | `coil run` with `--dialect` flag |
 
 ## CLI
 
 ```bash
-coil parse script.coil     # parse → AST or syntax errors
-coil check script.coil     # semantic validation
-coil run script.coil       # execute with reference SDK implementations
+coil run script.coil --dialect path/to/dialect.json   # execute (implemented)
+coil parse script.coil     # parse → AST or syntax errors (planned)
+coil check script.coil     # semantic validation (planned)
 ```
 
 ## SDK interfaces
@@ -47,11 +48,10 @@ To embed COIL in your host environment, implement these interfaces:
 
 ## Conformance tests
 
-The [COIL spec repository](https://github.com/animata-systems/coil) contains a conformance test suite in `tests/`. The CI pipeline for this repository runs the full test suite against the parser and validator.
+The [COIL spec repository](https://github.com/animata-systems/coil) contains a conformance test suite in `tests/`. The test suite runs `tests/valid/` and `tests/invalid/` files through the parser (122 tests total).
 
 ```bash
-# Run conformance tests
-make test-conformance
+npm test
 ```
 
 A spec-compliant implementation must:
@@ -60,11 +60,11 @@ A spec-compliant implementation must:
 
 ## Dialect support
 
-The runtime operates on construct semantics, not keyword spelling. Dialect support is implemented as a keyword mapping layer on top of the parser.
+The runtime operates on construct semantics, not keyword spelling. Dialect support is implemented as a keyword mapping layer on top of the parser. The CLI requires an explicit `--dialect <path>` flag pointing to a JSON dialect table — no built-in dialects (R-0002).
 
 ## Design decisions
 
-Implementation decisions (code structure, AST format, parser strategy, CLI behavior) are documented in [DESIGN.md](DESIGN.md) with rationale and trade-offs. 
+Implementation decisions (code structure, AST format, parser strategy, CLI behavior) are documented in [DESIGN.md](DESIGN.md) with rationale and trade-offs.
 
 ## Related
 
