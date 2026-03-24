@@ -62,6 +62,10 @@ A spec-compliant implementation must:
 
 The runtime operates on construct semantics, not keyword spelling. Dialect support is implemented as a keyword mapping layer on top of the parser.
 
+## Design decisions
+
+Implementation decisions (code structure, AST format, parser strategy, CLI behavior) are documented in [DESIGN.md](DESIGN.md) with rationale and trade-offs. 
+
 ## Related
 
 - [coil](https://github.com/animata-systems/coil) — language specification
