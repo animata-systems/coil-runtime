@@ -3,6 +3,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
+import { writeFile, unlink } from 'node:fs/promises';
 
 const exec = promisify(execFile);
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -46,15 +48,42 @@ describe('CLI: coil run', () => {
     expect(result.stderr).toContain('dialect path missing');
   });
 
-  it('run с файлом и --dialect → not implemented + exit 0', async () => {
-    const result = await run('run', 'test.coil', '--dialect', 'x.json');
-    expect(result.code).toBe(0);
-    expect(result.stdout).toContain('not implemented');
+  it('run с несуществующим файлом → error + exit 1', async () => {
+    const result = await run('run', 'nonexistent.coil', '--dialect', 'x.json');
+    expect(result.code).not.toBe(0);
   });
 
-  it('--dialect перед файлом → тоже работает', async () => {
-    const result = await run('run', '--dialect', 'x.json', 'test.coil');
-    expect(result.code).toBe(0);
-    expect(result.stdout).toContain('not implemented');
+  it('run с несуществующим диалектом → error + exit 1', async () => {
+    const result = await run('run', 'test.coil', '--dialect', 'nonexistent.json');
+    expect(result.code).not.toBe(0);
+    expect(result.stderr).toContain('error');
+  });
+
+  it('скрипт без EXIT → exit code != 0, сообщение exit-required в stderr', async () => {
+    const require = createRequire(import.meta.url);
+    const dialectPath = join(dirname(require.resolve('coil/dialects/SPEC.md')), 'en-standard', 'en-standard.json');
+    const tmpScript = '/tmp/no-exit.coil';
+    await writeFile(tmpScript, 'RECEIVE name\nEND');
+    try {
+      const result = await run('run', tmpScript, '--dialect', dialectPath);
+      expect(result.code).not.toBe(0);
+      expect(result.stderr).toContain('exit-required');
+    } finally {
+      await unlink(tmpScript);
+    }
+  });
+
+  it('валидный скрипт без RECEIVE → exit 0 + stdout', async () => {
+    const require = createRequire(import.meta.url);
+    const dialectPath = join(dirname(require.resolve('coil/dialects/SPEC.md')), 'en-standard', 'en-standard.json');
+    const tmpScript = '/tmp/hello-coil.coil';
+    await writeFile(tmpScript, 'SEND\n<< Hello from COIL! >>\nEND\nEXIT');
+    try {
+      const result = await run('run', tmpScript, '--dialect', dialectPath);
+      expect(result.code).toBe(0);
+      expect(result.stdout).toContain('Hello from COIL!');
+    } finally {
+      await unlink(tmpScript);
+    }
   });
 });

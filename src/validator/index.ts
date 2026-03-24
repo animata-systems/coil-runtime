@@ -1,2 +1,2 @@
-// TODO: Phase 5 — Validator (exit-required, unreachable-after-exit, unsupported-operator)
-export {};
+export { validate } from './validator.js';
+export type { ValidationDiagnostic, ValidationResult, Severity } from './validator.js';
