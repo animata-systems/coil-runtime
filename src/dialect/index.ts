@@ -1,2 +1,4 @@
-// TODO: Phase 2 — Dialect table types, loader, keyword index
-export {};
+export * from './types.js';
+export { loadDialect, DialectLoadError } from './loader.js';
+export { KeywordIndex } from './keyword-index.js';
+export type { KeywordMatch } from './keyword-index.js';
