@@ -389,6 +389,54 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
       continue;
     }
 
+    // Parentheses (RESULT microsyntax: CHOICE(a, b, c))
+    if (ch === '(') {
+      tokens.push({ type: 'ParenOpen', span: makeSpan(startLine, startCol, startOffset, 1) });
+      advance();
+      continue;
+    }
+
+    if (ch === ')') {
+      tokens.push({ type: 'ParenClose', span: makeSpan(startLine, startCol, startOffset, 1) });
+      advance();
+      continue;
+    }
+
+    // String literal: "..." (used in some test files)
+    if (ch === '"') {
+      advance(); // skip opening "
+      let value = '';
+      while (!atEnd() && peek() !== '"' && peek() !== '\n') {
+        value += peek();
+        advance();
+      }
+      if (!atEnd() && peek() === '"') {
+        advance(); // skip closing "
+      }
+      tokens.push({
+        type: 'StringLiteral',
+        value,
+        span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
+      });
+      continue;
+    }
+
+    // Comparison operators (IF microsyntax: > >= < <= = !=)
+    if (ch === '>' || ch === '<' || ch === '=') {
+      let op = ch;
+      advance();
+      if (!atEnd() && peek() === '=') {
+        op += '=';
+        advance();
+      }
+      tokens.push({
+        type: 'Identifier',
+        name: op,
+        span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
+      });
+      continue;
+    }
+
     // Unknown character
     throw new LexerError(
       `unexpected character: '${ch}' (U+${ch.codePointAt(0)!.toString(16).padStart(4, '0')})`,

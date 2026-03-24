@@ -24,9 +24,14 @@ export class ParseError extends Error {
 
 /** Operators that use block form (require Kw.End) */
 const BLOCK_OPERATORS: ReadonlySet<string> = new Set([
-  'Op.Actors', 'Op.Tools', 'Op.Define', 'Op.Set',
+  'Op.Define', 'Op.Set',
   'Op.Receive', 'Op.Think', 'Op.Execute', 'Op.Send', 'Op.Wait',
   'Op.If', 'Op.Repeat', 'Op.Each', 'Op.Gather', 'Op.Signal',
+]);
+
+/** Operators that support inline form (no Kw.End): ACTORS a, b, c */
+const INLINE_OPERATORS: ReadonlySet<string> = new Set([
+  'Op.Actors', 'Op.Tools',
 ]);
 
 /** SEND modifier abstract IDs */
@@ -302,6 +307,28 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
     return { kind: 'Op.Exit', span: kwToken.span };
   }
 
+  // ─── skipInline (for ACTORS/TOOLS — inline or block) ───
+
+  function skipInline(kwToken: KeywordToken, opId: AbstractId): UnsupportedOperatorNode {
+    // ACTORS/TOOLS can be inline (ACTORS a, b) or block (ACTORS\n  a\n  b\nEND).
+    // Strategy: skip tokens until we hit Kw.End (block) or a new operator (inline).
+    while (peek().type !== 'EOF') {
+      if (isKeyword('Kw.End')) {
+        advance(); // consume END — block form
+        break;
+      }
+      // If we hit another operator, this was inline — don't consume it
+      if (isOperator()) break;
+      advance();
+    }
+
+    return {
+      kind: 'Unsupported',
+      operatorId: opId,
+      span: makeSpanFrom(kwToken.span),
+    };
+  }
+
   // ─── skipBlock (R-0011) ────────────────────────────────
 
   function skipBlock(kwToken: KeywordToken, opId: AbstractId): UnsupportedOperatorNode {
@@ -344,6 +371,8 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
         operators.push(parseSend(kwToken));
       } else if (opId === 'Op.Exit') {
         operators.push(parseExit(kwToken));
+      } else if (INLINE_OPERATORS.has(opId)) {
+        operators.push(skipInline(kwToken, opId));
       } else if (BLOCK_OPERATORS.has(opId)) {
         operators.push(skipBlock(kwToken, opId));
       } else {

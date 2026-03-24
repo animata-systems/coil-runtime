@@ -22,6 +22,9 @@ export type Token =
   | DashToken
   | ColonToken
   | CommaToken
+  | ParenOpenToken
+  | ParenCloseToken
+  | StringLiteralToken
   | NewlineToken
   | CommentToken
   | EOFToken;
@@ -119,6 +122,22 @@ export interface DashToken {
 
 export interface ColonToken {
   type: 'Colon';
+  span: SourceSpan;
+}
+
+export interface ParenOpenToken {
+  type: 'ParenOpen';
+  span: SourceSpan;
+}
+
+export interface ParenCloseToken {
+  type: 'ParenClose';
+  span: SourceSpan;
+}
+
+export interface StringLiteralToken {
+  type: 'StringLiteral';
+  value: string;
   span: SourceSpan;
 }
 
