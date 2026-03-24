@@ -19,11 +19,11 @@ Parser, AST, semantic validator, execution engine, and SDK interfaces for embedd
 
 | Component | Status |
 |---|---|
-| Parser + AST | Planned (phase 1) |
-| Semantic validator | Planned (phase 2) |
-| Executor | Planned (phase 4) |
-| SDK interfaces | Planned (phase 5) |
-| Reference implementations | Planned (phase 5) |
+| Parser + AST | Planned |
+| Semantic validator | Planned |
+| Executor | Planned |
+| SDK interfaces | Planned |
+| Reference implementations | Planned |
 
 ## CLI
 
