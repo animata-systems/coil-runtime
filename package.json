@@ -19,6 +19,7 @@
     "coil": "./dist/cli/index.js"
   },
   "scripts": {
+    "prepare": "tsc",
     "build": "tsc",
     "dev": "tsc --watch",
     "pretest": "tsc",

@@ -14,5 +14,6 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true
   },
-  "include": ["src/**/*", "cli/**/*"]
+  "include": ["src/**/*", "cli/**/*"],
+  "exclude": ["**/*.test.ts"]
 }

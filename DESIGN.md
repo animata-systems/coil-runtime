@@ -198,3 +198,14 @@
 | **Решение** | Файл `src/browser.ts` реэкспортирует модули поштучно: `common`, `ast`, `dialect/types`, `dialect/keyword-index`, `lexer`, `parser`, `validator`. **Не** реэкспортирует `dialect/index` (содержит `loadDialect`), `executor`, `cli`. В `package.json`: `"exports": { "./browser": "./dist/src/browser.js" }`. Playground импортирует диалектные JSON напрямую (Vite JSON import) и передаёт `DialectTable` в `KeywordIndex.build()`. |
 | **Альтернативы** | (A) Реэкспорт через `dialect/index` с tree-shaking — Vite/Rollup не гарантирует удаление `node:fs` при `export *`, потому что `loadDialect` экспортируется с side-effect-свободным кодом, но сам `import` модуля с `node:fs` вызовет ошибку bundler. (B) Условный `export` через `package.json` `"browser"` field — менее явно, не все bundlers поддерживают одинаково. |
 | **Последствия** | Гранулярные импорты в `browser.ts` хрупки: новый экспорт в `dialect/index.ts` не попадёт в browser entry point автоматически. Это осознанный выбор — безопасность (не затянуть node:fs) важнее удобства. При добавлении новых модулей в runtime нужно решить, экспортируются ли они из `browser.ts`. |
+
+## R-0017 — Сборка для git-зависимости: exclude тестов + prepare
+
+| | |
+|---|---|
+| **Статус** | принят |
+| **Решено** | 2026-03-25 |
+| **Контекст** | coil-ide подключает coil-runtime как git-зависимость (`github:animata-systems/coil-runtime`). npm клонирует репозиторий, но `dist/` не входит в git. Нужна автоматическая сборка. Проблема: `tsc` включает `*.test.ts` (через `include: ["src/**/*"]`), которые импортируют `vitest`. При установке из git npm не ставит `devDependencies` транзитивных зависимостей → `vitest` отсутствует → `tsc` падает. |
+| **Решение** | (1) `tsconfig.json`: добавить `"exclude": ["**/*.test.ts"]`. (2) `package.json`: добавить `"prepare": "tsc"`. `prepare` вызывается npm после `npm install` из git-источника и собирает `dist/`. |
+| **Альтернативы** | (A) `file:` зависимости — привязывают к umbrella-структуре, ломают автономную сборку (I-0001). (B) Отдельный `tsconfig.build.json` — избыточно для одного `exclude`. (C) Коммитить `dist/` в git — антипаттерн, конфликты при merge, раздувание репозитория. |
+| **Последствия** | `vitest` продолжает работать — он компилирует файлы через esbuild, не через `tsc`. `pretest: "tsc"` продолжает работать: он собирает `dist/` для тестов, но без тестовых файлов. Тесты не попадают в `dist/`, что корректно — они не должны быть частью пакета. |
