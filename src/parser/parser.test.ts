@@ -6,7 +6,8 @@ import { loadDialect } from '../dialect/loader.js';
 import { KeywordIndex } from '../dialect/index.js';
 import { parse, ParseError } from './parser.js';
 import type { DialectTable } from '../dialect/types.js';
-import type { ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode } from '../ast/nodes.js';
+import type { ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode } from '../ast/nodes.js';
+import { validate } from '../validator/index.js';
 
 const require = createRequire(import.meta.url);
 const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
@@ -38,8 +39,8 @@ beforeAll(async () => {
 describe('parseReceive', () => {
   it('RECEIVE name << prompt >> END → ReceiveNode with prompt', () => {
     const ast = parseEN('RECEIVE name\n<<\nWhat is your name?\n>>\nEND');
-    expect(ast.operators).toHaveLength(1);
-    const node = ast.operators[0] as ReceiveNode;
+    expect(ast.nodes).toHaveLength(1);
+    const node = ast.nodes[0] as ReceiveNode;
     expect(node.kind).toBe('Op.Receive');
     expect(node.name).toBe('name');
     expect(node.prompt).not.toBeNull();
@@ -49,7 +50,7 @@ describe('parseReceive', () => {
 
   it('RECEIVE name END (без шаблона) → ReceiveNode { prompt: null }', () => {
     const ast = parseEN('RECEIVE name\nEND');
-    const node = ast.operators[0] as ReceiveNode;
+    const node = ast.nodes[0] as ReceiveNode;
     expect(node.kind).toBe('Op.Receive');
     expect(node.name).toBe('name');
     expect(node.prompt).toBeNull();
@@ -69,7 +70,7 @@ describe('parseReceive', () => {
 describe('parseSend', () => {
   it('SEND << Hello >> END → анонимный SendNode', () => {
     const ast = parseEN('SEND\n<< Hello >>\nEND');
-    const node = ast.operators[0] as SendNode;
+    const node = ast.nodes[0] as SendNode;
     expect(node.kind).toBe('Op.Send');
     expect(node.name).toBeNull();
     expect(node.body).not.toBeNull();
@@ -91,7 +92,7 @@ describe('parseSend', () => {
   >>
 END`;
     const ast = parseEN(src);
-    const node = ast.operators[0] as SendNode;
+    const node = ast.nodes[0] as SendNode;
     expect(node.kind).toBe('Op.Send');
     expect(node.name).toBe('answer');
     expect(node.to).not.toBeNull();
@@ -107,7 +108,7 @@ END`;
   it('SEND с несколькими получателями FOR @a, @b', () => {
     const src = 'SEND msg\nFOR @alice, @bob\n<< hi >>\nEND';
     const ast = parseEN(src);
-    const node = ast.operators[0] as SendNode;
+    const node = ast.nodes[0] as SendNode;
     expect(node.for).toEqual(['alice', 'bob']);
   });
 
@@ -123,14 +124,14 @@ END`;
   it('SEND с REPLY TO', () => {
     const src = 'SEND\nREPLY TO #msg_123\n<< reply >>\nEND';
     const ast = parseEN(src);
-    const node = ast.operators[0] as SendNode;
+    const node = ast.nodes[0] as SendNode;
     expect(node.replyTo).not.toBeNull();
   });
 
   it('SEND AWAIT NONE', () => {
     const src = 'SEND\nAWAIT NONE\n<< fire and forget >>\nEND';
     const ast = parseEN(src);
-    const node = ast.operators[0] as SendNode;
+    const node = ast.nodes[0] as SendNode;
     expect(node.await).toBe('none');
   });
 
@@ -149,8 +150,8 @@ END`;
 describe('parseExit', () => {
   it('EXIT → ExitNode', () => {
     const ast = parseEN('EXIT');
-    expect(ast.operators).toHaveLength(1);
-    const node = ast.operators[0] as ExitNode;
+    expect(ast.nodes).toHaveLength(1);
+    const node = ast.nodes[0] as ExitNode;
     expect(node.kind).toBe('Op.Exit');
   });
 
@@ -159,10 +160,11 @@ describe('parseExit', () => {
     expect(() => parseEN('EXIT done')).toThrow(ParseError);
   });
 
-  it('EXIT с комментарием → ok', () => {
+  it('EXIT с комментарием → ok (ExitNode + CommentNode)', () => {
     const ast = parseEN("EXIT ' done");
-    expect(ast.operators).toHaveLength(1);
-    expect(ast.operators[0].kind).toBe('Op.Exit');
+    expect(ast.nodes).toHaveLength(2);
+    expect(ast.nodes[0].kind).toBe('Op.Exit');
+    expect(ast.nodes[1].kind).toBe('Comment');
   });
 });
 
@@ -172,8 +174,8 @@ describe('UnsupportedOperatorNode', () => {
   it('THINK analysis GOAL << ... >> END → UnsupportedOperatorNode', () => {
     const src = 'THINK analysis\nGOAL <<\nAnalyze.\n>>\nEND';
     const ast = parseEN(src);
-    expect(ast.operators).toHaveLength(1);
-    const node = ast.operators[0] as UnsupportedOperatorNode;
+    expect(ast.nodes).toHaveLength(1);
+    const node = ast.nodes[0] as UnsupportedOperatorNode;
     expect(node.kind).toBe('Unsupported');
     expect(node.operatorId).toBe('Op.Think');
   });
@@ -199,12 +201,12 @@ END
 
 EXIT`;
     const ast = parseEN(src);
-    expect(ast.operators).toHaveLength(4);
-    expect(ast.operators[0].kind).toBe('Op.Receive');
-    expect(ast.operators[1].kind).toBe('Unsupported');
-    expect((ast.operators[1] as UnsupportedOperatorNode).operatorId).toBe('Op.Think');
-    expect(ast.operators[2].kind).toBe('Op.Send');
-    expect(ast.operators[3].kind).toBe('Op.Exit');
+    expect(ast.nodes).toHaveLength(4);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Unsupported');
+    expect((ast.nodes[1] as UnsupportedOperatorNode).operatorId).toBe('Op.Think');
+    expect(ast.nodes[2].kind).toBe('Op.Send');
+    expect(ast.nodes[3].kind).toBe('Op.Exit');
   });
 
   it('вложенные блоки в unsupported — правильно считает depth', () => {
@@ -216,10 +218,10 @@ END
 
 EXIT`;
     const ast = parseEN(src);
-    expect(ast.operators).toHaveLength(2);
-    expect(ast.operators[0].kind).toBe('Unsupported');
-    expect((ast.operators[0] as UnsupportedOperatorNode).operatorId).toBe('Op.Repeat');
-    expect(ast.operators[1].kind).toBe('Op.Exit');
+    expect(ast.nodes).toHaveLength(2);
+    expect(ast.nodes[0].kind).toBe('Unsupported');
+    expect((ast.nodes[0] as UnsupportedOperatorNode).operatorId).toBe('Op.Repeat');
+    expect(ast.nodes[1].kind).toBe('Op.Exit');
   });
 });
 
@@ -241,14 +243,14 @@ END
 
 EXIT`;
     const ast = parseEN(src);
-    expect(ast.operators).toHaveLength(3);
-    expect(ast.operators[0].kind).toBe('Op.Receive');
-    expect(ast.operators[1].kind).toBe('Op.Send');
-    expect(ast.operators[2].kind).toBe('Op.Exit');
+    expect(ast.nodes).toHaveLength(3);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Op.Send');
+    expect(ast.nodes[2].kind).toBe('Op.Exit');
     expect(ast.dialect).toBe('en-standard');
 
     // Check the Send body contains ValueRef
-    const send = ast.operators[1] as SendNode;
+    const send = ast.nodes[1] as SendNode;
     expect(send.body).not.toBeNull();
     const refs = send.body!.parts.filter(p => p.type === 'ref');
     expect(refs).toHaveLength(1);
@@ -270,14 +272,109 @@ EXIT`;
 
 ОТКЛЮЧИСЬ`;
     const ast = parseRU(src);
-    expect(ast.operators).toHaveLength(3);
-    expect(ast.operators[0].kind).toBe('Op.Receive');
-    expect(ast.operators[1].kind).toBe('Op.Send');
-    expect(ast.operators[2].kind).toBe('Op.Exit');
+    expect(ast.nodes).toHaveLength(3);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Op.Send');
+    expect(ast.nodes[2].kind).toBe('Op.Exit');
     expect(ast.dialect).toBe('ru-matrix');
 
     // Dialect-neutral AST: same structure as EN
-    const receive = ast.operators[0] as ReceiveNode;
+    const receive = ast.nodes[0] as ReceiveNode;
     expect(receive.name).toBe('запрос');
+  });
+});
+
+// ─── CommentNode ──────────────────────────────────────────
+
+describe('CommentNode', () => {
+  it('comment between operators → CommentNode in AST', () => {
+    const src = `RECEIVE name
+END
+' section header
+SEND
+<< hi >>
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(4);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Comment');
+    const comment = ast.nodes[1] as CommentNode;
+    expect(comment.text).toBe('section header');
+    expect(ast.nodes[2].kind).toBe('Op.Send');
+    expect(ast.nodes[3].kind).toBe('Op.Exit');
+  });
+
+  it('comment after EXIT → no unreachable-after-exit warning', () => {
+    const src = `RECEIVE name
+END
+EXIT
+' trailing comment`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(3);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Op.Exit');
+    expect(ast.nodes[2].kind).toBe('Comment');
+
+    const result = validate(ast);
+    expect(result.diagnostics).toHaveLength(0);
+  });
+
+  it('multiple consecutive comments', () => {
+    const src = `' line 1
+' line 2
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(3);
+    expect(ast.nodes[0].kind).toBe('Comment');
+    expect(ast.nodes[1].kind).toBe('Comment');
+    expect(ast.nodes[2].kind).toBe('Op.Exit');
+  });
+
+  it('comment inside block (RECEIVE) is NOT preserved as CommentNode', () => {
+    const src = `RECEIVE name
+' inside block
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(2);
+    expect(ast.nodes[0].kind).toBe('Op.Receive');
+    expect(ast.nodes[1].kind).toBe('Op.Exit');
+  });
+
+  it('comment inside unsupported block (THINK) is NOT preserved as CommentNode', () => {
+    const src = `THINK analysis
+' comment inside unparsed block
+GOAL <<
+Analyze.
+>>
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(2);
+    expect(ast.nodes[0].kind).toBe('Unsupported');
+    expect(ast.nodes[1].kind).toBe('Op.Exit');
+  });
+
+  it('comment inside SEND block is NOT preserved as CommentNode', () => {
+    const src = `SEND
+' inside send
+<< hello >>
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes).toHaveLength(2);
+    expect(ast.nodes[0].kind).toBe('Op.Send');
+    expect(ast.nodes[1].kind).toBe('Op.Exit');
+  });
+
+  it('exit-required still works when last node is Comment', () => {
+    const src = `RECEIVE name
+END
+' only a comment at the end`;
+    const ast = parseEN(src);
+    const result = validate(ast);
+    const exitRequired = result.diagnostics.find(d => d.ruleId === 'exit-required');
+    expect(exitRequired).toBeDefined();
   });
 });

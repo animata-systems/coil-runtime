@@ -38,40 +38,42 @@ async function parseFile(path: string) {
 describe('valid/core — parse succeeds', () => {
   it('receive-with-prompt.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'receive-with-prompt.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
-    expect(ast.operators[0].kind).toBe('Op.Receive');
+    const ops = ast.nodes.filter(n => n.kind !== 'Comment');
+    expect(ops.length).toBeGreaterThan(0);
+    expect(ops[0].kind).toBe('Op.Receive');
   });
 
   it('exit.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'exit.coil'));
-    expect(ast.operators).toHaveLength(1);
-    expect(ast.operators[0].kind).toBe('Op.Exit');
+    const ops = ast.nodes.filter(n => n.kind !== 'Comment');
+    expect(ops).toHaveLength(1);
+    expect(ops[0].kind).toBe('Op.Exit');
   });
 
   it('send-fire-and-forget.coil — SEND без AWAIT парсится', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'send-fire-and-forget.coil'));
-    const send = ast.operators.find(op => op.kind === 'Op.Send') as SendNode | undefined;
+    const send = ast.nodes.find(op => op.kind === 'Op.Send') as SendNode | undefined;
     expect(send).toBeTruthy();
     expect(send!.await).toBeNull();
   });
 
   it('send-await-all.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'send-await-all.coil'));
-    const send = ast.operators.find(op => op.kind === 'Op.Send') as SendNode | undefined;
+    const send = ast.nodes.find(op => op.kind === 'Op.Send') as SendNode | undefined;
     expect(send).toBeTruthy();
     expect(send!.await).toBe('all');
   });
 
   it('send-await-any.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'send-await-any.coil'));
-    const send = ast.operators.find(op => op.kind === 'Op.Send') as SendNode | undefined;
+    const send = ast.nodes.find(op => op.kind === 'Op.Send') as SendNode | undefined;
     expect(send).toBeTruthy();
     expect(send!.await).toBe('any');
   });
 
   it('send-reply-to.coil — TO, FOR, REPLY TO распознаны', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'send-reply-to.coil'));
-    const send = ast.operators.find(op => op.kind === 'Op.Send') as SendNode | undefined;
+    const send = ast.nodes.find(op => op.kind === 'Op.Send') as SendNode | undefined;
     expect(send).toBeTruthy();
     expect(send!.replyTo).not.toBeNull();
     expect(send!.to).not.toBeNull();
@@ -80,12 +82,12 @@ describe('valid/core — parse succeeds', () => {
 
   it('actors-inline.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'actors-inline.coil'));
-    expect(ast.operators.some(op => op.kind === 'Unsupported')).toBe(true);
+    expect(ast.nodes.some(op => op.kind === 'Unsupported')).toBe(true);
   });
 
   it('think-full.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'think-full.coil'));
-    expect(ast.operators.some(op => op.kind === 'Unsupported')).toBe(true);
+    expect(ast.nodes.some(op => op.kind === 'Unsupported')).toBe(true);
   });
 });
 
@@ -94,17 +96,17 @@ describe('valid/core — parse succeeds', () => {
 describe('valid/extended — parse succeeds', () => {
   it('repeat-count-only.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'extended', 'repeat-count-only.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 
   it('each-from-list.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'extended', 'each-from-list.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 
   it('signal-context.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'extended', 'signal-context.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 });
 
@@ -113,17 +115,17 @@ describe('valid/extended — parse succeeds', () => {
 describe('valid/patterns — parse succeeds', () => {
   it('classify-and-route.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'patterns', 'classify-and-route.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 
   it('parallel-think-wait-all.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'patterns', 'parallel-think-wait-all.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 
   it('iterative-improve.coil', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'patterns', 'iterative-improve.coil'));
-    expect(ast.operators.length).toBeGreaterThan(0);
+    expect(ast.nodes.length).toBeGreaterThan(0);
   });
 });
 

@@ -79,9 +79,18 @@ export interface UnsupportedOperatorNode {
   span: SourceSpan;
 }
 
+// ─── Comment ────────────────────────────────────────────
+
+/** Top-level comment preserved for COIL-H section dividers (spec/11-coil-h.md § 11.6) */
+export interface CommentNode {
+  kind: 'Comment';
+  text: string;
+  span: SourceSpan;
+}
+
 // ─── Script ──────────────────────────────────────────────
 
 export interface ScriptNode {
-  operators: OperatorNode[];
+  nodes: (OperatorNode | CommentNode)[];
   dialect: string; // dialect name
 }

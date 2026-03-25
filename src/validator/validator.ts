@@ -1,5 +1,5 @@
 import type { SourceSpan } from '../common/types.js';
-import type { ScriptNode } from '../ast/nodes.js';
+import type { ScriptNode, OperatorNode } from '../ast/nodes.js';
 
 export type Severity = 'error' | 'warning';
 
@@ -25,7 +25,7 @@ export interface ValidationResult {
 export function validate(ast: ScriptNode): ValidationResult {
   const diagnostics: ValidationDiagnostic[] = [];
 
-  const ops = ast.operators;
+  const ops = ast.nodes.filter((n): n is OperatorNode => n.kind.startsWith('Op.') || n.kind === 'Unsupported');
 
   // Rule: exit-required
   if (ops.length === 0 || ops[ops.length - 1].kind !== 'Op.Exit') {

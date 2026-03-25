@@ -1,11 +1,12 @@
 import type {
   Token, KeywordToken, IdentifierToken, ChannelRefToken,
   ParticipantRefToken, DurationLiteralToken, TextFragmentToken, ValueRefToken,
+  CommentToken,
 } from '../lexer/tokens.js';
 import type { SourceSpan } from '../common/types.js';
 import type { DialectTable, AbstractId } from '../dialect/types.js';
 import type {
-  ScriptNode, OperatorNode, ReceiveNode, SendNode, ExitNode,
+  ScriptNode, OperatorNode, CommentNode, ReceiveNode, SendNode, ExitNode,
   UnsupportedOperatorNode, TemplateNode, TextPart, RefPart, DurationValue,
   ChannelRef,
 } from '../ast/nodes.js';
@@ -40,7 +41,7 @@ const SEND_MODIFIERS: readonly AbstractId[] = [
 ];
 
 export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
-  const operators: OperatorNode[] = [];
+  const nodes: (OperatorNode | CommentNode)[] = [];
   let pos = 0;
 
   function peek(): Token {
@@ -51,14 +52,22 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
     return tokens[pos++];
   }
 
+  /** Skip newlines only (for main loop — comments handled explicitly) */
   function skipNewlines(): void {
+    while (peek().type === 'Newline') {
+      advance();
+    }
+  }
+
+  /** Skip newlines and comments (for inside blocks where comments are discarded) */
+  function skipTrivia(): void {
     while (peek().type === 'Newline' || peek().type === 'Comment') {
       advance();
     }
   }
 
   function expect(type: Token['type']): Token {
-    skipNewlines();
+    skipTrivia();
     const t = peek();
     if (t.type !== type) {
       throw new ParseError(`expected ${type}, got ${t.type}`, t.span);
@@ -71,7 +80,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
   }
 
   function expectKeyword(id: AbstractId): KeywordToken {
-    skipNewlines();
+    skipTrivia();
     const t = peek();
     if (t.type !== 'Keyword' || !(t as KeywordToken).ids.includes(id)) {
       const dialectWord = lookupDialectWord(id, dialect);
@@ -147,16 +156,16 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
   // ─── RECEIVE ───────────────────────────────────────────
 
   function parseReceive(kwToken: KeywordToken): ReceiveNode {
-    skipNewlines();
+    skipTrivia();
     const nameToken = expect('Identifier') as IdentifierToken;
 
-    skipNewlines();
+    skipTrivia();
     let prompt: TemplateNode | null = null;
     if (peek().type === 'TemplateOpen') {
       prompt = parseTemplate();
     }
 
-    skipNewlines();
+    skipTrivia();
     expectKeyword('Kw.End');
 
     return {
@@ -170,7 +179,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
   // ─── SEND ──────────────────────────────────────────────
 
   function parseSend(kwToken: KeywordToken): SendNode {
-    skipNewlines();
+    skipTrivia();
 
     let name: string | null = null;
     let to: ChannelRef | null = null;
@@ -188,7 +197,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
     }
 
     while (!isKeyword('Kw.End') && peek().type !== 'EOF') {
-      skipNewlines();
+      skipTrivia();
       if (isKeyword('Kw.End') || peek().type === 'EOF') break;
 
       // Template body
@@ -214,7 +223,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
         }
 
         advance(); // consume modifier keyword
-        skipNewlines();
+        skipTrivia();
 
         switch (modId) {
           case 'Mod.To': {
@@ -232,7 +241,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
             advance();
             while (peek().type === 'Comma') {
               advance();
-              skipNewlines();
+              skipTrivia();
               if (peek().type === 'ParticipantRef') {
                 forList.push((peek() as ParticipantRefToken).name);
                 advance();
@@ -251,7 +260,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
             if (awaitPolicy !== null) {
               throw new ParseError('duplicate AWAIT modifier', peek().span, 'Mod.Await');
             }
-            skipNewlines();
+            skipTrivia();
             const polId = isAnyKeywordOf(['Pol.None', 'Pol.Any', 'Pol.All']);
             if (polId === 'Pol.None') { awaitPolicy = 'none'; advance(); }
             else if (polId === 'Pol.Any') { awaitPolicy = 'any'; advance(); }
@@ -265,7 +274,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
             if (timeout !== null) {
               throw new ParseError('duplicate TIMEOUT modifier', peek().span, 'Mod.Timeout');
             }
-            skipNewlines();
+            skipTrivia();
             if (peek().type === 'DurationLiteral') {
               const dur = peek() as DurationLiteralToken;
               timeout = { value: dur.value, unitId: dur.unitId, span: dur.span };
@@ -301,6 +310,8 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
   // ─── EXIT ──────────────────────────────────────────────
 
   function parseExit(kwToken: KeywordToken): ExitNode {
+    // Comment is allowed after EXIT on the same line (e.g. "EXIT ' done");
+    // the main loop will pick it up as a separate CommentNode.
     if (peek().type !== 'Newline' && peek().type !== 'EOF' && peek().type !== 'Comment') {
       throw new ParseError('EXIT takes no arguments', peek().span, 'Op.Exit');
     }
@@ -361,22 +372,29 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
     skipNewlines();
     if (peek().type === 'EOF') break;
 
+    // Top-level comment → CommentNode (for COIL-H section dividers)
+    if (peek().type === 'Comment') {
+      const ct = advance() as CommentToken;
+      nodes.push({ kind: 'Comment', text: ct.text, span: ct.span });
+      continue;
+    }
+
     const opId = isOperator();
     if (opId) {
       const kwToken = advance() as KeywordToken;
 
       if (opId === 'Op.Receive') {
-        operators.push(parseReceive(kwToken));
+        nodes.push(parseReceive(kwToken));
       } else if (opId === 'Op.Send') {
-        operators.push(parseSend(kwToken));
+        nodes.push(parseSend(kwToken));
       } else if (opId === 'Op.Exit') {
-        operators.push(parseExit(kwToken));
+        nodes.push(parseExit(kwToken));
       } else if (INLINE_OPERATORS.has(opId)) {
-        operators.push(skipInline(kwToken, opId));
+        nodes.push(skipInline(kwToken, opId));
       } else if (BLOCK_OPERATORS.has(opId)) {
-        operators.push(skipBlock(kwToken, opId));
+        nodes.push(skipBlock(kwToken, opId));
       } else {
-        operators.push({ kind: 'Unsupported', operatorId: opId, span: kwToken.span });
+        nodes.push({ kind: 'Unsupported', operatorId: opId, span: kwToken.span });
       }
       continue;
     }
@@ -385,7 +403,7 @@ export function parse(tokens: Token[], dialect: DialectTable): ScriptNode {
     throw new ParseError(`unexpected token at top level: ${t.type}`, t.span);
   }
 
-  return { operators, dialect: dialect.name };
+  return { nodes, dialect: dialect.name };
 }
 
 // ─── Dialect-aware diagnostics ─────────────────────────

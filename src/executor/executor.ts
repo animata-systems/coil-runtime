@@ -1,5 +1,5 @@
 import type { SourceSpan } from '../common/types.js';
-import type { ScriptNode, ReceiveNode, SendNode, TemplateNode, RefPart } from '../ast/nodes.js';
+import type { ScriptNode, OperatorNode, ReceiveNode, SendNode, TemplateNode, RefPart } from '../ast/nodes.js';
 import type { Environment } from './environment.js';
 
 export class ExecutionError extends Error {
@@ -57,30 +57,32 @@ function interpolate(template: TemplateNode, scope: Map<string, unknown>): strin
 export async function execute(ast: ScriptNode, env: Environment): Promise<void> {
   const scope = new Map<string, unknown>();
 
-  for (const op of ast.operators) {
-    switch (op.kind) {
+  const ops = ast.nodes.filter((n): n is OperatorNode => n.kind !== 'Comment');
+
+  for (const node of ops) {
+    switch (node.kind) {
       case 'Op.Receive': {
-        const node = op as ReceiveNode;
-        let promptText = node.prompt
-          ? interpolate(node.prompt, scope)
-          : `${node.name}: `;
+        const recv = node as ReceiveNode;
+        let promptText = recv.prompt
+          ? interpolate(recv.prompt, scope)
+          : `${recv.name}: `;
         const value = await env.receive(promptText);
-        scope.set(node.name, value);
+        scope.set(recv.name, value);
         break;
       }
 
       case 'Op.Send': {
-        const node = op as SendNode;
+        const send = node as SendNode;
         // Check for unsupported modifiers (R-0006)
-        if (node.to) throw new NotImplementedError('SEND TO', node.to.span);
-        if (node.for.length > 0) throw new NotImplementedError('SEND FOR', node.span);
-        if (node.replyTo) throw new NotImplementedError('SEND REPLY TO', node.replyTo.span);
-        if (node.await) throw new NotImplementedError(`SEND AWAIT ${node.await.toUpperCase()}`, node.span);
-        if (node.timeout) throw new NotImplementedError('SEND TIMEOUT', node.timeout.span);
+        if (send.to) throw new NotImplementedError('SEND TO', send.to.span);
+        if (send.for.length > 0) throw new NotImplementedError('SEND FOR', send.span);
+        if (send.replyTo) throw new NotImplementedError('SEND REPLY TO', send.replyTo.span);
+        if (send.await) throw new NotImplementedError(`SEND AWAIT ${send.await.toUpperCase()}`, send.span);
+        if (send.timeout) throw new NotImplementedError('SEND TIMEOUT', send.timeout.span);
 
         let bodyText = '';
-        if (node.body) {
-          bodyText = interpolate(node.body, scope);
+        if (send.body) {
+          bodyText = interpolate(send.body, scope);
         }
         env.send(bodyText);
         break;
@@ -91,8 +93,7 @@ export async function execute(ast: ScriptNode, env: Environment): Promise<void> 
       }
 
       case 'Unsupported': {
-        // Should have been caught by validator, but just in case
-        throw new NotImplementedError(`operator ${op.operatorId}`, op.span);
+        throw new NotImplementedError(`operator ${node.operatorId}`, node.span);
       }
     }
   }
