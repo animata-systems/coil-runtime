@@ -10,6 +10,7 @@ import type {
   ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode,
   ActorsNode, ToolsNode, DefineNode, SetNode, ThinkNode,
   ExecuteNode, WaitNode, SignalNode,
+  IfNode, RepeatNode, EachNode,
 } from '../ast/nodes.js';
 import { validate } from '../validator/index.js';
 
@@ -647,6 +648,231 @@ describe('parseSignal', () => {
     const sig = ast.nodes[0] as SignalNode;
     expect(sig.kind).toBe('Op.Signal');
     expect(sig.target.name).toBe('решение');
+  });
+});
+
+// ─── IF ──────────────────────────────────────────────────
+
+describe('parseIf', () => {
+  it('IF with equality condition', () => {
+    const src = `IF $verdict.type == "technical"
+  SET $role
+  <<
+  Tech specialist.
+  >>
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as IfNode;
+    expect(node.kind).toBe('Op.If');
+    expect(node.condition).toBe('$verdict.type == "technical"');
+    expect(node.body).toHaveLength(1);
+    expect(node.body[0].kind).toBe('Op.Set');
+  });
+
+  it('IF with numeric comparison', () => {
+    const src = `IF $evaluation.score >= 8
+  SET $done
+  1
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as IfNode;
+    expect(node.condition).toBe('$evaluation.score >= 8');
+    expect(node.body).toHaveLength(1);
+  });
+
+  it('RU: А ВДРУГ', () => {
+    const src = `А ВДРУГ $x >= 5
+  ПЕРЕПИШИ $y
+  1
+  ПРОСНИСЬ
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const node = ast.nodes[0] as IfNode;
+    expect(node.kind).toBe('Op.If');
+    expect(node.condition).toContain('$x');
+    expect(node.body).toHaveLength(1);
+  });
+});
+
+// ─── REPEAT ──────────────────────────────────────────────
+
+describe('parseRepeat', () => {
+  it('REPEAT count-only', () => {
+    const src = `REPEAT 2
+  THINK attempt
+    GOAL <<
+    Try to solve.
+    >>
+    RESULT
+    * solution: TEXT
+  END
+
+  WAIT
+    ON ?attempt
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as RepeatNode;
+    expect(node.kind).toBe('Op.Repeat');
+    expect(node.until).toBeNull();
+    expect(node.limit).toBe(2);
+    expect(node.body.length).toBeGreaterThanOrEqual(2);
+    expect(node.body.some(n => n.kind === 'Op.Think')).toBe(true);
+    expect(node.body.some(n => n.kind === 'Op.Wait')).toBe(true);
+  });
+
+  it('REPEAT UNTIL + NO MORE THAN', () => {
+    const src = `DEFINE done
+0
+END
+
+REPEAT UNTIL $done NO MORE THAN 3
+  THINK check
+    GOAL << Check. >>
+    RESULT
+    * complete: FLAG
+  END
+  WAIT
+    ON ?check
+  END
+  IF $check.complete == 1
+    SET $done
+    1
+    END
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const repeat = ast.nodes.find(n => n.kind === 'Op.Repeat') as RepeatNode;
+    expect(repeat.until).toBe('$done');
+    expect(repeat.limit).toBe(3);
+    expect(repeat.body.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('REPEAT UNTIL multiline (NO MORE THAN on next line)', () => {
+    const src = `REPEAT UNTIL $done
+NO MORE THAN 5
+  THINK x
+    GOAL << x >>
+    RESULT
+    * s: TEXT
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as RepeatNode;
+    expect(node.until).toBe('$done');
+    expect(node.limit).toBe(5);
+  });
+
+  it('REPEAT UNTIL without limit → ParseError', () => {
+    const src = `DEFINE done\n0\nEND\nREPEAT UNTIL $done\n  SET $done\n  1\n  END\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/limit|NO MORE THAN/);
+  });
+
+  it('RU: ЦИКЛ count-only', () => {
+    const src = `ЦИКЛ 3
+  ПРОЗРЕЙ попытка
+    БЕЛЫЙ КРОЛИК << x >>
+    ПРОРОЧЕСТВО
+    * s: КОД
+  ПРОСНИСЬ
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const node = ast.nodes[0] as RepeatNode;
+    expect(node.kind).toBe('Op.Repeat');
+    expect(node.limit).toBe(3);
+    expect(node.until).toBeNull();
+  });
+});
+
+// ─── EACH ────────────────────────────────────────────────
+
+describe('parseEach', () => {
+  it('EACH $element FROM $source', () => {
+    const src = `EACH $task FROM $plan.tasks
+  THINK work
+    GOAL << Do task: $task.name >>
+    RESULT
+    * output: TEXT
+  END
+  WAIT
+    ON ?work
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as EachNode;
+    expect(node.kind).toBe('Op.Each');
+    expect(node.element.name).toBe('task');
+    expect(node.from.name).toBe('plan');
+    expect(node.from.path).toEqual(['tasks']);
+    expect(node.body.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('RU: КЛОНИРУЙ $элемент ИЗ $список', () => {
+    const src = `КЛОНИРУЙ $задача ИЗ $план
+  ПРОЗРЕЙ работа
+    БЕЛЫЙ КРОЛИК << x >>
+    ПРОРОЧЕСТВО
+    * r: КОД
+  ПРОСНИСЬ
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const node = ast.nodes[0] as EachNode;
+    expect(node.kind).toBe('Op.Each');
+    expect(node.element.name).toBe('задача');
+    expect(node.from.name).toBe('план');
+  });
+});
+
+// ─── Nesting & Comments in body ─────────────────────────
+
+describe('nesting and body comments', () => {
+  it('arbitrary nesting depth: REPEAT → IF → THINK', () => {
+    const src = `REPEAT 2
+  IF $x > 0
+    THINK analysis
+      GOAL << Analyze >>
+      RESULT
+      * r: TEXT
+    END
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const repeat = ast.nodes[0] as RepeatNode;
+    expect(repeat.kind).toBe('Op.Repeat');
+    const ifNode = repeat.body[0] as IfNode;
+    expect(ifNode.kind).toBe('Op.If');
+    const think = ifNode.body[0] as ThinkNode;
+    expect(think.kind).toBe('Op.Think');
+    expect(think.name).toBe('analysis');
+  });
+
+  it('comments inside nested block body are preserved as CommentNode (D-006-3)', () => {
+    const src = `IF $x > 0
+  ' comment between operators
+  SET $y
+  1
+  END
+END
+EXIT`;
+    const ast = parseEN(src);
+    const ifNode = ast.nodes[0] as IfNode;
+    expect(ifNode.body).toHaveLength(2);
+    expect(ifNode.body[0].kind).toBe('Comment');
+    expect((ifNode.body[0] as CommentNode).text).toBe('comment between operators');
+    expect(ifNode.body[1].kind).toBe('Op.Set');
   });
 });
 
