@@ -19,13 +19,13 @@ Parser, AST, semantic validator, execution engine, and SDK interfaces for embedd
 
 | Layer | Status |
 |---|---|
-| Parser + AST | Full coverage of stable surface syntax (Core + Extended), all dialects |
+| Parser + AST | Full coverage of parser-backed frozen surface (Core + Extended), all dialects; bound WAIT remains an implementation gap |
 | Semantic validator | 3 rules: `exit-required`, `unreachable-after-exit`, `unsupported-operator` |
 | Executor | Limited: RECEIVE → stdin, SEND (no modifiers) → stdout, EXIT → return |
 | SDK interfaces | `Environment` interface exists; provider interfaces planned |
 | Reference implementations | Planned |
 | CLI | `coil parse` and `coil run` with `--dialect` flag |
-| Conformance suite | 224 tests passing (parser-level) |
+| Conformance suite | 227 tests passing (parser-level) |
 
 The parser covers all operators in the [frozen surface](https://github.com/animata-systems/coil/blob/main/spec/02-core.md): ACTORS, TOOLS, DEFINE, SET, RECEIVE, THINK, EXECUTE, SEND, WAIT, EXIT, IF, REPEAT, EACH, SIGNAL. The conformance suite confirms parser-level contract against the spec test corpus, but does not yet cover full runtime semantics.
 
