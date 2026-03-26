@@ -30,7 +30,7 @@ beforeAll(async () => {
 async function parseFile(path: string) {
   const src = await readFile(path, 'utf-8');
   const tokens = tokenize(src, enIndex);
-  return parse(tokens, enTable);
+  return parse(tokens, enTable, src);
 }
 
 // ─── valid/core ──────────────────────────────────────────
@@ -80,14 +80,14 @@ describe('valid/core — parse succeeds', () => {
     expect(send!.for.length).toBeGreaterThan(0);
   });
 
-  it('actors-inline.coil', async () => {
+  it('actors-inline.coil — ActorsNode (no longer unsupported)', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'actors-inline.coil'));
-    expect(ast.nodes.some(op => op.kind === 'Unsupported')).toBe(true);
+    expect(ast.nodes.some(op => op.kind === 'Op.Actors')).toBe(true);
   });
 
-  it('think-full.coil', async () => {
+  it('think-full.coil — ThinkNode (no longer unsupported)', async () => {
     const ast = await parseFile(join(TESTS_DIR, 'valid', 'core', 'think-full.coil'));
-    expect(ast.nodes.some(op => op.kind === 'Unsupported')).toBe(true);
+    expect(ast.nodes.some(op => op.kind === 'Op.Think')).toBe(true);
   });
 });
 

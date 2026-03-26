@@ -337,10 +337,10 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
           continue;
         }
       }
-      // Plain number — treat as identifier (for REPEAT 5, etc.)
+      // Plain number — NumberLiteral (D-006-7)
       tokens.push({
-        type: 'Identifier',
-        name: String(numValue),
+        type: 'NumberLiteral',
+        value: numValue,
         span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
       });
       continue;
@@ -422,6 +422,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     }
 
     // Comparison operators (IF microsyntax: > >= < <= = !=)
+    // TODO: tokenized as Identifier until expression parser is implemented
     if (ch === '>' || ch === '<' || ch === '=') {
       let op = ch;
       advance();

@@ -20,11 +20,11 @@ let enIndex: KeywordIndex;
 let ruIndex: KeywordIndex;
 
 function parseEN(src: string) {
-  return parse(tokenize(src, enIndex), enTable);
+  return parse(tokenize(src, enIndex), enTable, src);
 }
 
 function parseRU(src: string) {
-  return parse(tokenize(src, ruIndex), ruTable);
+  return parse(tokenize(src, ruIndex), ruTable, src);
 }
 
 beforeAll(async () => {
@@ -171,16 +171,14 @@ describe('parseExit', () => {
 // ─── UnsupportedOperatorNode (R-0011) ────────────────────
 
 describe('UnsupportedOperatorNode', () => {
-  it('THINK analysis GOAL << ... >> END → UnsupportedOperatorNode', () => {
+  it('THINK analysis GOAL << ... >> END → ThinkNode (no longer unsupported)', () => {
     const src = 'THINK analysis\nGOAL <<\nAnalyze.\n>>\nEND';
     const ast = parseEN(src);
     expect(ast.nodes).toHaveLength(1);
-    const node = ast.nodes[0] as UnsupportedOperatorNode;
-    expect(node.kind).toBe('Unsupported');
-    expect(node.operatorId).toBe('Op.Think');
+    expect(ast.nodes[0].kind).toBe('Op.Think');
   });
 
-  it('RECEIVE + THINK + SEND + EXIT → [Receive, Unsupported, Send, Exit]', () => {
+  it('RECEIVE + THINK + SEND + EXIT → [Receive, Think, Send, Exit]', () => {
     const src = `RECEIVE name
 <<
 query
@@ -203,15 +201,14 @@ EXIT`;
     const ast = parseEN(src);
     expect(ast.nodes).toHaveLength(4);
     expect(ast.nodes[0].kind).toBe('Op.Receive');
-    expect(ast.nodes[1].kind).toBe('Unsupported');
-    expect((ast.nodes[1] as UnsupportedOperatorNode).operatorId).toBe('Op.Think');
+    expect(ast.nodes[1].kind).toBe('Op.Think');
     expect(ast.nodes[2].kind).toBe('Op.Send');
     expect(ast.nodes[3].kind).toBe('Op.Exit');
   });
 
-  it('вложенные блоки в unsupported — правильно считает depth', () => {
+  it('REPEAT содержит вложенный WAIT → RepeatNode с body', () => {
     const src = `REPEAT 3
-  WAIT data
+  WAIT
     ON ?something
   END
 END
@@ -219,8 +216,7 @@ END
 EXIT`;
     const ast = parseEN(src);
     expect(ast.nodes).toHaveLength(2);
-    expect(ast.nodes[0].kind).toBe('Unsupported');
-    expect((ast.nodes[0] as UnsupportedOperatorNode).operatorId).toBe('Op.Repeat');
+    expect(ast.nodes[0].kind).toBe('Op.Repeat');
     expect(ast.nodes[1].kind).toBe('Op.Exit');
   });
 });
@@ -342,9 +338,9 @@ EXIT`;
     expect(ast.nodes[1].kind).toBe('Op.Exit');
   });
 
-  it('comment inside unsupported block (THINK) is NOT preserved as CommentNode', () => {
+  it('comment inside THINK block is NOT preserved as CommentNode (skipTrivia)', () => {
     const src = `THINK analysis
-' comment inside unparsed block
+' comment inside think block
 GOAL <<
 Analyze.
 >>
@@ -352,7 +348,7 @@ END
 EXIT`;
     const ast = parseEN(src);
     expect(ast.nodes).toHaveLength(2);
-    expect(ast.nodes[0].kind).toBe('Unsupported');
+    expect(ast.nodes[0].kind).toBe('Op.Think');
     expect(ast.nodes[1].kind).toBe('Op.Exit');
   });
 

@@ -243,10 +243,10 @@ describe('duration literals', () => {
     expect((tokens[0] as any).unitId).toBe('Dur.Hours');
   });
 
-  it('plain number without suffix → Identifier', () => {
+  it('plain number without suffix → NumberLiteral (D-006-7)', () => {
     const tokens = significant(tokenize('5', enIndex));
-    expect(tokens[0].type).toBe('Identifier');
-    expect((tokens[0] as any).name).toBe('5');
+    expect(tokens[0].type).toBe('NumberLiteral');
+    expect((tokens[0] as any).value).toBe(5);
   });
 });
 

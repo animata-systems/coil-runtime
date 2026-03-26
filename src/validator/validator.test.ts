@@ -17,7 +17,7 @@ let enIndex: KeywordIndex;
 
 function validateEN(src: string) {
   const tokens = tokenize(src, enIndex);
-  const ast = parse(tokens, enTable);
+  const ast = parse(tokens, enTable, src);
   return validate(ast);
 }
 
@@ -55,8 +55,8 @@ describe('validate', () => {
     expect(warnings.every(w => w.ruleId === 'unreachable-after-exit')).toBe(true);
   });
 
-  it('скрипт с UnsupportedOperatorNode → error unsupported-operator (R-0011)', () => {
-    const result = validateEN('THINK analysis\nGOAL <<\nAnalyze.\n>>\nEND\nEXIT');
+  it('скрипт с UnsupportedOperatorNode (GATHER) → error unsupported-operator (R-0011)', () => {
+    const result = validateEN('GATHER\nEND\nEXIT');
     const errors = result.diagnostics.filter(d => d.severity === 'error');
     expect(errors.some(e => e.ruleId === 'unsupported-operator')).toBe(true);
   });

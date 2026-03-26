@@ -37,11 +37,11 @@ function mockEnv(receiveValue: string) {
 }
 
 function parseEN(src: string) {
-  return parse(tokenize(src, enIndex), enTable);
+  return parse(tokenize(src, enIndex), enTable, src);
 }
 
 function parseRU(src: string) {
-  return parse(tokenize(src, ruIndex), ruTable);
+  return parse(tokenize(src, ruIndex), ruTable, src);
 }
 
 describe('executor', () => {

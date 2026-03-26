@@ -28,6 +28,7 @@ export interface RefPart extends TemplatePart {
 }
 
 export interface TemplateNode {
+  type: 'template';
   parts: (TextPart | RefPart)[];
   span: SourceSpan;
 }
@@ -40,12 +41,79 @@ export interface DurationValue {
   span: SourceSpan;
 }
 
+// ─── Value types (AST-level) ────────────────────────────
+
+export interface ValueRef {
+  type: 'ref';
+  name: string;
+  path: string[];
+  span: SourceSpan;
+}
+
+export interface ToolRef {
+  name: string;
+  span: SourceSpan;
+}
+
+export interface PromiseRef {
+  name: string;
+  span: SourceSpan;
+}
+
+export interface StreamRef {
+  name: string;
+  span: SourceSpan;
+}
+
+export interface StringLiteral {
+  type: 'string';
+  value: string;
+  span: SourceSpan;
+}
+
+export interface NumberLiteral {
+  type: 'number';
+  value: number;
+  span: SourceSpan;
+}
+
+/** Body of DEFINE/SET: template, reference, or literal */
+export type BodyValue = TemplateNode | ValueRef | NumberLiteral | StringLiteral;
+
+/** Argument entry for EXECUTE: - key: value */
+export interface ArgEntry {
+  key: string;
+  value: ValueRef | StringLiteral | NumberLiteral;
+  span: SourceSpan;
+}
+
+/** Field in RESULT microsyntax (spec/05-structured-output.md) */
+export interface ResultField {
+  name: string;
+  typeId: AbstractId;
+  typeArgs: string[];     // CHOICE options
+  description: string;
+  depth: number;          // 0 = top-level, 1+ = nested under LIST
+  span: SourceSpan;
+}
+
 // ─── Operator nodes (R-0005) ─────────────────────────────
 
 export type OperatorNode =
   | ReceiveNode
   | SendNode
   | ExitNode
+  | ActorsNode
+  | ToolsNode
+  | DefineNode
+  | SetNode
+  | ThinkNode
+  | ExecuteNode
+  | WaitNode
+  | SignalNode
+  | IfNode
+  | RepeatNode
+  | EachNode
   | UnsupportedOperatorNode;
 
 export interface ReceiveNode {
@@ -71,6 +139,102 @@ export interface ExitNode {
   kind: 'Op.Exit';
   span: SourceSpan;
 }
+
+// ─── Instantaneous operators ────────────────────────────
+
+export interface ActorsNode {
+  kind: 'Op.Actors';
+  names: string[];
+  span: SourceSpan;
+}
+
+export interface ToolsNode {
+  kind: 'Op.Tools';
+  names: string[];
+  span: SourceSpan;
+}
+
+export interface DefineNode {
+  kind: 'Op.Define';
+  name: string;
+  body: BodyValue;
+  span: SourceSpan;
+}
+
+export interface SetNode {
+  kind: 'Op.Set';
+  target: ValueRef;
+  body: BodyValue;
+  span: SourceSpan;
+}
+
+// ─── Launching operators ────────────────────────────────
+
+export interface ThinkNode {
+  kind: 'Op.Think';
+  name: string;
+  via: ValueRef | null;
+  as: ValueRef[];
+  using: ToolRef[];
+  goal: TemplateNode | null;
+  input: TemplateNode | null;
+  context: TemplateNode | null;
+  result: ResultField[];
+  body: TemplateNode | null;    // anonymous body (D-0032)
+  span: SourceSpan;
+}
+
+export interface ExecuteNode {
+  kind: 'Op.Execute';
+  name: string;
+  tool: ToolRef;
+  args: ArgEntry[];
+  span: SourceSpan;
+}
+
+export interface SignalNode {
+  kind: 'Op.Signal';
+  target: StreamRef;
+  body: TemplateNode;
+  span: SourceSpan;
+}
+
+// ─── Blocking operators ─────────────────────────────────
+
+export interface WaitNode {
+  kind: 'Op.Wait';
+  on: PromiseRef[];
+  mode: 'any' | 'all' | null;
+  timeout: DurationValue | null;
+  span: SourceSpan;
+}
+
+// ─── Control-flow operators (Extended) ──────────────────
+
+export interface IfNode {
+  kind: 'Op.If';
+  condition: string;
+  body: (OperatorNode | CommentNode)[];
+  span: SourceSpan;
+}
+
+export interface RepeatNode {
+  kind: 'Op.Repeat';
+  until: string | null;       // null for count-only form
+  limit: number;
+  body: (OperatorNode | CommentNode)[];
+  span: SourceSpan;
+}
+
+export interface EachNode {
+  kind: 'Op.Each';
+  element: ValueRef;
+  from: ValueRef;
+  body: (OperatorNode | CommentNode)[];
+  span: SourceSpan;
+}
+
+// ─── Unsupported ────────────────────────────────────────
 
 /** R-0011: parser skips unimplemented operators, validator reports error */
 export interface UnsupportedOperatorNode {

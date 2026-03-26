@@ -18,6 +18,7 @@ export type Token =
   | TemplateCloseToken
   | TextFragmentToken
   | DurationLiteralToken
+  | NumberLiteralToken
   | StarToken
   | DashToken
   | ColonToken
@@ -107,6 +108,13 @@ export interface DurationLiteralToken {
   type: 'DurationLiteral';
   value: number;
   unitId: AbstractId;
+  span: SourceSpan;
+}
+
+/** Number without duration suffix (D-006-7) */
+export interface NumberLiteralToken {
+  type: 'NumberLiteral';
+  value: number;
   span: SourceSpan;
 }
 

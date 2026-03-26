@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
     const keywords = KeywordIndex.build(dialectTable);
     const tokens = tokenize(source, keywords);
-    const ast = parse(tokens, dialectTable);
+    const ast = parse(tokens, dialectTable, source);
     const result = validate(ast);
 
     // Output diagnostics
