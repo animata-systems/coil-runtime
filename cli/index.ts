@@ -8,36 +8,32 @@ import {
   validate,
   execute, CliEnvironment,
 } from '../src/index.js';
+import type { ScriptNode, OperatorNode, CommentNode } from '../src/ast/nodes.js';
 
-const USAGE = `Usage: coil run <file> --dialect <path>
+const USAGE = `Usage: coil <command> <file> --dialect <path>
+
+Commands:
+  run <file>     Run a .coil script
+  parse <file>   Parse and print AST (no execution)
 
 Arguments:
   <file>              Path to .coil script
   --dialect <path>    Path to dialect table JSON file`;
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-
-  if (args.length === 0 || args[0] !== 'run') {
-    console.error(USAGE);
-    process.exit(1);
-  }
-
-  // Parse: coil run <file> --dialect <path>
+function parseArgs(args: string[]): { file: string; dialect: string } {
   let file: string | undefined;
   let dialect: string | undefined;
 
-  const rest = args.slice(1);
-  for (let i = 0; i < rest.length; i++) {
-    if (rest[i] === '--dialect') {
-      if (i + 1 >= rest.length || rest[i + 1].startsWith('-')) {
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--dialect') {
+      if (i + 1 >= args.length || args[i + 1].startsWith('-')) {
         console.error('error: dialect path missing after --dialect');
         console.error(USAGE);
         process.exit(1);
       }
-      dialect = rest[++i];
-    } else if (!rest[i].startsWith('-')) {
-      file = rest[i];
+      dialect = args[++i];
+    } else if (!args[i].startsWith('-')) {
+      file = args[i];
     }
   }
 
@@ -53,7 +49,112 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  // Pipeline: file → readFile → loadDialect → tokenize → parse → validate → execute
+  return { file, dialect };
+}
+
+/** Print AST node for `coil parse` */
+function printNode(node: OperatorNode | CommentNode, indent: string = ''): void {
+  if (node.kind === 'Comment') {
+    console.log(`${indent}Comment: "${node.text}"`);
+    return;
+  }
+
+  const fields: string[] = [];
+
+  switch (node.kind) {
+    case 'Op.Receive':
+      fields.push(`name=${node.name}`);
+      if (node.prompt) fields.push('prompt=<template>');
+      break;
+    case 'Op.Send':
+      if (node.name) fields.push(`name=${node.name}`);
+      if (node.to) fields.push(`to=#...`);
+      if (node.for.length) fields.push(`for=[${node.for.join(', ')}]`);
+      if (node.await) fields.push(`await=${node.await}`);
+      if (node.timeout) fields.push(`timeout=${node.timeout.value}`);
+      if (node.body) fields.push('body=<template>');
+      break;
+    case 'Op.Exit':
+      break;
+    case 'Op.Actors':
+      fields.push(`names=[${node.names.join(', ')}]`);
+      break;
+    case 'Op.Tools':
+      fields.push(`names=[${node.names.join(', ')}]`);
+      break;
+    case 'Op.Define':
+      fields.push(`name=${node.name}`, `body.type=${node.body.type}`);
+      break;
+    case 'Op.Set':
+      fields.push(`target=$${node.target.name}`, `body.type=${node.body.type}`);
+      break;
+    case 'Op.Think':
+      fields.push(`name=${node.name}`);
+      if (node.via) fields.push(`via=$${node.via.name}`);
+      if (node.as.length) fields.push(`as=[${node.as.map(r => '$' + r.name).join(', ')}]`);
+      if (node.using.length) fields.push(`using=[${node.using.map(r => '!' + r.name).join(', ')}]`);
+      if (node.goal) fields.push('goal=<template>');
+      if (node.input) fields.push('input=<template>');
+      if (node.context) fields.push('context=<template>');
+      if (node.result.length) fields.push(`result=[${node.result.length} fields]`);
+      if (node.body) fields.push('body=<template>');
+      break;
+    case 'Op.Execute':
+      fields.push(`name=${node.name}`, `tool=!${node.tool.name}`);
+      if (node.args.length) fields.push(`args=[${node.args.map(a => a.key).join(', ')}]`);
+      break;
+    case 'Op.Wait':
+      if (node.on.length) fields.push(`on=[${node.on.map(r => '?' + r.name).join(', ')}]`);
+      if (node.mode) fields.push(`mode=${node.mode}`);
+      if (node.timeout) fields.push(`timeout=${node.timeout.value}`);
+      break;
+    case 'Op.Signal':
+      fields.push(`target=~${node.target.name}`, 'body=<template>');
+      break;
+    case 'Op.If':
+      fields.push(`condition="${node.condition}"`);
+      break;
+    case 'Op.Repeat':
+      fields.push(`limit=${node.limit}`);
+      if (node.until) fields.push(`until="${node.until}"`);
+      break;
+    case 'Op.Each':
+      fields.push(`element=$${node.element.name}`, `from=$${node.from.name}`);
+      break;
+    case 'Unsupported':
+      fields.push(`operatorId=${node.operatorId}`);
+      break;
+  }
+
+  const fieldsStr = fields.length > 0 ? ` ${fields.join(', ')}` : '';
+  console.log(`${indent}${node.kind}${fieldsStr}`);
+
+  // Print nested body for control-flow operators
+  if (node.kind === 'Op.If' || node.kind === 'Op.Repeat' || node.kind === 'Op.Each') {
+    for (const child of node.body) {
+      printNode(child, indent + '  ');
+    }
+  }
+}
+
+function printAST(ast: ScriptNode): void {
+  console.log(`Script (dialect: ${ast.dialect})`);
+  for (const node of ast.nodes) {
+    printNode(node, '  ');
+  }
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+
+  if (args.length === 0 || (args[0] !== 'run' && args[0] !== 'parse')) {
+    console.error(USAGE);
+    process.exit(1);
+  }
+
+  const command = args[0];
+  const { file, dialect } = parseArgs(args.slice(1));
+
   try {
     const [source, dialectTable] = await Promise.all([
       readFile(file, 'utf-8'),
@@ -73,6 +174,18 @@ async function main(): Promise<void> {
       console.error(`warning[${w.ruleId}]: ${w.message} (line ${w.span.line})`);
     }
 
+    if (command === 'parse') {
+      printAST(ast);
+      if (errors.length > 0) {
+        for (const e of errors) {
+          console.error(`error[${e.ruleId}]: ${e.message} (line ${e.span.line})`);
+        }
+        process.exit(1);
+      }
+      process.exit(0);
+    }
+
+    // command === 'run'
     if (errors.length > 0) {
       for (const e of errors) {
         console.error(`error[${e.ruleId}]: ${e.message} (line ${e.span.line})`);
@@ -80,7 +193,6 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    // Execute
     const env = new CliEnvironment();
     await execute(ast, env);
     process.exit(0);
