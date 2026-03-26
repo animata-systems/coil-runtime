@@ -9,6 +9,7 @@ import type { DialectTable } from '../dialect/types.js';
 import type {
   ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode,
   ActorsNode, ToolsNode, DefineNode, SetNode, ThinkNode,
+  ExecuteNode, WaitNode, SignalNode,
 } from '../ast/nodes.js';
 import { validate } from '../validator/index.js';
 
@@ -517,6 +518,135 @@ END`;
     const src = `THINK x\n  << first >>\n  << second >>\nEND`;
     expect(() => parseEN(src)).toThrow(ParseError);
     expect(() => parseEN(src)).toThrow(/duplicate.*body/);
+  });
+});
+
+// ─── EXECUTE ─────────────────────────────────────────────
+
+describe('parseExecute', () => {
+  it('EXECUTE with USING and arguments', () => {
+    const src = `TOOLS load_article
+
+EXECUTE article
+  USING !load_article
+  - url: $url
+  - format: "markdown"
+END
+
+EXIT`;
+    const ast = parseEN(src);
+    const exec = ast.nodes.find(n => n.kind === 'Op.Execute') as ExecuteNode;
+    expect(exec.name).toBe('article');
+    expect(exec.tool.name).toBe('load_article');
+    expect(exec.args).toHaveLength(2);
+    expect(exec.args[0].key).toBe('url');
+    expect(exec.args[0].value.type).toBe('ref');
+    expect(exec.args[1].key).toBe('format');
+    expect(exec.args[1].value.type).toBe('string');
+    expect((exec.args[1].value as any).value).toBe('markdown');
+  });
+
+  it('EXECUTE with template body → ParseError', () => {
+    const src = `TOOLS search\nEXECUTE results\n  USING !search\n  <<\n  Search.\n  >>\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/template.*not allowed.*EXECUTE/);
+  });
+
+  it('RU: ВЗЛОМАЙ с аргументами', () => {
+    const src = `АРСЕНАЛ поиск
+
+ВЗЛОМАЙ результат
+  ВООРУЖИВШИСЬ !поиск
+  - запрос: $запрос
+ПРОСНИСЬ
+
+ОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const exec = ast.nodes.find(n => n.kind === 'Op.Execute') as ExecuteNode;
+    expect(exec.name).toBe('результат');
+    expect(exec.tool.name).toBe('поиск');
+    expect(exec.args).toHaveLength(1);
+    expect(exec.args[0].key).toBe('запрос');
+  });
+});
+
+// ─── WAIT ────────────────────────────────────────────────
+
+describe('parseWait', () => {
+  it('WAIT single promise', () => {
+    const src = `THINK plan\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND\nWAIT\n  ON ?plan\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.on).toHaveLength(1);
+    expect(wait.on[0].name).toBe('plan');
+    expect(wait.mode).toBeNull();
+    expect(wait.timeout).toBeNull();
+  });
+
+  it('WAIT multiple promises with MODE ALL', () => {
+    const src = `THINK a\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+THINK b\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+WAIT\n  ON ?a, ?b\n  MODE ALL\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.on).toHaveLength(2);
+    expect(wait.on[0].name).toBe('a');
+    expect(wait.on[1].name).toBe('b');
+    expect(wait.mode).toBe('all');
+  });
+
+  it('WAIT with MODE ANY', () => {
+    const src = `THINK a\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+THINK b\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+WAIT\n  ON ?a, ?b\n  MODE ANY\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.mode).toBe('any');
+  });
+
+  it('WAIT with TIMEOUT', () => {
+    const src = `THINK x\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND\nWAIT\n  ON ?x\n  TIMEOUT 5m\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.timeout).not.toBeNull();
+    expect(wait.timeout!.value).toBe(5);
+    expect(wait.timeout!.unitId).toBe('Dur.Minutes');
+  });
+
+  it('WAIT ON $value → ParseError (R-0020)', () => {
+    const src = `DEFINE data\n"hello"\nEND\nWAIT\n  ON $data\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/PromiseRef/);
+  });
+
+  it('RU: ЗАМРИ с ПОКА НЕ СБУДЕТСЯ', () => {
+    const src = `ПРОЗРЕЙ план\n  БЕЛЫЙ КРОЛИК << x >>\n  ПРОРОЧЕСТВО\n  * s: КОД\nПРОСНИСЬ\nЗАМРИ\n  ПОКА НЕ СБУДЕТСЯ ?план\nПРОСНИСЬ\nОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.on).toHaveLength(1);
+    expect(wait.on[0].name).toBe('план');
+  });
+});
+
+// ─── SIGNAL ──────────────────────────────────────────────
+
+describe('parseSignal', () => {
+  it('SIGNAL with target and template body', () => {
+    const src = `SIGNAL ~analysis\n  <<\n  Additional data: $results\n  >>\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const sig = ast.nodes[0] as SignalNode;
+    expect(sig.kind).toBe('Op.Signal');
+    expect(sig.target.name).toBe('analysis');
+    expect(sig.body.type).toBe('template');
+    expect(sig.body.parts.some(p => p.type === 'ref')).toBe(true);
+  });
+
+  it('RU: ГЛИТЧ', () => {
+    const src = `ГЛИТЧ ~решение\n  <<\n  Новые данные: $данные\n  >>\nПРОСНИСЬ\nОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    const sig = ast.nodes[0] as SignalNode;
+    expect(sig.kind).toBe('Op.Signal');
+    expect(sig.target.name).toBe('решение');
   });
 });
 
