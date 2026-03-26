@@ -6,6 +6,11 @@ import { buildScope } from './scope.js';
 import { exitRequired } from './rules/exit-required.js';
 import { unreachableAfterExit } from './rules/unreachable-after-exit.js';
 import { unsupportedOperator } from './rules/unsupported-operator.js';
+import { undeclaredParticipant } from './rules/undeclared-participant.js';
+import { undeclaredTool } from './rules/undeclared-tool.js';
+import { undefinedVariable } from './rules/undefined-variable.js';
+import { duplicateDefine } from './rules/duplicate-define.js';
+import { setWithoutDefine } from './rules/set-without-define.js';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -50,6 +55,11 @@ function createDefaultRegistry(): RuleRegistry {
   registry.register(exitRequired);
   registry.register(unreachableAfterExit);
   registry.register(unsupportedOperator);
+  registry.register(undeclaredParticipant);
+  registry.register(undeclaredTool);
+  registry.register(undefinedVariable);
+  registry.register(duplicateDefine);
+  registry.register(setWithoutDefine);
   return registry;
 }
 

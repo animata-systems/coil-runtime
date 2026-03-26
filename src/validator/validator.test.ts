@@ -11,9 +11,12 @@ import type { DialectTable } from '../dialect/types.js';
 const require = createRequire(import.meta.url);
 const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
 
 let enTable: DialectTable;
 let enIndex: KeywordIndex;
+let ruTable: DialectTable;
+let ruIndex: KeywordIndex;
 
 function validateEN(src: string) {
   const tokens = tokenize(src, enIndex);
@@ -21,9 +24,17 @@ function validateEN(src: string) {
   return validate(ast, enTable);
 }
 
+function validateRU(src: string) {
+  const tokens = tokenize(src, ruIndex);
+  const ast = parse(tokens, ruTable, src);
+  return validate(ast, ruTable);
+}
+
 beforeAll(async () => {
   enTable = await loadDialect(EN_PATH);
   enIndex = KeywordIndex.build(enTable);
+  ruTable = await loadDialect(RU_PATH);
+  ruIndex = KeywordIndex.build(ruTable);
 });
 
 describe('validate', () => {
@@ -77,5 +88,383 @@ END
 EXIT`;
     const result = validateEN(src);
     expect(result.diagnostics).toHaveLength(0);
+  });
+});
+
+// ─── Phase 2 rules ─────────────────────────────────────────
+
+describe('undeclared-participant', () => {
+  it('SEND FOR @name без ACTORS → error', () => {
+    const src = `SEND
+  FOR @alice
+<<
+Hello
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-participant');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('SEND FOR @name с ACTORS → OK', () => {
+    const src = `ACTORS alice
+
+SEND
+  FOR @alice
+<<
+Hello
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-participant');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('SEND без FOR → OK (никого не адресует)', () => {
+    const src = `RECEIVE msg
+<<
+prompt
+>>
+END
+
+SEND
+<<
+$msg
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-participant');
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('undeclared-tool', () => {
+  it('THINK USING !tool без TOOLS → error', () => {
+    const src = `THINK plan
+  USING !search
+  GOAL <<
+  Find something.
+  >>
+END
+WAIT
+  ON ?plan
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-tool');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('THINK USING !tool с TOOLS → OK', () => {
+    const src = `TOOLS search
+
+THINK plan
+  USING !search
+  GOAL <<
+  Find something.
+  >>
+END
+WAIT
+  ON ?plan
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-tool');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('EXECUTE USING !tool без TOOLS → error', () => {
+    const src = `EXECUTE action
+  USING !api_call
+  - endpoint: "test"
+END
+WAIT
+  ON ?action
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-tool');
+    expect(errors).toHaveLength(1);
+  });
+});
+
+describe('undefined-variable', () => {
+  it('$name в SEND без определения → error', () => {
+    const src = `SEND
+<<
+Hello, $unknown!
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('$name после DEFINE → OK', () => {
+    const src = `DEFINE greeting
+<<
+Hello
+>>
+END
+
+SEND
+<<
+$greeting, world!
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('$name после RECEIVE → OK', () => {
+    const src = `RECEIVE msg
+<<
+prompt
+>>
+END
+
+SEND
+<<
+$msg
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('$name с state promised → NOT error (use-before-wait handles it)', () => {
+    const src = `TOOLS search
+
+THINK plan
+  USING !search
+  GOAL <<
+  Plan something.
+  >>
+END
+
+SEND
+<<
+$plan
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('duplicate-define', () => {
+  it('два безусловных DEFINE одного имени → error', () => {
+    const src = `DEFINE x
+<<
+first
+>>
+END
+
+DEFINE x
+<<
+second
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'duplicate-define');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('два условных DEFINE одного имени → OK (D-007-1)', () => {
+    const src = `TOOLS search
+
+THINK verdict
+  USING !search
+  GOAL <<
+  Classify.
+  >>
+  RESULT
+  * type: CHOICE(a, b) - request type
+END
+
+WAIT
+  ON ?verdict
+END
+
+IF $verdict.type == "a"
+  DEFINE role
+  <<
+  Role A.
+  >>
+  END
+END
+
+IF $verdict.type == "b"
+  DEFINE role
+  <<
+  Role B.
+  >>
+  END
+END
+
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'duplicate-define');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('безусловный + условный DEFINE → error', () => {
+    const src = `TOOLS search
+
+THINK verdict
+  USING !search
+  GOAL <<
+  Classify.
+  >>
+  RESULT
+  * type: CHOICE(a, b) - type
+END
+
+WAIT
+  ON ?verdict
+END
+
+DEFINE role
+<<
+Default.
+>>
+END
+
+IF $verdict.type == "a"
+  DEFINE role
+  <<
+  Override.
+  >>
+  END
+END
+
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'duplicate-define');
+    expect(errors).toHaveLength(1);
+  });
+});
+
+describe('set-without-define', () => {
+  it('SET $x без DEFINE → error', () => {
+    const src = `SET $x
+<<
+value
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'set-without-define');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('SET $x после DEFINE → OK', () => {
+    const src = `DEFINE x
+<<
+initial
+>>
+END
+
+SET $x
+<<
+updated
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'set-without-define');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('SET $x на promised переменную (без WAIT) → error', () => {
+    const src = `TOOLS api
+
+EXECUTE data
+  USING !api
+  - endpoint: "test"
+END
+
+SET $data
+<<
+override
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'set-without-define');
+    expect(errors).toHaveLength(1);
+  });
+
+  it('SET $x на resolved promise (после WAIT) → OK', () => {
+    const src = `TOOLS api
+
+EXECUTE data
+  USING !api
+  - endpoint: "test"
+END
+
+WAIT
+  ON ?data
+END
+
+SET $data
+<<
+updated
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'set-without-define');
+    expect(errors).toHaveLength(0);
+  });
+});
+
+// ─── ru-matrix smoke tests ─────────────────────────────────
+
+describe('ru-matrix dialect', () => {
+  it('валидный скрипт на ru-matrix → 0 errors', () => {
+    const src = `ПРИМИ имя
+<<
+Как вас зовут?
+>>
+ПРОСНИСЬ
+
+ПЕРЕДАЙ
+<<
+Привет, $имя!
+>>
+ПРОСНИСЬ
+
+ОТКЛЮЧИСЬ`;
+    const result = validateRU(src);
+    expect(result.diagnostics.filter(d => d.severity === 'error')).toHaveLength(0);
+  });
+
+  it('undefined-variable на ru-matrix → error', () => {
+    const src = `ПЕРЕДАЙ
+<<
+$неизвестная
+>>
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const result = validateRU(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
+    expect(errors).toHaveLength(1);
   });
 });

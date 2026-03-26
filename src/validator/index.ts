@@ -4,3 +4,4 @@ export type { ScopeModel, ScopeEntry, VariableEntry } from './scope.js';
 export { buildScope, createScopeModel } from './scope.js';
 export { walkOperators, topLevelOps } from './walk.js';
 export type { WalkContext, OperatorVisitor } from './walk.js';
+export { collectVariableRefs, collectRefsFromBody, collectRefsFromTemplate } from './refs.js';
