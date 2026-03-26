@@ -6,7 +6,10 @@ import { loadDialect } from '../dialect/loader.js';
 import { KeywordIndex } from '../dialect/index.js';
 import { parse, ParseError } from './parser.js';
 import type { DialectTable } from '../dialect/types.js';
-import type { ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode } from '../ast/nodes.js';
+import type {
+  ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode,
+  ActorsNode, ToolsNode, DefineNode, SetNode,
+} from '../ast/nodes.js';
 import { validate } from '../validator/index.js';
 
 const require = createRequire(import.meta.url);
@@ -165,6 +168,146 @@ describe('parseExit', () => {
     expect(ast.nodes).toHaveLength(2);
     expect(ast.nodes[0].kind).toBe('Op.Exit');
     expect(ast.nodes[1].kind).toBe('Comment');
+  });
+});
+
+// ─── ACTORS / TOOLS ─────────────────────────────────────
+
+describe('parseActors', () => {
+  it('ACTORS inline: ACTORS a, b → ActorsNode { names: [a, b] }', () => {
+    const ast = parseEN('ACTORS analyst, reviewer\nEXIT');
+    expect(ast.nodes[0].kind).toBe('Op.Actors');
+    const node = ast.nodes[0] as ActorsNode;
+    expect(node.names).toEqual(['analyst', 'reviewer']);
+  });
+
+  it('ACTORS block form', () => {
+    const src = `ACTORS
+  analyst
+  reviewer
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes[0].kind).toBe('Op.Actors');
+    const node = ast.nodes[0] as ActorsNode;
+    expect(node.names).toEqual(['analyst', 'reviewer']);
+  });
+
+  it('RU: ЭКИПАЖ inline', () => {
+    const ast = parseRU('ЭКИПАЖ аналитик, рецензент\nОТКЛЮЧИСЬ');
+    expect(ast.nodes[0].kind).toBe('Op.Actors');
+    const node = ast.nodes[0] as ActorsNode;
+    expect(node.names).toEqual(['аналитик', 'рецензент']);
+  });
+});
+
+describe('parseTools', () => {
+  it('TOOLS inline: TOOLS search, calc → ToolsNode', () => {
+    const ast = parseEN('TOOLS search, calc\nEXIT');
+    expect(ast.nodes[0].kind).toBe('Op.Tools');
+    const node = ast.nodes[0] as ToolsNode;
+    expect(node.names).toEqual(['search', 'calc']);
+  });
+
+  it('TOOLS block form', () => {
+    const src = `TOOLS
+  search
+  calc
+END
+EXIT`;
+    const ast = parseEN(src);
+    expect(ast.nodes[0].kind).toBe('Op.Tools');
+    const node = ast.nodes[0] as ToolsNode;
+    expect(node.names).toEqual(['search', 'calc']);
+  });
+
+  it('RU: АРСЕНАЛ block', () => {
+    const src = `АРСЕНАЛ
+  загрузить_статью
+  открыть_чат
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const ast = parseRU(src);
+    expect(ast.nodes[0].kind).toBe('Op.Tools');
+    const node = ast.nodes[0] as ToolsNode;
+    expect(node.names).toEqual(['загрузить_статью', 'открыть_чат']);
+  });
+});
+
+// ─── DEFINE / SET ───────────────────────────────────────
+
+describe('parseDefine', () => {
+  it('DEFINE with number literal', () => {
+    const ast = parseEN('DEFINE max_retries\n3\nEND\nEXIT');
+    expect(ast.nodes[0].kind).toBe('Op.Define');
+    const node = ast.nodes[0] as DefineNode;
+    expect(node.name).toBe('max_retries');
+    expect(node.body.type).toBe('number');
+    expect((node.body as any).value).toBe(3);
+  });
+
+  it('DEFINE with string literal', () => {
+    const ast = parseEN('DEFINE model\n"gpt-4"\nEND\nEXIT');
+    expect(ast.nodes[0].kind).toBe('Op.Define');
+    const node = ast.nodes[0] as DefineNode;
+    expect(node.name).toBe('model');
+    expect(node.body.type).toBe('string');
+    expect((node.body as any).value).toBe('gpt-4');
+  });
+
+  it('DEFINE with template', () => {
+    const src = `DEFINE role
+<<
+You are an analyst.
+>>
+END
+EXIT`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as DefineNode;
+    expect(node.body.type).toBe('template');
+  });
+
+  it('DEFINE with $ref (aliasing)', () => {
+    const src = 'DEFINE current_role\n$general_role\nEND\nEXIT';
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as DefineNode;
+    expect(node.body.type).toBe('ref');
+    expect((node.body as any).name).toBe('general_role');
+  });
+
+  it('RU: ЗАГРУЗИ с числом', () => {
+    const ast = parseRU('ЗАГРУЗИ попытки\n3\nПРОСНИСЬ\nОТКЛЮЧИСЬ');
+    expect(ast.nodes[0].kind).toBe('Op.Define');
+    const node = ast.nodes[0] as DefineNode;
+    expect(node.name).toBe('попытки');
+    expect(node.body.type).toBe('number');
+  });
+});
+
+describe('parseSet', () => {
+  it('SET with number literal', () => {
+    const ast = parseEN('SET $counter\n1\nEND\nEXIT');
+    expect(ast.nodes[0].kind).toBe('Op.Set');
+    const node = ast.nodes[0] as SetNode;
+    expect(node.target.name).toBe('counter');
+    expect(node.body.type).toBe('number');
+    expect((node.body as any).value).toBe(1);
+  });
+
+  it('SET with $ref.field', () => {
+    const ast = parseEN('SET $current\n$improved.text\nEND\nEXIT');
+    const node = ast.nodes[0] as SetNode;
+    expect(node.target.name).toBe('current');
+    expect(node.body.type).toBe('ref');
+    expect((node.body as any).name).toBe('improved');
+    expect((node.body as any).path).toEqual(['text']);
+  });
+
+  it('RU: ПЕРЕПИШИ', () => {
+    const ast = parseRU('ПЕРЕПИШИ $счётчик\n0\nПРОСНИСЬ\nОТКЛЮЧИСЬ');
+    expect(ast.nodes[0].kind).toBe('Op.Set');
+    const node = ast.nodes[0] as SetNode;
+    expect(node.target.name).toBe('счётчик');
   });
 });
 
