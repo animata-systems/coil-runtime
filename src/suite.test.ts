@@ -12,6 +12,7 @@ import { readdirSync } from 'node:fs';
 import { tokenize, LexerError } from './lexer/index.js';
 import { loadDialect, KeywordIndex } from './dialect/index.js';
 import { parse, ParseError } from './parser/index.js';
+import { validate } from './validator/index.js';
 import type { DialectTable } from './dialect/index.js';
 
 const require = createRequire(import.meta.url);
@@ -169,22 +170,54 @@ describe('invalid — syntactic tests rejected by parser', () => {
   }
 });
 
-// ─── invalid — semantic tests (4) — parser succeeds, validator scope ──
+// ─── invalid — semantic tests — parser succeeds, validator catches ──
+
+/** Extract @rule annotation from .coil file header */
+function extractRule(src: string): string | undefined {
+  const match = src.match(/^'\s*@rule\s+(\S+)/m);
+  return match?.[1];
+}
 
 const SEMANTIC_INVALID = [
   'duplicate-define.coil',
   'set-undefined.coil',
   'undeclared-actor.coil',
   'undeclared-tool.coil',
+  'undefined-variable.coil',
+  'undefined-promise.coil',
 ];
 
-describe('invalid — semantic tests (out of scope, parser succeeds)', () => {
+describe('invalid — semantic tests: parser succeeds, validator catches @rule', () => {
   for (const name of SEMANTIC_INVALID) {
-    it(`${name} — parser does not throw`, async () => {
-      // These are semantic errors caught by validator, not parser
-      const ast = await parseFileEN(join(TESTS_DIR, 'invalid', name));
+    it(`${name} — validator reports expected ruleId`, async () => {
+      const src = await readFile(join(TESTS_DIR, 'invalid', name), 'utf-8');
+      const ast = parseStringEN(src);
       expect(ast.nodes.length).toBeGreaterThan(0);
+      const result = validate(ast, enTable);
+      const expectedRule = extractRule(src);
+      expect(expectedRule).toBeDefined();
+      const matching = result.diagnostics.filter(d => d.ruleId === expectedRule && d.severity === 'error');
+      expect(matching.length).toBeGreaterThanOrEqual(1);
     });
+  }
+});
+
+// ─── valid — full validate (no errors) ────────────────────
+
+describe('valid — validate produces no errors', () => {
+  const dirs = ['core', 'extended', 'patterns', 'result'];
+  for (const dir of dirs) {
+    const files = coilFiles(join(TESTS_DIR, 'valid', dir));
+    for (const file of files) {
+      const name = `${dir}/${file.split('/').pop()!}`;
+      it(name, async () => {
+        const src = await readFile(file, 'utf-8');
+        const ast = parseStringEN(src);
+        const result = validate(ast, enTable);
+        const errors = result.diagnostics.filter(d => d.severity === 'error');
+        expect(errors).toHaveLength(0);
+      });
+    }
   }
 });
 
