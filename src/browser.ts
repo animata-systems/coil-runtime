@@ -14,6 +14,7 @@ export * from './ast/index.js';
 export * from './dialect/types.js';
 export { KeywordIndex } from './dialect/keyword-index.js';
 export type { KeywordMatch } from './dialect/keyword-index.js';
+export { lookupDialectWord, extractLanguage } from './dialect/lookup.js';
 export * from './lexer/index.js';
 export * from './parser/index.js';
 export * from './validator/index.js';

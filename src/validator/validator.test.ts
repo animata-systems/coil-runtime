@@ -614,3 +614,33 @@ EXIT`;
     expect(warnings).toHaveLength(0);
   });
 });
+
+// ─── Phase 4: dialect-aware messages ────────────────────────
+
+describe('dialect-aware messages (D-007-4)', () => {
+  it('en-standard → English message', () => {
+    const src = `SEND
+<<
+$unknown
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const error = result.diagnostics.find(d => d.ruleId === 'undefined-variable');
+    expect(error).toBeDefined();
+    expect(error!.message).toContain('variable $unknown is not defined');
+  });
+
+  it('ru-matrix → русское сообщение', () => {
+    const src = `ПЕРЕДАЙ
+<<
+$неизвестная
+>>
+ПРОСНИСЬ
+ОТКЛЮЧИСЬ`;
+    const result = validateRU(src);
+    const error = result.diagnostics.find(d => d.ruleId === 'undefined-variable');
+    expect(error).toBeDefined();
+    expect(error!.message).toContain('переменная $неизвестная не определена');
+  });
+});

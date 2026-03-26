@@ -5,3 +5,4 @@ export { buildScope, createScopeModel } from './scope.js';
 export { walkOperators, topLevelOps } from './walk.js';
 export type { WalkContext, OperatorVisitor } from './walk.js';
 export { collectVariableRefs, collectRefsFromBody, collectRefsFromTemplate } from './refs.js';
+export { formatMessage } from './messages.js';

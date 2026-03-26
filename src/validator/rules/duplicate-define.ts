@@ -4,10 +4,11 @@ import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { walkOperators } from '../walk.js';
 import type { SourceSpan } from '../../common/types.js';
+import { formatMessage } from '../messages.js';
 
 export const duplicateDefine: ValidationRule = {
   ruleId: 'duplicate-define',
-  run(ast: ScriptNode, _scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
     const seen = new Map<string, { conditional: boolean; span: SourceSpan }>();
 
@@ -23,7 +24,7 @@ export const duplicateDefine: ValidationRule = {
           diagnostics.push({
             severity: 'error',
             ruleId: 'duplicate-define',
-            message: `variable $${def.name} is already defined`,
+            message: formatMessage('duplicate-define', dialect, def.name),
             span: def.span,
           });
         }

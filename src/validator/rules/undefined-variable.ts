@@ -4,10 +4,11 @@ import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { walkOperators } from '../walk.js';
 import { collectVariableRefs } from '../refs.js';
+import { formatMessage } from '../messages.js';
 
 export const undefinedVariable: ValidationRule = {
   ruleId: 'undefined-variable',
-  run(ast: ScriptNode, scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
     const reported = new Set<string>();
 
@@ -20,7 +21,7 @@ export const undefinedVariable: ValidationRule = {
           diagnostics.push({
             severity: 'error',
             ruleId: 'undefined-variable',
-            message: `variable $${ref.name} is not defined`,
+            message: formatMessage('undefined-variable', dialect, ref.name),
             span: ref.span,
           });
         }

@@ -15,6 +15,7 @@ const USAGE = `Usage: coil <command> <file> --dialect <path>
 Commands:
   run <file>     Run a .coil script
   parse <file>   Parse and print AST (no execution)
+  check <file>   Validate a .coil script (no execution)
 
 Arguments:
   <file>              Path to .coil script
@@ -147,7 +148,7 @@ function printAST(ast: ScriptNode): void {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || (args[0] !== 'run' && args[0] !== 'parse')) {
+  if (args.length === 0 || !['run', 'parse', 'check'].includes(args[0])) {
     console.error(USAGE);
     process.exit(1);
   }
@@ -172,6 +173,20 @@ async function main(): Promise<void> {
 
     for (const w of warnings) {
       console.error(`warning[${w.ruleId}]: ${w.message} (line ${w.span.line})`);
+    }
+
+    if (command === 'check') {
+      const infos = result.diagnostics.filter(d => d.severity === 'info');
+      for (const d of infos) {
+        console.error(`info[${d.ruleId}]: ${d.message} (line ${d.span.line})`);
+      }
+      if (errors.length > 0) {
+        for (const e of errors) {
+          console.error(`error[${e.ruleId}]: ${e.message} (line ${e.span.line})`);
+        }
+        process.exit(1);
+      }
+      process.exit(0);
     }
 
     if (command === 'parse') {

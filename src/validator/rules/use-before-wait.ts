@@ -7,6 +7,7 @@ import type { ScopeModel } from '../scope.js';
 import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { collectVariableRefs } from '../refs.js';
+import { formatMessage } from '../messages.js';
 
 type VarState = 'defined' | 'promised';
 
@@ -16,7 +17,7 @@ type VarState = 'defined' | 'promised';
  */
 export const useBeforeWait: ValidationRule = {
   ruleId: 'use-before-wait',
-  run(ast: ScriptNode, _scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
     const vars = new Map<string, VarState>();
     const reported = new Set<string>();
@@ -36,7 +37,7 @@ export const useBeforeWait: ValidationRule = {
             diagnostics.push({
               severity: 'info',
               ruleId: 'use-before-wait',
-              message: `$${ref.name} used before WAIT ON ?${ref.name} — value may not be available`,
+              message: formatMessage('use-before-wait', dialect, ref.name),
               span: ref.span,
             });
           }

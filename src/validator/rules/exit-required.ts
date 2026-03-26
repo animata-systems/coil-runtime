@@ -3,10 +3,11 @@ import type { ScopeModel } from '../scope.js';
 import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { topLevelOps } from '../walk.js';
+import { formatMessage } from '../messages.js';
 
 export const exitRequired: ValidationRule = {
   ruleId: 'exit-required',
-  run(ast: ScriptNode, _scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const ops = topLevelOps(ast.nodes);
 
     if (ops.length === 0 || ops[ops.length - 1].kind !== 'Op.Exit') {
@@ -16,7 +17,7 @@ export const exitRequired: ValidationRule = {
       return [{
         severity: 'error',
         ruleId: 'exit-required',
-        message: 'script must end with EXIT',
+        message: formatMessage('exit-required', dialect),
         span,
       }];
     }

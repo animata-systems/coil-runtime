@@ -87,3 +87,44 @@ describe('CLI: coil run', () => {
     }
   });
 });
+
+describe('CLI: coil check', () => {
+  const require = createRequire(import.meta.url);
+  const enDialectPath = join(dirname(require.resolve('coil/dialects/SPEC.md')), 'en-standard', 'en-standard.json');
+  const ruDialectPath = join(dirname(require.resolve('coil/dialects/SPEC.md')), 'ru-matrix', 'ru-matrix.json');
+
+  it('валидный скрипт → exit 0', async () => {
+    const tmpScript = '/tmp/check-valid.coil';
+    await writeFile(tmpScript, 'RECEIVE name\nEND\nEXIT');
+    try {
+      const result = await run('check', tmpScript, '--dialect', enDialectPath);
+      expect(result.code).toBe(0);
+    } finally {
+      await unlink(tmpScript);
+    }
+  });
+
+  it('скрипт без EXIT → exit 1, stderr contains exit-required', async () => {
+    const tmpScript = '/tmp/check-no-exit.coil';
+    await writeFile(tmpScript, 'RECEIVE name\nEND');
+    try {
+      const result = await run('check', tmpScript, '--dialect', enDialectPath);
+      expect(result.code).not.toBe(0);
+      expect(result.stderr).toContain('exit-required');
+    } finally {
+      await unlink(tmpScript);
+    }
+  });
+
+  it('ru-matrix диагностика → русское сообщение', async () => {
+    const tmpScript = '/tmp/check-ru.coil';
+    await writeFile(tmpScript, 'ПРИМИ имя\nПРОСНИСЬ');
+    try {
+      const result = await run('check', tmpScript, '--dialect', ruDialectPath);
+      expect(result.code).not.toBe(0);
+      expect(result.stderr).toContain('скрипт должен заканчиваться');
+    } finally {
+      await unlink(tmpScript);
+    }
+  });
+});

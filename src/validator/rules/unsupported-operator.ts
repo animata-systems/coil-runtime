@@ -3,20 +3,20 @@ import type { ScopeModel } from '../scope.js';
 import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { walkOperators } from '../walk.js';
+import { formatMessage } from '../messages.js';
 
 export const unsupportedOperator: ValidationRule = {
   ruleId: 'unsupported-operator',
-  run(ast: ScriptNode, _scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
 
-    // Walks nested blocks (IF/REPEAT/EACH) — expanded from top-level-only in phase 1 migration
     walkOperators(ast.nodes, (op) => {
       if (op.kind === 'Unsupported') {
         const unsup = op as UnsupportedOperatorNode;
         diagnostics.push({
           severity: 'error',
           ruleId: 'unsupported-operator',
-          message: `operator ${unsup.operatorId} is not supported in this version`,
+          message: formatMessage('unsupported-operator', dialect, unsup.operatorId),
           span: unsup.span,
         });
       }

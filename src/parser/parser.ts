@@ -6,6 +6,7 @@ import type {
 } from '../lexer/tokens.js';
 import type { SourceSpan } from '../common/types.js';
 import type { DialectTable, AbstractId } from '../dialect/types.js';
+import { lookupDialectWord } from '../dialect/lookup.js';
 import type {
   ScriptNode, OperatorNode, CommentNode, ReceiveNode, SendNode, ExitNode,
   UnsupportedOperatorNode, TemplateNode, TextPart, RefPart, DurationValue,
@@ -1013,19 +1014,6 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 }
 
 // ─── Dialect-aware diagnostics ─────────────────────────
-
-function lookupDialectWord(id: AbstractId, dialect: DialectTable): string {
-  const sections = [
-    dialect.operators, dialect.terminators, dialect.modifiers,
-    dialect.policies, dialect.resultTypes, dialect.durationSuffixes,
-  ];
-  for (const section of sections) {
-    if (id in section) {
-      return (section as Record<string, string>)[id];
-    }
-  }
-  return id;
-}
 
 /** Format a ParseError with dialect-specific keywords */
 export function formatError(error: ParseError, dialect: DialectTable): string {

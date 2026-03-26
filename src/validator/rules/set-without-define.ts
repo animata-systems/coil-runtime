@@ -3,10 +3,11 @@ import type { ScopeModel } from '../scope.js';
 import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { walkOperators } from '../walk.js';
+import { formatMessage } from '../messages.js';
 
 export const setWithoutDefine: ValidationRule = {
   ruleId: 'set-without-define',
-  run(ast: ScriptNode, scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
 
     walkOperators(ast.nodes, (op) => {
@@ -19,14 +20,14 @@ export const setWithoutDefine: ValidationRule = {
         diagnostics.push({
           severity: 'error',
           ruleId: 'set-without-define',
-          message: `cannot SET $${name}: variable is not defined`,
+          message: formatMessage('set-without-define', dialect, name),
           span: set.span,
         });
       } else if (entry.state === 'promised') {
         diagnostics.push({
           severity: 'error',
           ruleId: 'set-without-define',
-          message: `cannot SET $${name}: promise is not yet resolved (use WAIT first)`,
+          message: formatMessage('set-without-define:promised', dialect, name),
           span: set.span,
         });
       }

@@ -3,10 +3,11 @@ import type { ScopeModel } from '../scope.js';
 import type { DialectTable } from '../../dialect/types.js';
 import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
 import { walkOperators } from '../walk.js';
+import { formatMessage } from '../messages.js';
 
 export const undeclaredTool: ValidationRule = {
   ruleId: 'undeclared-tool',
-  run(ast: ScriptNode, scope: ScopeModel, _dialect: DialectTable): ValidationDiagnostic[] {
+  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
     const diagnostics: ValidationDiagnostic[] = [];
 
     walkOperators(ast.nodes, (op) => {
@@ -17,7 +18,7 @@ export const undeclaredTool: ValidationRule = {
             diagnostics.push({
               severity: 'error',
               ruleId: 'undeclared-tool',
-              message: `tool !${toolRef.name} is not declared in TOOLS`,
+              message: formatMessage('undeclared-tool', dialect, toolRef.name),
               span: toolRef.span,
             });
           }
@@ -28,7 +29,7 @@ export const undeclaredTool: ValidationRule = {
           diagnostics.push({
             severity: 'error',
             ruleId: 'undeclared-tool',
-            message: `tool !${exec.tool.name} is not declared in TOOLS`,
+            message: formatMessage('undeclared-tool', dialect, exec.tool.name),
             span: exec.tool.span,
           });
         }
