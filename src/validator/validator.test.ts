@@ -468,3 +468,149 @@ $неизвестная
     expect(errors).toHaveLength(1);
   });
 });
+
+// ─── Phase 3 rules ─────────────────────────────────────────
+
+describe('undefined-promise', () => {
+  it('WAIT ON ?name без запускающего оператора → error', () => {
+    const src = `WAIT
+  ON ?phantom
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-promise');
+    expect(errors).toHaveLength(1);
+    expect(errors[0].severity).toBe('error');
+  });
+
+  it('WAIT ON ?name после THINK → OK', () => {
+    const src = `TOOLS search
+
+THINK plan
+  USING !search
+  GOAL <<
+  Plan something.
+  >>
+END
+
+WAIT
+  ON ?plan
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-promise');
+    expect(errors).toHaveLength(0);
+  });
+
+  it('WAIT ON ?name после EXECUTE → OK', () => {
+    const src = `TOOLS api
+
+EXECUTE data
+  USING !api
+  - endpoint: "test"
+END
+
+WAIT
+  ON ?data
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-promise');
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('use-before-wait', () => {
+  it('$name от THINK использован до WAIT → info', () => {
+    const src = `TOOLS search
+
+THINK plan
+  USING !search
+  GOAL <<
+  Plan something.
+  >>
+END
+
+SEND
+<<
+$plan
+>>
+END
+
+WAIT
+  ON ?plan
+END
+EXIT`;
+    const result = validateEN(src);
+    const infos = result.diagnostics.filter(d => d.ruleId === 'use-before-wait');
+    expect(infos).toHaveLength(1);
+    expect(infos[0].severity).toBe('info');
+  });
+
+  it('$name от THINK использован после WAIT → OK', () => {
+    const src = `TOOLS search
+
+THINK plan
+  USING !search
+  GOAL <<
+  Plan something.
+  >>
+END
+
+WAIT
+  ON ?plan
+END
+
+SEND
+<<
+$plan
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const infos = result.diagnostics.filter(d => d.ruleId === 'use-before-wait');
+    expect(infos).toHaveLength(0);
+  });
+
+  it('$name от DEFINE не триггерит use-before-wait', () => {
+    const src = `DEFINE greeting
+<<
+Hello
+>>
+END
+
+SEND
+<<
+$greeting
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const infos = result.diagnostics.filter(d => d.ruleId === 'use-before-wait');
+    expect(infos).toHaveLength(0);
+  });
+});
+
+describe('unreachable-after-exit (D-007-5)', () => {
+  it('EXIT внутри IF → НЕ считается завершением скрипта', () => {
+    const src = `DEFINE flag
+<<
+true
+>>
+END
+
+IF $flag == "true"
+  EXIT
+END
+
+SEND
+<<
+After conditional exit.
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const warnings = result.diagnostics.filter(d => d.ruleId === 'unreachable-after-exit');
+    expect(warnings).toHaveLength(0);
+  });
+});

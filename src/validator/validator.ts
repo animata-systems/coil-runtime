@@ -11,6 +11,8 @@ import { undeclaredTool } from './rules/undeclared-tool.js';
 import { undefinedVariable } from './rules/undefined-variable.js';
 import { duplicateDefine } from './rules/duplicate-define.js';
 import { setWithoutDefine } from './rules/set-without-define.js';
+import { undefinedPromise } from './rules/undefined-promise.js';
+import { useBeforeWait } from './rules/use-before-wait.js';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -60,6 +62,8 @@ function createDefaultRegistry(): RuleRegistry {
   registry.register(undefinedVariable);
   registry.register(duplicateDefine);
   registry.register(setWithoutDefine);
+  registry.register(undefinedPromise);
+  registry.register(useBeforeWait);
   return registry;
 }
 
