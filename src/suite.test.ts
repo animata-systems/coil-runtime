@@ -39,16 +39,35 @@ beforeAll(async () => {
   ruStdIndex = KeywordIndex.build(ruStdTable);
 });
 
-async function parseFileEN(path: string) {
-  const src = await readFile(path, 'utf-8');
+function parseStringEN(src: string) {
   const tokens = tokenize(src, enIndex);
   return parse(tokens, enTable, src);
 }
 
-async function parseFileRU(path: string) {
-  const src = await readFile(path, 'utf-8');
+function parseStringRU(src: string) {
   const tokens = tokenize(src, ruStdIndex);
   return parse(tokens, ruStdTable, src);
+}
+
+async function parseFileEN(path: string) {
+  const src = await readFile(path, 'utf-8');
+  return parseStringEN(src);
+}
+
+async function parseFileRU(path: string) {
+  const src = await readFile(path, 'utf-8');
+  return parseStringRU(src);
+}
+
+/** Extract contents of ```coil fenced code blocks from markdown. */
+function extractCoilBlocks(markdown: string): string[] {
+  const blocks: string[] = [];
+  const re = /^```coil\s*\n([\s\S]*?)^```\s*$/gm;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(markdown)) !== null) {
+    blocks.push(m[1]);
+  }
+  return blocks;
 }
 
 /** List .coil files in a directory */
@@ -196,6 +215,36 @@ describe('examples — RU (ru-standard) parse succeeds', () => {
       expect(ast.nodes.length).toBeGreaterThan(0);
     });
   }
+});
+
+// ─── narrative examples — COIL-C blocks extracted from .md ──
+
+describe('narrative examples — EN parse succeeds', () => {
+  const mdFiles = ['hello-world.md', 'research-agent.en.md'];
+
+  for (const name of mdFiles) {
+    it(name, async () => {
+      const md = await readFile(join(EXAMPLES_DIR, name), 'utf-8');
+      const blocks = extractCoilBlocks(md);
+      expect(blocks.length).toBeGreaterThan(0);
+      for (const block of blocks) {
+        const ast = parseStringEN(block);
+        expect(ast.nodes.length).toBeGreaterThan(0);
+      }
+    });
+  }
+});
+
+describe('narrative examples — RU (ru-standard) parse succeeds', () => {
+  it('research-agent.ru.md', async () => {
+    const md = await readFile(join(EXAMPLES_DIR, 'research-agent.ru.md'), 'utf-8');
+    const blocks = extractCoilBlocks(md);
+    expect(blocks.length).toBeGreaterThan(0);
+    for (const block of blocks) {
+      const ast = parseStringRU(block);
+      expect(ast.nodes.length).toBeGreaterThan(0);
+    }
+  });
 });
 
 describe('examples — RU (ru-matrix) parse succeeds', () => {

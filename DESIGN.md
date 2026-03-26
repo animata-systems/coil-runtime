@@ -286,3 +286,14 @@
 | **Решение** | Вынести `lookupDialectWord()` в отдельный файл `src/dialect/lookup.ts`. Экспортировать через `src/dialect/index.ts` и `src/browser.ts`. Парсер импортирует из `dialect/lookup.ts`. |
 | **Альтернативы** | (A) Дублировать в валидаторе — нарушает DRY. (B) Положить в `dialect/types.ts` — types.ts содержит только типы, добавление рантайм-функции нарушает конвенцию. (C) Положить в `common/` — функция специфична для dialect, не common. |
 | **Последствия** | Один дополнительный файл в `dialect/`. Минимальное изменение: перенос функции + обновление импорта в `parser.ts`. Scope: `src/dialect/lookup.ts`, `src/dialect/index.ts`, `src/parser/parser.ts`, `src/browser.ts`. |
+
+## R-0025 — Parser-check автоматизация для narrative examples
+
+| | |
+|---|---|
+| **Статус** | принят |
+| **Решено** | 2026-03-26 |
+| **Контекст** | Необходимо, чтобы stable executable examples были как минимум parser-checkable в автоматизированном потоке. `suite.test.ts` покрывал все `.coil` файлы в `coil/examples/` и `coil/tests/`, но не проверял COIL-C блоки, встроенные в нарративные `.md` примеры (`hello-world.md`, `research-agent.en.md`, `research-agent.ru.md`). |
+| **Решение** | Добавить в `suite.test.ts`: (1) утилиту `extractCoilBlocks()` для извлечения ` ```coil ` fenced-блоков из markdown; (2) хелперы `parseStringEN()` / `parseStringRU()` для парсинга из строки (существующие `parseFile*` выражены через них); (3) тесты для EN narrative examples и RU narrative example. Список файлов задаётся явно, а не через автообнаружение — не каждый `.md` обязан содержать parser-checkable COIL-C. |
+| **Альтернативы** | (A) Автообнаружение всех `.md` — невозможно определить диалект автоматически, и не каждый `.md` содержит полные исполняемые фрагменты. (B) Требовать `.coil` twin для каждого `.md` и проверять только twins — делегирует ответственность авторам контента, не закрывает gap для уже существующих narrative examples. |
+| **Последствия** | Scope: `src/suite.test.ts`. Если в Phase 5 (задача 1) примеры будут маркироваться fence-атрибутами (например `` ```coil {.experimental} ``), regex `extractCoilBlocks` потребует расширения. |
