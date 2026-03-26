@@ -1020,7 +1020,7 @@ EXIT
     expect(ast.nodes[1].kind).toBe('Op.Exit');
     expect(ast.nodes[2].kind).toBe('Comment');
 
-    const result = validate(ast);
+    const result = validate(ast, enTable);
     expect(result.diagnostics).toHaveLength(0);
   });
 
@@ -1077,7 +1077,7 @@ EXIT`;
 END
 ' only a comment at the end`;
     const ast = parseEN(src);
-    const result = validate(ast);
+    const result = validate(ast, enTable);
     const exitRequired = result.diagnostics.find(d => d.ruleId === 'exit-required');
     expect(exitRequired).toBeDefined();
   });

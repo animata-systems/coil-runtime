@@ -18,7 +18,7 @@ let enIndex: KeywordIndex;
 function validateEN(src: string) {
   const tokens = tokenize(src, enIndex);
   const ast = parse(tokens, enTable, src);
-  return validate(ast);
+  return validate(ast, enTable);
 }
 
 beforeAll(async () => {
