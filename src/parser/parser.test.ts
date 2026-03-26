@@ -8,7 +8,7 @@ import { parse, ParseError } from './parser.js';
 import type { DialectTable } from '../dialect/types.js';
 import type {
   ReceiveNode, SendNode, ExitNode, UnsupportedOperatorNode, CommentNode,
-  ActorsNode, ToolsNode, DefineNode, SetNode,
+  ActorsNode, ToolsNode, DefineNode, SetNode, ThinkNode,
 } from '../ast/nodes.js';
 import { validate } from '../validator/index.js';
 
@@ -308,6 +308,215 @@ describe('parseSet', () => {
     expect(ast.nodes[0].kind).toBe('Op.Set');
     const node = ast.nodes[0] as SetNode;
     expect(node.target.name).toBe('счётчик');
+  });
+});
+
+// ─── THINK ──────────────────────────────────────────────
+
+describe('parseThink', () => {
+  it('minimal THINK: GOAL + RESULT', () => {
+    const src = `THINK verdict
+  GOAL <<
+  Classify the request.
+  >>
+  RESULT
+  * category: CHOICE(bug, feature, question) - request type
+END`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.kind).toBe('Op.Think');
+    expect(node.name).toBe('verdict');
+    expect(node.goal).not.toBeNull();
+    expect(node.result).toHaveLength(1);
+    expect(node.result[0].name).toBe('category');
+    expect(node.result[0].typeId).toBe('Typ.Choice');
+    expect(node.result[0].typeArgs).toEqual(['bug', 'feature', 'question']);
+    expect(node.result[0].description).toBe('request type');
+    // Unused fields are null/empty
+    expect(node.via).toBeNull();
+    expect(node.as).toEqual([]);
+    expect(node.using).toEqual([]);
+    expect(node.input).toBeNull();
+    expect(node.context).toBeNull();
+    expect(node.body).toBeNull();
+  });
+
+  it('full THINK: VIA, AS, USING, GOAL, INPUT, CONTEXT, RESULT', () => {
+    const src = `DEFINE model
+"gpt-4"
+END
+
+DEFINE analyst_skill
+<<
+You are a senior data analyst.
+>>
+END
+
+TOOLS search
+
+THINK plan
+  VIA $model
+  AS $analyst_skill
+  USING !search
+  GOAL <<
+  Identify artifacts that need changes.
+  >>
+  INPUT <<
+  User request: $query
+  >>
+  CONTEXT <<
+  Previous history: $history
+  >>
+  RESULT
+  * summary: TEXT - brief overview
+  * artifacts: LIST - artifacts requiring changes
+    * path: TEXT - artifact path
+    * action: CHOICE(create, modify, delete) - change type
+    * reason: TEXT - why the change is needed
+END
+
+EXIT`;
+    const ast = parseEN(src);
+    // Find ThinkNode
+    const think = ast.nodes.find(n => n.kind === 'Op.Think') as ThinkNode;
+    expect(think.name).toBe('plan');
+    expect(think.via).not.toBeNull();
+    expect(think.via!.name).toBe('model');
+    expect(think.as).toHaveLength(1);
+    expect(think.as[0].name).toBe('analyst_skill');
+    expect(think.using).toHaveLength(1);
+    expect(think.using[0].name).toBe('search');
+    expect(think.goal).not.toBeNull();
+    expect(think.input).not.toBeNull();
+    expect(think.context).not.toBeNull();
+    // RESULT: 2 top-level + 3 nested
+    expect(think.result).toHaveLength(5);
+    expect(think.result[0]).toMatchObject({ name: 'summary', typeId: 'Typ.Text', depth: 0 });
+    expect(think.result[1]).toMatchObject({ name: 'artifacts', typeId: 'Typ.List', depth: 0 });
+    expect(think.result[2]).toMatchObject({ name: 'path', typeId: 'Typ.Text', depth: 1 });
+    expect(think.result[3]).toMatchObject({ name: 'action', typeId: 'Typ.Choice', depth: 1 });
+    expect(think.result[4]).toMatchObject({ name: 'reason', typeId: 'Typ.Text', depth: 1 });
+    expect(think.body).toBeNull();
+  });
+
+  it('THINK with anonymous body (no named formulation modifiers)', () => {
+    const src = `THINK answer
+  <<
+  Summarize the document: $doc
+  >>
+END`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.body).not.toBeNull();
+    expect(node.body!.type).toBe('template');
+    expect(node.goal).toBeNull();
+    expect(node.result).toEqual([]);
+  });
+
+  it('THINK USING !tools — multiple tools', () => {
+    const src = `TOOLS search, calculator
+
+THINK analysis
+  USING !search, !calculator
+  GOAL <<
+  Research and calculate.
+  >>
+  RESULT
+  * findings: TEXT - research findings
+  * metric: NUMBER - calculated metric
+END
+
+EXIT`;
+    const ast = parseEN(src);
+    const think = ast.nodes.find(n => n.kind === 'Op.Think') as ThinkNode;
+    expect(think.using).toHaveLength(2);
+    expect(think.using[0].name).toBe('search');
+    expect(think.using[1].name).toBe('calculator');
+  });
+
+  it('RESULT with TEXT type', () => {
+    const src = `THINK s\n  GOAL << x >>\n  RESULT\n  * summary: TEXT - doc summary\nEND`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.result[0].typeId).toBe('Typ.Text');
+  });
+
+  it('RESULT with NUMBER type', () => {
+    const src = `THINK s\n  GOAL << x >>\n  RESULT\n  * score: NUMBER - quality\nEND`;
+    const ast = parseEN(src);
+    expect((ast.nodes[0] as ThinkNode).result[0].typeId).toBe('Typ.Number');
+  });
+
+  it('RESULT with FLAG type', () => {
+    const src = `THINK s\n  GOAL << x >>\n  RESULT\n  * ok: FLAG - is valid\nEND`;
+    const ast = parseEN(src);
+    expect((ast.nodes[0] as ThinkNode).result[0].typeId).toBe('Typ.Flag');
+  });
+
+  it('RESULT with CHOICE — options parsed', () => {
+    const src = `THINK t\n  GOAL << x >>\n  RESULT\n  * sev: CHOICE(critical, high, low) - level\nEND`;
+    const ast = parseEN(src);
+    const f = (ast.nodes[0] as ThinkNode).result[0];
+    expect(f.typeId).toBe('Typ.Choice');
+    expect(f.typeArgs).toEqual(['critical', 'high', 'low']);
+  });
+
+  it('RESULT with LIST — nested fields have depth > 0', () => {
+    const src = `THINK plan
+  GOAL << plan >>
+  RESULT
+  * summary: TEXT - overview
+  * steps: LIST - steps
+    * desc: TEXT - step description
+    * effort: CHOICE(small, medium, large) - effort
+END`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.result).toHaveLength(4);
+    expect(node.result[0]).toMatchObject({ name: 'summary', depth: 0 });
+    expect(node.result[1]).toMatchObject({ name: 'steps', typeId: 'Typ.List', depth: 0 });
+    expect(node.result[2]).toMatchObject({ name: 'desc', depth: 1 });
+    expect(node.result[3]).toMatchObject({ name: 'effort', depth: 1 });
+  });
+
+  it('THINK with RESULT + anonymous body (D-0032)', () => {
+    const src = `THINK verdict
+  RESULT
+  * category: CHOICE(bug, feature, question) - type
+  <<
+  Classify this request: $request
+  >>
+END`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.result).toHaveLength(1);
+    expect(node.result[0].typeId).toBe('Typ.Choice');
+    expect(node.body).not.toBeNull();
+    expect(node.body!.type).toBe('template');
+  });
+
+  it('error: GOAL (formulation) before AS (rigging)', () => {
+    const src = `DEFINE role\n<< analyst >>\nEND\nTHINK plan\n  GOAL <<\n  Find problem.\n  >>\n  AS $role\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/rigging.*after formulation/);
+  });
+
+  it('error: modifier after RESULT', () => {
+    const src = `THINK analysis\n  RESULT\n  * summary: TEXT\n  CONTEXT <<\n  Additional data.\n  >>\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/after RESULT/);
+  });
+
+  it('error: duplicate modifier', () => {
+    const src = `THINK x\n  GOAL << a >>\n  GOAL << b >>\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/duplicate/);
+  });
+
+  it('error: duplicate anonymous body', () => {
+    const src = `THINK x\n  << first >>\n  << second >>\nEND`;
+    expect(() => parseEN(src)).toThrow(ParseError);
+    expect(() => parseEN(src)).toThrow(/duplicate.*body/);
   });
 });
 
