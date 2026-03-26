@@ -17,21 +17,23 @@ Parser, AST, semantic validator, execution engine, and SDK interfaces for embedd
 
 ## Status
 
-| Component | Status |
+| Layer | Status |
 |---|---|
-| Parser + AST | RECEIVE, SEND (all modifiers), EXIT; unsupported operators → UnsupportedOperatorNode |
-| Semantic validator | exit-required, unreachable-after-exit, unsupported-operator |
-| Executor | RECEIVE → stdin, SEND (no modifiers) → stdout, EXIT → return |
-| SDK interfaces | Planned (`Environment` interface exists) |
+| Parser + AST | Full coverage of stable surface syntax (Core + Extended), all dialects |
+| Semantic validator | 3 rules: `exit-required`, `unreachable-after-exit`, `unsupported-operator` |
+| Executor | Limited: RECEIVE → stdin, SEND (no modifiers) → stdout, EXIT → return |
+| SDK interfaces | `Environment` interface exists; provider interfaces planned |
 | Reference implementations | Planned |
-| CLI | `coil run` with `--dialect` flag |
+| CLI | `coil parse` and `coil run` with `--dialect` flag |
+| Conformance suite | 224 tests passing (parser-level) |
+
+The parser covers all operators in the [frozen surface](https://github.com/animata-systems/coil/blob/main/spec/02-core.md): ACTORS, TOOLS, DEFINE, SET, RECEIVE, THINK, EXECUTE, SEND, WAIT, EXIT, IF, REPEAT, EACH, SIGNAL. The conformance suite confirms parser-level contract against the spec test corpus, but does not yet cover full runtime semantics.
 
 ## CLI
 
 ```bash
-coil run script.coil --dialect path/to/dialect.json   # execute (implemented)
-coil parse script.coil     # parse → AST or syntax errors (planned)
-coil check script.coil     # semantic validation (planned)
+coil parse script.coil --dialect path/to/dialect.json  # parse → AST or syntax errors
+coil run script.coil --dialect path/to/dialect.json     # execute (limited subset)
 ```
 
 ## SDK interfaces
@@ -48,7 +50,7 @@ To embed COIL in your host environment, implement these interfaces:
 
 ## Conformance tests
 
-The [COIL spec repository](https://github.com/animata-systems/coil) contains a conformance test suite in `tests/`. The test suite runs `tests/valid/` and `tests/invalid/` files through the parser (122 tests total).
+The [COIL spec repository](https://github.com/animata-systems/coil) contains a conformance test suite in `tests/`. The test suite runs `tests/valid/` and `tests/invalid/` files through the parser.
 
 ```bash
 npm test
