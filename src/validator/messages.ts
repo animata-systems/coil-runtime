@@ -55,6 +55,30 @@ const templates: Record<string, Record<Lang, MessageFn>> = {
     en: (p) => `$${p.name} used before WAIT ON ?${p.name} — value may not be available`,
     ru: (p) => `$${p.name} использован до ${lookupDialectWord('Op.Wait', p.dialect)} ${lookupDialectWord('Mod.On', p.dialect)} ?${p.name} — значение может быть недоступно`,
   },
+  'result-choice-min-options': {
+    en: (p) => `CHOICE field "${p.name}" must have at least 2 options`,
+    ru: (p) => `поле ВЫБОР "${p.name}" должно иметь минимум 2 варианта`,
+  },
+  'result-nested-list': {
+    en: (p) => `LIST field "${p.name}" cannot be nested inside another LIST`,
+    ru: (p) => `поле СПИСОК "${p.name}" не может быть вложено в другой СПИСОК`,
+  },
+  'result-list-no-children': {
+    en: (p) => `LIST field "${p.name}" has no item fields`,
+    ru: (p) => `поле СПИСОК "${p.name}" не содержит полей элемента`,
+  },
+  'result-duplicate-field': {
+    en: (p) => `duplicate field name "${p.name}" at the same level`,
+    ru: (p) => `дублирующееся имя поля "${p.name}" на одном уровне`,
+  },
+  'result-leaf-with-children': {
+    en: (p) => `field "${p.name}" cannot have nested fields`,
+    ru: (p) => `поле "${p.name}" не может иметь вложенных полей`,
+  },
+  'result-orphan-depth': {
+    en: (p) => `field "${p.name}" has no parent field at the expected depth`,
+    ru: (p) => `поле "${p.name}" не имеет родительского поля на ожидаемом уровне`,
+  },
 };
 
 /** Format a diagnostic message using dialect-aware templates (D-007-4). */

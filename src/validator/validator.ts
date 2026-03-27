@@ -13,6 +13,7 @@ import { duplicateDefine } from './rules/duplicate-define.js';
 import { setWithoutDefine } from './rules/set-without-define.js';
 import { undefinedPromise } from './rules/undefined-promise.js';
 import { useBeforeWait } from './rules/use-before-wait.js';
+import { resultSchemaRule } from '../result/rules.js';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -64,6 +65,7 @@ function createDefaultRegistry(): RuleRegistry {
   registry.register(setWithoutDefine);
   registry.register(undefinedPromise);
   registry.register(useBeforeWait);
+  registry.register(resultSchemaRule);
   return registry;
 }
 

@@ -18,3 +18,4 @@ export { lookupDialectWord, extractLanguage } from './dialect/lookup.js';
 export * from './lexer/index.js';
 export * from './parser/index.js';
 export * from './validator/index.js';
+export * from './result/index.js';
