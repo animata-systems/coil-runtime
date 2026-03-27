@@ -297,3 +297,55 @@
 | **Решение** | Добавить в `suite.test.ts`: (1) утилиту `extractCoilBlocks()` для извлечения ` ```coil ` fenced-блоков из markdown; (2) хелперы `parseStringEN()` / `parseStringRU()` для парсинга из строки (существующие `parseFile*` выражены через них); (3) тесты для EN narrative examples и RU narrative example. Список файлов задаётся явно, а не через автообнаружение — не каждый `.md` обязан содержать parser-checkable COIL-C. |
 | **Альтернативы** | (A) Автообнаружение всех `.md` — невозможно определить диалект автоматически, и не каждый `.md` содержит полные исполняемые фрагменты. (B) Требовать `.coil` twin для каждого `.md` и проверять только twins — делегирует ответственность авторам контента, не закрывает gap для уже существующих narrative examples. |
 | **Последствия** | Scope: `src/suite.test.ts`. Если в Phase 5 (задача 1) примеры будут маркироваться fence-атрибутами (например `` ```coil {.experimental} ``), regex `extractCoilBlocks` потребует расширения. |
+
+## R-0026 — ResultSchema: типовая модель и tolerant-компиляция
+
+| | |
+|---|---|
+| **Статус** | принят |
+| **Дата** | 2026-03-27 |
+| **Scope** | `src/result/schema.ts`, `src/result/compile.ts`, `src/result/index.ts` |
+
+**Контекст.** Парсер (STORY-006) возвращает `ResultField[]` — плоский массив с `depth`. Для валидации, компиляции в JSON Schema и отображения в COIL-H нужна древовидная типовая модель. STORY-009 определяет scope: 5 типов (`text`, `number`, `flag`, `choice`, `list`), дерево по `depth`, набор структурных ограничений.
+
+**Решение.** Новая директория `src/result/`. Типы:
+
+- `ResultSchema` — discriminated union по `kind`: `text`, `number`, `flag`, `choice` (с `options: string[]`), `list` (с `itemFields: ResultSchemaField[]`).
+- `ResultSchemaField` — `{ name, description, schema: ResultSchema, span }`.
+- `compileResult(fields: ResultField[]): CompileResultOutput` — строит дерево за один линейный проход со стеком родителей по `depth`.
+- `CompileResultOutput = { fields: ResultSchemaField[], diagnostics: ValidationDiagnostic[] }` — tolerant compilation: при ошибках (вложение в скаляр, orphan depth) ошибка записывается в diagnostics, а не бросается исключение. Partial structure сохраняется для IDE.
+
+**Почему.** Tolerant-компиляция позволяет собрать все ошибки за один проход и не терять partial structure. Это критично для Playground (progressive authoring) и для `coil check` (все ошибки сразу, а не первая найденная). Правило `result-leaf-with-children` естественно генерируется внутри `compileResult`, потому что именно там видна попытка вложить поле в скаляр.
+
+**Цена.** Вызывающий код должен проверять `diagnostics`, а не полагаться на исключение. Типовая модель может содержать неполное дерево (например, orphan-поля отброшены). Потребители должны быть устойчивы к этому.
+
+## R-0027 — Правила валидации РЕЗУЛЬТАТ: один ValidationRule-обёртка
+
+| | |
+|---|---|
+| **Статус** | принят |
+| **Дата** | 2026-03-27 |
+| **Scope** | `src/result/rules.ts`, `src/validator/validator.ts` |
+
+**Контекст.** STORY-009 определяет 5 правил валидации РЕЗУЛЬТАТ. Текущий `ValidationRule` interface принимает `(ast, scope, dialect)`. Правила РЕЗУЛЬТАТ работают поверх `ResultSchemaField[]` (типовой модели), а не поверх AST напрямую. Нужен способ подключить их к реестру валидатора без дублирования компиляции.
+
+**Решение.** Один `ValidationRule`-обёртка `resultSchemaRule` в `src/result/rules.ts`:
+
+1. Проходит по ThinkNode через `walkOperators`.
+2. Для каждого `think.result` (непустого) вызывает `compileResult` — один раз на ThinkNode.
+3. Прогоняет проверочные функции по `ResultSchemaField[]`.
+4. Каждая проверочная функция возвращает `ValidationDiagnostic[]` со своим `ruleId`.
+5. Диагностики из `compileResult` (включая `result-leaf-with-children`) добавляются к результату.
+
+Правила:
+- `result-choice-min-options` (error): `kind === 'choice'` и `options.length < 2`.
+- `result-nested-list` (error): `kind === 'list'` внутри `kind === 'list'`.
+- `result-leaf-with-children` (error): генерируется в `compileResult` при попытке вложения в скаляр.
+- `result-list-no-children` (warning): `kind === 'list'` и `itemFields.length === 0`.
+- `result-duplicate-field` (error): два поля с одинаковым `name` на одном уровне.
+
+`resultSchemaRule` регистрируется в `createDefaultRegistry()` в `validator.ts`.
+
+**Почему.** Вариант «один обёртка» избегает дублирования компиляции (5 правил × каждый ThinkNode) и сохраняет чистое разделение: `src/result/` знает о типовой модели, `src/validator/` — о AST traversal. Каждая проверка возвращает свой `ruleId`, поэтому гранулярность диагностик не теряется.
+
+**Цена.** `resultSchemaRule` имеет составной `ruleId` (формальный ID обёртки), а реальные диагностики несут свои индивидуальные `ruleId`. Это не проблема: `RuleRegistry.runAll` собирает плоский массив диагностик, `ruleId` обёртки нигде не фигурирует в выводе.
