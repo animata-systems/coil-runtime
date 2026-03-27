@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/animata-systems/coil-runtime)
+
 # coil-runtime
 
 Reference implementation of the COIL language runtime.
