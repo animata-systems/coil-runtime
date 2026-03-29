@@ -16,10 +16,12 @@ export function lookupDialectWord(id: AbstractId, dialect: DialectTable): string
 
 /**
  * Extract human language from dialect name.
- * Format: `{lang}-{name}` — e.g. "ru-matrix" → "ru", "en-standard" → "en".
+ * Format: `{lang}-{variant}` — last segment is variant, everything before is language.
+ * Examples: "en-standard" → "en", "ru-standard" → "ru", "pt-br-standard" → "pt-br".
  * Unsupported languages fall back to "en".
  */
 export function extractLanguage(dialectName: string): 'en' | 'ru' {
-  const lang = dialectName.split('-')[0];
+  const parts = dialectName.split('-');
+  const lang = parts.slice(0, -1).join('-');
   return lang === 'ru' ? 'ru' : 'en';
 }

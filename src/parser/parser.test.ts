@@ -15,9 +15,9 @@ import type {
 import { validate } from '../validator/index.js';
 
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 let enTable: DialectTable;
 let ruTable: DialectTable;
@@ -195,8 +195,8 @@ EXIT`;
     expect(node.names).toEqual(['analyst', 'reviewer']);
   });
 
-  it('RU: ЭКИПАЖ inline', () => {
-    const ast = parseRU('ЭКИПАЖ аналитик, рецензент\nОТКЛЮЧИСЬ');
+  it('RU: УЧАСТНИКИ inline', () => {
+    const ast = parseRU('УЧАСТНИКИ аналитик, рецензент\nВЫХОД');
     expect(ast.nodes[0].kind).toBe('Op.Actors');
     const node = ast.nodes[0] as ActorsNode;
     expect(node.names).toEqual(['аналитик', 'рецензент']);
@@ -223,12 +223,12 @@ EXIT`;
     expect(node.names).toEqual(['search', 'calc']);
   });
 
-  it('RU: АРСЕНАЛ block', () => {
-    const src = `АРСЕНАЛ
+  it('RU: ИНСТРУМЕНТЫ block', () => {
+    const src = `ИНСТРУМЕНТЫ
   загрузить_статью
   открыть_чат
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+КОНЕЦ
+ВЫХОД`;
     const ast = parseRU(src);
     expect(ast.nodes[0].kind).toBe('Op.Tools');
     const node = ast.nodes[0] as ToolsNode;
@@ -277,8 +277,8 @@ EXIT`;
     expect((node.body as any).name).toBe('general_role');
   });
 
-  it('RU: ЗАГРУЗИ с числом', () => {
-    const ast = parseRU('ЗАГРУЗИ попытки\n3\nПРОСНИСЬ\nОТКЛЮЧИСЬ');
+  it('RU: ОПРЕДЕЛИ с числом', () => {
+    const ast = parseRU('ОПРЕДЕЛИ попытки\n3\nКОНЕЦ\nВЫХОД');
     expect(ast.nodes[0].kind).toBe('Op.Define');
     const node = ast.nodes[0] as DefineNode;
     expect(node.name).toBe('попытки');
@@ -305,8 +305,8 @@ describe('parseSet', () => {
     expect((node.body as any).path).toEqual(['text']);
   });
 
-  it('RU: ПЕРЕПИШИ', () => {
-    const ast = parseRU('ПЕРЕПИШИ $счётчик\n0\nПРОСНИСЬ\nОТКЛЮЧИСЬ');
+  it('RU: УСТАНОВИ', () => {
+    const ast = parseRU('УСТАНОВИ $счётчик\n0\nКОНЕЦ\nВЫХОД');
     expect(ast.nodes[0].kind).toBe('Op.Set');
     const node = ast.nodes[0] as SetNode;
     expect(node.target.name).toBe('счётчик');
@@ -553,15 +553,15 @@ EXIT`;
     expect(() => parseEN(src)).toThrow(/template.*not allowed.*EXECUTE/);
   });
 
-  it('RU: ВЗЛОМАЙ с аргументами', () => {
-    const src = `АРСЕНАЛ поиск
+  it('RU: ВЫПОЛНИ с аргументами', () => {
+    const src = `ИНСТРУМЕНТЫ поиск
 
-ВЗЛОМАЙ результат
-  ВООРУЖИВШИСЬ !поиск
+ВЫПОЛНИ результат
+  ИСПОЛЬЗУЯ !поиск
   - запрос: $запрос
-ПРОСНИСЬ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ`;
+ВЫХОД`;
     const ast = parseRU(src);
     const exec = ast.nodes.find(n => n.kind === 'Op.Execute') as ExecuteNode;
     expect(exec.name).toBe('результат');
@@ -620,8 +620,8 @@ WAIT\n  ON ?a, ?b\n  MODE ANY\nEND\nEXIT`;
     expect(() => parseEN(src)).toThrow(/PromiseRef/);
   });
 
-  it('RU: ЗАМРИ с ПОКА НЕ СБУДЕТСЯ', () => {
-    const src = `ПРОЗРЕЙ план\n  БЕЛЫЙ КРОЛИК << x >>\n  ПРОРОЧЕСТВО\n  * s: КОД\nПРОСНИСЬ\nЗАМРИ\n  ПОКА НЕ СБУДЕТСЯ ?план\nПРОСНИСЬ\nОТКЛЮЧИСЬ`;
+  it('RU: ЖДИ с НА', () => {
+    const src = `ДУМАЙ план\n  ЦЕЛЬ << x >>\n  РЕЗУЛЬТАТ\n  * s: ТЕКСТ\nКОНЕЦ\nЖДИ\n  НА ?план\nКОНЕЦ\nВЫХОД`;
     const ast = parseRU(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
     expect(wait.on).toHaveLength(1);
@@ -642,8 +642,8 @@ describe('parseSignal', () => {
     expect(sig.body.parts.some(p => p.type === 'ref')).toBe(true);
   });
 
-  it('RU: ГЛИТЧ', () => {
-    const src = `ГЛИТЧ ~решение\n  <<\n  Новые данные: $данные\n  >>\nПРОСНИСЬ\nОТКЛЮЧИСЬ`;
+  it('RU: СИГНАЛ', () => {
+    const src = `СИГНАЛ ~решение\n  <<\n  Новые данные: $данные\n  >>\nКОНЕЦ\nВЫХОД`;
     const ast = parseRU(src);
     const sig = ast.nodes[0] as SignalNode;
     expect(sig.kind).toBe('Op.Signal');
@@ -684,13 +684,13 @@ EXIT`;
     expect(node.body).toHaveLength(1);
   });
 
-  it('RU: А ВДРУГ', () => {
-    const src = `А ВДРУГ $x >= 5
-  ПЕРЕПИШИ $y
+  it('RU: ЕСЛИ', () => {
+    const src = `ЕСЛИ $x >= 5
+  УСТАНОВИ $y
   1
-  ПРОСНИСЬ
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+  КОНЕЦ
+КОНЕЦ
+ВЫХОД`;
     const ast = parseRU(src);
     const node = ast.nodes[0] as IfNode;
     expect(node.kind).toBe('Op.If');
@@ -777,15 +777,15 @@ EXIT`;
     expect(() => parseEN(src)).toThrow(/limit|NO MORE THAN/);
   });
 
-  it('RU: ЦИКЛ count-only', () => {
-    const src = `ЦИКЛ 3
-  ПРОЗРЕЙ попытка
-    БЕЛЫЙ КРОЛИК << x >>
-    ПРОРОЧЕСТВО
-    * s: КОД
-  ПРОСНИСЬ
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+  it('RU: ПОВТОРЯЙ count-only', () => {
+    const src = `ПОВТОРЯЙ 3
+  ДУМАЙ попытка
+    ЦЕЛЬ << x >>
+    РЕЗУЛЬТАТ
+    * s: ТЕКСТ
+  КОНЕЦ
+КОНЕЦ
+ВЫХОД`;
     const ast = parseRU(src);
     const node = ast.nodes[0] as RepeatNode;
     expect(node.kind).toBe('Op.Repeat');
@@ -818,15 +818,15 @@ EXIT`;
     expect(node.body.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('RU: КЛОНИРУЙ $элемент ИЗ $список', () => {
-    const src = `КЛОНИРУЙ $задача ИЗ $план
-  ПРОЗРЕЙ работа
-    БЕЛЫЙ КРОЛИК << x >>
-    ПРОРОЧЕСТВО
-    * r: КОД
-  ПРОСНИСЬ
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+  it('RU: КАЖДЫЙ $элемент ИЗ $список', () => {
+    const src = `КАЖДЫЙ $задача ИЗ $план
+  ДУМАЙ работа
+    ЦЕЛЬ << x >>
+    РЕЗУЛЬТАТ
+    * r: ТЕКСТ
+  КОНЕЦ
+КОНЕЦ
+ВЫХОД`;
     const ast = parseRU(src);
     const node = ast.nodes[0] as EachNode;
     expect(node.kind).toBe('Op.Each');
@@ -961,26 +961,26 @@ EXIT`;
     expect(refs[0].name).toBe('name');
   });
 
-  it('RU-диалект: ПРИМИ запрос << ... >> ПРОСНИСЬ → тот же AST', () => {
-    const src = `ПРИМИ запрос
+  it('RU-диалект: ПОЛУЧИ запрос << ... >> КОНЕЦ → тот же AST', () => {
+    const src = `ПОЛУЧИ запрос
 <<
 Как тебя зовут?
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ПЕРЕДАЙ
+НАПИШИ
 <<
 Привет, $запрос!
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ`;
+ВЫХОД`;
     const ast = parseRU(src);
     expect(ast.nodes).toHaveLength(3);
     expect(ast.nodes[0].kind).toBe('Op.Receive');
     expect(ast.nodes[1].kind).toBe('Op.Send');
     expect(ast.nodes[2].kind).toBe('Op.Exit');
-    expect(ast.dialect).toBe('ru-matrix');
+    expect(ast.dialect).toBe('ru-standard');
 
     // Dialect-neutral AST: same structure as EN
     const receive = ast.nodes[0] as ReceiveNode;

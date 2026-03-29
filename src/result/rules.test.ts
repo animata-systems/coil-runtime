@@ -10,9 +10,9 @@ import type { DialectTable } from '../dialect/types.js';
 import type { ValidationDiagnostic } from '../validator/validator.js';
 
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 let enTable: DialectTable;
 let enIndex: KeywordIndex;
@@ -334,20 +334,20 @@ EXIT
 describe('result rules with RU dialect', () => {
   it('detects result-nested-list in Russian', () => {
     const src = `
-ПРОЗРЕЙ план
-  БЕЛЫЙ КРОЛИК <<
+ДУМАЙ план
+  ЦЕЛЬ <<
   Спланировать.
   >>
-  ПРОРОЧЕСТВО
-  * шаги: ПОТОК - шаги
-    * вложенный: ПОТОК - вложенный (нельзя)
-ПРОСНИСЬ
+  РЕЗУЛЬТАТ
+  * шаги: СПИСОК - шаги
+    * вложенный: СПИСОК - вложенный (нельзя)
+КОНЕЦ
 
-ЗАМРИ
-  ПОКА НЕ СБУДЕТСЯ ?план
-ПРОСНИСЬ
+ЖДИ
+  НА ?план
+КОНЕЦ
 
-ОТКЛЮЧИСЬ
+ВЫХОД
 `;
     const { diagnostics } = validateRU(src);
     const found = findByRule(diagnostics, 'result-nested-list');
@@ -356,19 +356,19 @@ describe('result rules with RU dialect', () => {
 
   it('detects result-choice-min-options in Russian', () => {
     const src = `
-ПРОЗРЕЙ анализ
-  БЕЛЫЙ КРОЛИК <<
+ДУМАЙ анализ
+  ЦЕЛЬ <<
   Анализировать.
   >>
-  ПРОРОЧЕСТВО
-  * тип: ТАБЛЕТКА(один) - один вариант
-ПРОСНИСЬ
+  РЕЗУЛЬТАТ
+  * тип: ВЫБОР(один) - один вариант
+КОНЕЦ
 
-ЗАМРИ
-  ПОКА НЕ СБУДЕТСЯ ?анализ
-ПРОСНИСЬ
+ЖДИ
+  НА ?анализ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ
+ВЫХОД
 `;
     const { diagnostics } = validateRU(src);
     const found = findByRule(diagnostics, 'result-choice-min-options');

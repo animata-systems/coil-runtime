@@ -54,7 +54,7 @@ export class KeywordIndex {
       for (const [id, phrase] of Object.entries(section)) {
         const existing = map.get(phrase);
         if (existing) {
-          // Same phrase maps to multiple abstract IDs (R-0010, SPEC.md § 5)
+          // Same phrase maps to multiple abstract IDs (R-0010, README.md § 5)
           existing.ids.push(id as AbstractId);
         } else {
           map.set(phrase, { ids: [id as AbstractId], category });

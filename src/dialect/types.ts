@@ -1,5 +1,5 @@
 /**
- * Abstract identifiers from SPEC.md § 4.
+ * Abstract identifiers from README.md § 4.
  * Every dialect must map all of these.
  */
 

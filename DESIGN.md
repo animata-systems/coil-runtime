@@ -1,351 +1,373 @@
-# Решения реализации
+# Implementation Decisions
 
-Журнал принятых проектных решений по реализации COIL (coil-runtime):
+Log of accepted design decisions for the COIL implementation (coil-runtime):
 
-- структура кода, 
-- архитектура парсера, 
-- поведение CLI, 
-- формат AST.
+- code structure,
+- parser architecture,
+- CLI behavior,
+- AST format.
 
-## Как ведётся этот журнал
+## How this log is maintained
 
-Каждое решение получает сквозной номер `R-NNNN`.
+Each decision receives a sequential number `R-NNNN`.
 
-| Статус | Значение |
+| Status | Meaning |
 |---|---|
-| `принят` | Решение зафиксировано, реализация следует ему. |
-| `принят как направление` | Выбор сделан, детали уточняются по ходу реализации. |
-| `заменён R-NNNN` | Решение заменено указанным. |
+| `accepted` | Decision is recorded, implementation follows it. |
+| `accepted as direction` | Choice is made, details are refined during implementation. |
+| `superseded by R-NNNN` | Decision is replaced by the specified one. |
 
-Процесс:
-1. Принять решение → присвоить следующий `R-NNNN`, записать мотивацию, статус `принят`.
-2. Заменить решение → старому присвоить `заменён R-NNNN`, новому — свой `R-NNNN`.
+Process:
+1. Accept a decision — assign the next `R-NNNN`, record the rationale, status `accepted`.
+2. Replace a decision — assign `superseded by R-NNNN` to the old one, assign a new `R-NNNN` to the new one.
 
 ---
 
-## R-0001 — Структура проекта: монопакет с разделением по директориям
+## R-0001 — Project structure: monopackage with directory-based separation
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Первоначально история STORY-001 указывала `cli/` как корень исходников. Но лексер, парсер, валидатор, AST — это библиотека, а CLI — тонкий слой поверх неё. Будущие потребители (coil-ide, coil-sandbox) будут импортировать библиотеку, не CLI. |
-| **Решение** | Монопакет. Библиотека в `src/` с поддиректориями по подсистемам (`lexer/`, `parser/`, `validator/`, `executor/`, `ast/`, `dialect/`, `sdk/`). CLI — отдельная директория `cli/`, тонкий слой, `bin` entry point в `package.json`. |
-| **Альтернативы** | (A) Всё в `cli/` — семантически неверно, ложная связанность. (B) Monorepo с workspace-пакетами — преждевременный overhead. (C) Плоская структура без поддиректорий — не масштабируется, когда файлов > 10. |
-| **Последствия** | STORY-001 обновляется: «директория `cli/`» заменяется на описание реальной структуры. Библиотека экспортируется через `main`/`exports` в `package.json`. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | Initially the requirements specified `cli/` as the source root. But the lexer, parser, validator, AST form a library, while the CLI is a thin layer on top of it. Future consumers (coil-ide, coil-sandbox) will import the library, not the CLI. |
+| **Decision** | Monopackage. Library in `src/` with subdirectories per subsystem (`lexer/`, `parser/`, `validator/`, `executor/`, `ast/`, `dialect/`, `sdk/`). CLI is a separate directory `cli/`, a thin layer, `bin` entry point in `package.json`. |
+| **Alternatives** | (A) Everything in `cli/` — semantically incorrect, false coupling. (B) Monorepo with workspace packages — premature overhead. (C) Flat structure without subdirectories — doesn't scale when files > 10. |
+| **Consequences** | The initial requirements are updated: "directory `cli/`" is replaced with a description of the actual structure. The library is exported via `main`/`exports` in `package.json`. |
 
-## R-0002 — Диалект задаётся путём к файлу таблицы
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Спецификация (01-lexical.md) требует, чтобы диалект был однозначно определён до начала лексического анализа, но оставляет механизм на усмотрение реализации. D-0029 требует: ни один диалект не привилегирован, маппинги загружаются из внешних таблиц. |
-| **Решение** | CLI принимает флаг `--dialect <path>`, значение — путь к файлу диалектной таблицы. Никакого встроенного реестра диалектов. Если флаг не указан — ошибка `dialect not specified`. Автодетект — отдельное решение на будущее. |
-| **Альтернативы** | (A) Флаг с именем диалекта (`--dialect en-standard`) + встроенный реестр — нарушает принцип D-0029, зашивает знание о конкретных диалектах. (B) Автодетект по первому ключевому слову — сложно, ненадёжно, можно добавить позже. |
-| **Последствия** | Пользователь обязан указать диалект явно. Формат файла таблицы определяется отдельно (JSON как стартовый выбор). Любой может создать свой диалект, не трогая код. |
-
-## R-0003 — Лексер: фразы как единицы, longest match
+## R-0002 — Dialect is specified by the path to a table file
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Спецификация (01-lexical.md § 1.0) явно требует: лексер не может быть ограничен пословным распознаванием. Ключевые фразы из нескольких слов (`REPLY TO`, `NO MORE THAN`, `НЕ БОЛЕЕ`, `БЕЛЫЙ КРОЛИК`) — полноценные единицы. |
-| **Решение** | Лексер инициализируется диалектной таблицей и строит обратный индекс «фраза → абстрактный ID». При встрече потенциального начала ключевой фразы — longest match по таблице. Пример: видит `NO` → проверяет `NO MORE THAN` → если совпало, выдаёт один токен `Mod.Timeout` (или `Mod.Limit` — контекст разрешает парсер). Если не совпало — это идентификатор. |
-| **Альтернативы** | (A) Пословное распознавание + склейка в парсере — нарушает требование спеки, усложняет парсер, ломает диагностику. |
-| **Последствия** | Лексер сложнее, чем пословный. Но это разовая работа, и архитектура правильная с первого дня. Lookahead ограничен длиной самой длинной фразы в таблице. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The specification (01-lexical.md) requires the dialect to be unambiguously determined before lexical analysis begins, but leaves the mechanism to the implementation. D-0029 requires: no dialect is privileged, mappings are loaded from external tables. |
+| **Decision** | CLI accepts a flag `--dialect <path>`, the value is a path to a dialect table file. No built-in dialect registry. If the flag is not specified — error `dialect not specified`. Auto-detection is a separate future decision. |
+| **Alternatives** | (A) Flag with dialect name (`--dialect en-standard`) + built-in registry — violates the D-0029 principle, hardcodes knowledge of specific dialects. (B) Auto-detect by first keyword — complex, unreliable, can be added later. |
+| **Consequences** | The user must specify the dialect explicitly. The table file format is determined separately (JSON as the initial choice). Anyone can create their own dialect without touching the code. |
 
-## R-0004 — Шаблоны: лексер разбивает на [TextFragment, ValueRef, ...]
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Шаблоны `<< >>` содержат свободный текст с `$`-подстановками. Нужно решить, кто отвечает за разбор подстановок: лексер или executor. |
-| **Решение** | Лексер при встрече `<<` переключается в template mode и разбивает содержимое на типизированные части: `TextFragment` (сырой текст) и `ValueRef` (`$name`, `$name.field`). Парсер строит `TemplateNode` из этих частей. |
-| **Альтернативы** | (A) Один сырой токен `TemplateContent` — подстановки разрешает executor. Проще лексер, но валидатор не может проверить `$`-ссылки до запуска, нарушается принцип «ошибки подготовки vs ошибки исполнения». |
-| **Последствия** | Валидатор может проверить, что `$name` объявлен, до запуска. Executor при подстановке просто склеивает фрагменты. Лексер чуть сложнее, но разбор `$`-ссылок внутри шаблона тривиален. |
-
-## R-0005 — AST: типизированные узлы на оператор
+## R-0003 — Lexer: phrases as units, longest match
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Два подхода к AST: generic `OperatorNode` с `modifiers: Map<string, any>` или типизированный узел на каждый оператор. |
-| **Решение** | Каждый оператор — свой узел: `ReceiveNode`, `SendNode`, `ExitNode`, и т.д. Поля типизированы: `SendNode.await` — `'none' | 'any' | 'all' | null`, не произвольная строка. Невалидные состояния невыразимы на уровне типов. |
-| **Альтернативы** | (A) Generic `OperatorNode` с dictionary модификаторов — гибче, но переносит проверки из типов в рантайм. Удобно для метапрограммирования, но COIL — фиксированный набор операторов, не расширяемый пользователем. |
-| **Последствия** | Больше кода на определение узлов (каждый новый оператор — новый тип). Взамен — type safety, автодополнение в IDE, самодокументированность. При добавлении THINK, EXECUTE, WAIT — аналогичные узлы. Общий `OperatorNode` — базовый интерфейс с `kind` и `span`. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The specification (01-lexical.md § 1.0) explicitly requires: the lexer cannot be limited to word-by-word recognition. Multi-word keyword phrases (`REPLY TO`, `NO MORE THAN`, `НЕ БОЛЕЕ`, `БЕЛЫЙ КРОЛИК`) are full units. |
+| **Decision** | The lexer is initialized with the dialect table and builds a reverse index "phrase -> abstract ID". When encountering a potential start of a keyword phrase — longest match against the table. Example: sees `NO` -> checks `NO MORE THAN` -> if matched, emits one token `Mod.Timeout` (or `Mod.Limit` — context is resolved by the parser). If not matched — it's an identifier. |
+| **Alternatives** | (A) Word-by-word recognition + merging in the parser — violates the spec requirement, complicates the parser, breaks diagnostics. |
+| **Consequences** | The lexer is more complex than a word-by-word one. But this is a one-time effort, and the architecture is correct from day one. Lookahead is bounded by the length of the longest phrase in the table. |
 
-## R-0006 — CLI: SEND без адреса → stdout
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Спецификация определяет SEND как отправку сообщения в канал. Критерий готовности STORY-001 — SEND без `TO`, без `FOR`, просто тело `<< Hello, $name! >>`. Нужна семантика для CLI. |
-| **Решение** | В CLI-среде исполнения SEND без `TO` и без `FOR` выводит тело в stdout. Концептуально: CLI-среда предоставляет дефолтный канал, и SEND без адреса направляется туда. SEND с модификаторами (`TO`, `FOR`, `AWAIT`, `REPLY TO`, `TIMEOUT`) — executor выбрасывает ошибку `not implemented`. |
-| **Альтернативы** | (A) SEND без адреса — всегда ошибка. Формально корректно, но делает vertical slice бесполезным для демо. (B) Ввести специальный оператор PRINT — нарушает спеку, COIL не имеет такого оператора. |
-| **Последствия** | Поведение специфично для CLI-среды. Другие среды исполнения (coil-sandbox, production) определят своё поведение для SEND без адреса. |
-
-## R-0007 — Валидация EOF без EXIT — отдельный проход
+## R-0004 — Templates: the lexer splits into [TextFragment, ValueRef, ...]
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | STORY-001 требует: EOF без EXIT — ошибка валидации. Вопрос: это проверяет парсер или отдельный валидатор? |
-| **Решение** | Парсер строит AST как есть. Отдельный проход `validate(ast)` проверяет семантические инварианты, включая «скрипт должен заканчиваться EXIT». Для vertical slice — одно правило. Архитектурно — точка расширения для десятков правил. |
-| **Альтернативы** | (A) Парсер проверяет — смешивает синтаксис и семантику. В будущем правила типа «необъявленный участник», «WAIT на не-обещание» не поместятся в парсер без превращения его во второй валидатор. |
-| **Последствия** | Пайплайн: `file → dialect → lexer → parser → validator → executor`. Валидатор — отдельный модуль с чистым интерфейсом: `validate(ast): ValidationError[]`. Парсер отвечает за синтаксис, валидатор — за семантику. Ошибки обоих уровней содержат `SourceSpan` для диагностики. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | Templates `<< >>` contain free text with `$`-substitutions. A decision is needed on who handles substitution parsing: the lexer or the executor. |
+| **Decision** | When encountering `<<`, the lexer switches to template mode and splits the content into typed parts: `TextFragment` (raw text) and `ValueRef` (`$name`, `$name.field`). The parser builds a `TemplateNode` from these parts. |
+| **Alternatives** | (A) One raw token `TemplateContent` — substitutions are resolved by the executor. Simpler lexer, but the validator cannot check `$`-references before execution, violating the principle "preparation errors vs execution errors". |
+| **Consequences** | The validator can check that `$name` is declared before execution. The executor simply concatenates fragments during substitution. The lexer is slightly more complex, but parsing `$`-references inside a template is trivial. |
 
-## R-0008 — Формат диалектной таблицы: JSON
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | D-0031 определяет структуру диалектной таблицы (метаданные + шесть категорий маппинга), но не фиксирует формат файла. Нужен конкретный формат для реализации. |
-| **Решение** | Диалектная таблица — JSON-файл. Структура: `{ name, label, operators: { "Op.Actors": "ACTORS", ... }, terminators: { "Kw.End": "END" }, modifiers: { "Mod.To": "TO", "Mod.ReplyTo": "REPLY TO", ... }, policies: { "Pol.All": "ALL", ... }, resultTypes: { "Typ.Text": "TEXT", ... }, durationSuffixes: { "Dur.Seconds": "s", ... } }`. JSON-файлы живут рядом с README в директориях диалектов: `dialects/en-standard/en-standard.json`, `dialects/ru-matrix/ru-matrix.json`. |
-| **Альтернативы** | (A) YAML — зависимость на парсер. (B) TypeScript-модуль — требует компиляции, нарушает принцип «диалект — это данные, не код». (C) TOML — менее распространён, дополнительная зависимость. |
-| **Последствия** | JSON — zero-dependency, читается из любого языка. README в директории диалекта — человекочитаемое описание с мотивацией и пояснениями. JSON-файл — машинночитаемая таблица для загрузчика. Оба артефакта живут вместе, но служат разным целям. |
-
-## R-0009 — Код после EXIT: warning валидатора, не ошибка парсера
+## R-0005 — AST: typed nodes per operator
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | EXIT — терминирующий оператор. Код после него недостижим. Спека не запрещает явно текст после EXIT, но смысл ясен. Нужно решить: парсер отвергает, валидатор ошибается, или валидатор предупреждает? |
-| **Решение** | Парсер разбирает весь файл, включая операторы после EXIT (полезно для tooling). Валидатор выдаёт **warning** `unreachable-after-exit`, если после ExitNode есть ещё операторы. Warning выводится в stderr, но не влияет на exit code. |
-| **Альтернативы** | (A) Парсер отвергает — теряем возможность подсветки и навигации по «мёртвому» коду. (B) Жёсткая ошибка валидатора — может заблокировать прогон тестов; позже можно ужесточить. |
-| **Последствия** | `ValidationResult` содержит и errors, и warnings. CLI: errors → exit 1, warnings → stderr но exit 0. Валидатор в vertical slice имеет два правила: `exit-required` (error) и `unreachable-after-exit` (warning). |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | Two approaches to AST: a generic `OperatorNode` with `modifiers: Map<string, any>` or a typed node per operator. |
+| **Decision** | Each operator has its own node: `ReceiveNode`, `SendNode`, `ExitNode`, etc. Fields are typed: `SendNode.await` is `'none' | 'any' | 'all' | null`, not an arbitrary string. Invalid states are unrepresentable at the type level. |
+| **Alternatives** | (A) Generic `OperatorNode` with a dictionary of modifiers — more flexible, but pushes checks from types to runtime. Convenient for metaprogramming, but COIL has a fixed set of operators, not extensible by users. |
+| **Consequences** | More code for node definitions (each new operator is a new type). In return — type safety, IDE autocompletion, self-documentation. When adding THINK, EXECUTE, WAIT — analogous nodes. The common `OperatorNode` is a base interface with `kind` and `span`. |
 
-## R-0010 — KeywordIndex: одна фраза → массив возможных ID
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | SPEC.md § 5 допускает контекстно-зависимое разрешение: одна ключевая фраза может маппиться на несколько абстрактных ID (пример: `НЕ БОЛЕЕ` → `Mod.Timeout` в SEND/WAIT, `Mod.Limit` в REPEAT). Лексер не знает контекст оператора — это работа парсера. |
-| **Решение** | `KeywordIndex.lookup(phrase)` возвращает `{ ids: AbstractId[] }`. Если `ids.length === 1` — однозначно, лексер выдаёт токен с одним ID. Если больше — лексер выдаёт `Keyword` с массивом кандидатов, парсер разрешает по контексту оператора. |
-| **Альтернативы** | (A) Одна фраза → один ID, контекстная логика зашита в лексер — нарушает разделение лексер/парсер, лексер должен знать текущий оператор. |
-| **Последствия** | Для vertical slice все фразы однозначны (REPEAT вне scope, `НЕ БОЛЕЕ` / `NO MORE THAN` резолвится в `Mod.Timeout`). Архитектура готова к расширению. |
-
-## R-0011 — Нереализованные операторы: UnsupportedOperatorNode, не ошибка парсера
+## R-0006 — CLI: SEND without address -> stdout
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Лексер токенизирует все операторы из реестра (Op.Think, Op.Execute, Op.If и т.д.), но парсер в vertical slice реализует только RECEIVE, SEND, EXIT. Что делать при встрече нереализованного оператора? |
-| **Решение** | Парсер при встрече нереализованного оператора: распознаёт keyword → пропускает содержимое до соответствующего `Kw.End` (считая вложенность) → создаёт `UnsupportedOperatorNode { kind: AbstractId, span: SourceSpan }`. Парсер не бросает исключение на синтаксически корректном блоке. Валидатор добавляет правило `unsupported-operator` (error): «оператор Op.Think не поддерживается в этой версии». |
-| **Альтернативы** | (A) Парсер бросает исключение — теряем tooling-возможности, парсер не может показать outline файла с THINK. |
-| **Последствия** | Tooling (подсветка, навигация, outline) работает для всех операторов. Добавление нового оператора = реализация `parseThink()` + замена `UnsupportedOperatorNode` на `ThinkNode` + убрать из списка unsupported. Валидатор в vertical slice имеет три правила: `exit-required` (error), `unreachable-after-exit` (warning), `unsupported-operator` (error). |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The specification defines SEND as sending a message to a channel. The acceptance criteria require SEND without `TO`, without `FOR`, just the body `<< Hello, $name! >>`. CLI semantics are needed. |
+| **Decision** | In the CLI execution environment, SEND without `TO` and without `FOR` outputs the body to stdout. Conceptually: the CLI environment provides a default channel, and SEND without an address is directed there. SEND with modifiers (`TO`, `FOR`, `AWAIT`, `REPLY TO`, `TIMEOUT`) — the executor throws a `not implemented` error. |
+| **Alternatives** | (A) SEND without address — always an error. Formally correct, but makes the vertical slice useless for demos. (B) Introduce a special PRINT operator — violates the spec, COIL has no such operator. |
+| **Consequences** | The behavior is specific to the CLI environment. Other execution environments (coil-sandbox, production) will define their own behavior for SEND without an address. |
 
-## R-0012 — ValidationDiagnostic: единый тип с severity
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Валидатор должен возвращать и ошибки, и предупреждения (R-0009). Два подхода: два отдельных массива (`errors[]`, `warnings[]`) или единый тип с полем `severity`. |
-| **Решение** | Единый `ValidationDiagnostic { severity: 'error' \| 'warning', ruleId: string, message: string, span: SourceSpan }`. Результат: `ValidationResult { diagnostics: ValidationDiagnostic[] }`. CLI: `diagnostics.filter(d => d.severity === 'error').length > 0` → exit 1. |
-| **Альтернативы** | (A) Два массива `{ errors: [], warnings: [] }` — по сути тот же фильтр, зашитый в структуру. Менее расширяемо (для `'info'`, `'hint'` нужен ещё массив). |
-| **Последствия** | Один массив: проще сортировать по span, выводить в единый поток, расширять severity без изменения структуры. |
-
-## R-0013 — Диалектные таблицы: git-зависимость на coil
+## R-0007 — Validation of EOF without EXIT — separate pass
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-24 |
-| **Контекст** | Тесты coil-runtime используют JSON-таблицы диалектов из `coil/dialects/`. |
-| **Решение** | Добавить `coil` как git-зависимость в `devDependencies`: `"coil": "github:animata-systems/coil"`. Тесты берут диалекты из `node_modules/coil/dialects/`. Никаких `../` путей за пределы репозитория. |
-| **Альтернативы** | (A) Копировать JSON в `test/fixtures/` — дубль, рассинхронизация. (B) npm-пакет `@coil/dialects` — overhead для двух JSON-файлов. |
-| **Последствия** | `npm install` клонирует публичный `coil`, тесты работают автономно. Один источник истины для диалектов. Версионирование: пока пиннинг на main, при стабилизации спеки — перейти на теги. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The requirements specify: EOF without EXIT is a validation error. Question: does the parser or a separate validator check this? |
+| **Decision** | The parser builds the AST as-is. A separate pass `validate(ast)` checks semantic invariants, including "script must end with EXIT". For the vertical slice — one rule. Architecturally — an extension point for dozens of rules. |
+| **Alternatives** | (A) Parser checks — mixes syntax and semantics. In the future, rules like "undeclared participant", "WAIT on non-promise" won't fit in the parser without turning it into a second validator. |
+| **Consequences** | Pipeline: `file -> dialect -> lexer -> parser -> validator -> executor`. The validator is a separate module with a clean interface: `validate(ast): ValidationError[]`. The parser handles syntax, the validator handles semantics. Errors from both levels contain `SourceSpan` for diagnostics. |
 
-## R-0014 — CommentNode: отдельный тип, не оператор
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-25 |
-| **Контекст** | COIL-H (spec/11-coil-h.md § 11.6) требует отображать комментарии-секции как строки-разделители в табличной проекции. Для этого парсер должен сохранять комментарии в AST, а не пропускать их. Вопрос: комментарий — это разновидность оператора или отдельная сущность? |
-| **Решение** | `CommentNode { kind: 'Comment', text: string, span: SourceSpan }` — отдельный тип, **не** входит в union `OperatorNode`. `ScriptNode.nodes: (OperatorNode | CommentNode)[]` — массив содержит оба типа. Старое поле `operators` переименовано в `nodes`. |
-| **Альтернативы** | (A) Включить `CommentNode` в union `OperatorNode` — семантически неверно: комментарий не исполняется, не валидируется, не нумеруется в COIL-H. Включение в union заставит каждое правило валидатора и executor фильтровать его вручную, а exhaustiveness-проверки TypeScript будут требовать ветку для Comment в каждом switch. (B) Хранить комментарии в отдельном массиве `ScriptNode.comments[]` — теряется порядок относительно операторов, что необходимо для COIL-H section dividers. |
-| **Последствия** | Все потребители `ScriptNode` (валидатор, executor, tooling) фильтруют `nodes` по `kind` при итерации по операторам. Паттерн: `ast.nodes.filter((n): n is OperatorNode => n.kind !== 'Comment')`. COIL-H проекция итерирует `nodes` целиком, обрабатывая CommentNode как divider-строки. |
-
-## R-0015 — Комментарии: top-level сохраняются, внутри блоков — нет
+## R-0008 — Dialect table format: JSON
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-25 |
-| **Контекст** | Комментарии могут встречаться на двух уровнях: (1) между операторами (top-level), (2) внутри тела оператора (между ключевым словом и END). Для COIL-H section dividers нужны только top-level комментарии. Комментарии внутри блоков — авторские заметки, не имеющие структурного значения для проекции. |
-| **Решение** | Main loop парсера: токен `Comment` → `CommentNode` в `nodes[]`. Внутри блоков (`parseReceive`, `parseSend`, `skipBlock`): функция `skipTrivia()` пропускает и Newline, и Comment. Функция `skipNewlines()` пропускает только Newline и используется в main loop для сохранения Comment-токенов. |
-| **Альтернативы** | (A) Сохранять комментарии на всех уровнях — усложняет каждый `*Node` (нужно поле `leadingComments`/`trailingComments`), а потребителей для этих данных сейчас нет. Можно добавить позже, если понадобится. (B) Не сохранять нигде — невозможно построить COIL-H dividers. |
-| **Последствия** | Контракт для авторов: если комментарий должен быть виден в COIL-H как секционный разделитель — он должен быть top-level (между операторами), а не внутри блока. Это совпадает с интуицией автора: секционный заголовок естественно пишется между операторами. При расширении парсера (добавление IF, REPEAT и т.д.) блочные комментарии останутся невидимыми для COIL-H, что корректно: вложенная структура отображается по-другому. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | D-0031 defines the dialect table structure (metadata + six mapping categories), but does not fix the file format. A specific format is needed for implementation. |
+| **Decision** | The dialect table is a JSON file. Structure: `{ name, label, operators: { "Op.Actors": "ACTORS", ... }, terminators: { "Kw.End": "END" }, modifiers: { "Mod.To": "TO", "Mod.ReplyTo": "REPLY TO", ... }, policies: { "Pol.All": "ALL", ... }, resultTypes: { "Typ.Text": "TEXT", ... }, durationSuffixes: { "Dur.Seconds": "s", ... } }`. JSON files live alongside READMEs in dialect directories: `dialects/en-standard/en-standard.json`, `dialects/ru-matrix/ru-matrix.json`. |
+| **Alternatives** | (A) YAML — dependency on a parser. (B) TypeScript module — requires compilation, violates the principle "a dialect is data, not code". (C) TOML — less common, additional dependency. |
+| **Consequences** | JSON — zero-dependency, readable from any language. README in the dialect directory — a human-readable description with rationale and explanations. The JSON file — a machine-readable table for the loader. Both artifacts live together but serve different purposes. |
 
-## R-0016 — Browser entry point: гранулярные импорты без node:fs
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-25 |
-| **Контекст** | coil-ide (Vite + React) импортирует лексер, парсер, валидатор из coil-runtime. Модули `loadDialect` (node:fs) и `executor` (node:readline) недоступны в браузере. Нужна точка входа, исключающая Node.js-зависимости. |
-| **Решение** | Файл `src/browser.ts` реэкспортирует модули поштучно: `common`, `ast`, `dialect/types`, `dialect/keyword-index`, `lexer`, `parser`, `validator`. **Не** реэкспортирует `dialect/index` (содержит `loadDialect`), `executor`, `cli`. В `package.json`: `"exports": { "./browser": "./dist/src/browser.js" }`. Playground импортирует диалектные JSON напрямую (Vite JSON import) и передаёт `DialectTable` в `KeywordIndex.build()`. |
-| **Альтернативы** | (A) Реэкспорт через `dialect/index` с tree-shaking — Vite/Rollup не гарантирует удаление `node:fs` при `export *`, потому что `loadDialect` экспортируется с side-effect-свободным кодом, но сам `import` модуля с `node:fs` вызовет ошибку bundler. (B) Условный `export` через `package.json` `"browser"` field — менее явно, не все bundlers поддерживают одинаково. |
-| **Последствия** | Гранулярные импорты в `browser.ts` хрупки: новый экспорт в `dialect/index.ts` не попадёт в browser entry point автоматически. Это осознанный выбор — безопасность (не затянуть node:fs) важнее удобства. При добавлении новых модулей в runtime нужно решить, экспортируются ли они из `browser.ts`. |
-
-## R-0017 — Сборка для git-зависимости: exclude тестов + prepare
+## R-0009 — Code after EXIT: validator warning, not a parser error
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-25 |
-| **Контекст** | coil-ide подключает coil-runtime как git-зависимость (`github:animata-systems/coil-runtime`). npm клонирует репозиторий, но `dist/` не входит в git. Нужна автоматическая сборка. Проблема: `tsc` включает `*.test.ts` (через `include: ["src/**/*"]`), которые импортируют `vitest`. При установке из git npm не ставит `devDependencies` транзитивных зависимостей → `vitest` отсутствует → `tsc` падает. |
-| **Решение** | (1) `tsconfig.json`: добавить `"exclude": ["**/*.test.ts"]`. (2) `package.json`: добавить `"prepare": "tsc"`. `prepare` вызывается npm после `npm install` из git-источника и собирает `dist/`. |
-| **Альтернативы** | (A) `file:` зависимости — привязывают к umbrella-структуре, ломают автономную сборку (I-0001). (B) Отдельный `tsconfig.build.json` — избыточно для одного `exclude`. (C) Коммитить `dist/` в git — антипаттерн, конфликты при merge, раздувание репозитория. |
-| **Последствия** | `vitest` продолжает работать — он компилирует файлы через esbuild, не через `tsc`. `pretest: "tsc"` продолжает работать: он собирает `dist/` для тестов, но без тестовых файлов. Тесты не попадают в `dist/`, что корректно — они не должны быть частью пакета. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | EXIT is a terminating operator. Code after it is unreachable. The spec doesn't explicitly forbid text after EXIT, but the meaning is clear. A decision is needed: does the parser reject it, the validator throw an error, or the validator issue a warning? |
+| **Decision** | The parser parses the entire file, including operators after EXIT (useful for tooling). The validator emits a **warning** `unreachable-after-exit` if there are operators after ExitNode. The warning is output to stderr but does not affect the exit code. |
+| **Alternatives** | (A) Parser rejects — loses the ability to highlight and navigate "dead" code. (B) Hard validator error — may block test runs; can be tightened later. |
+| **Consequences** | `ValidationResult` contains both errors and warnings. CLI: errors -> exit 1, warnings -> stderr but exit 0. The validator in the vertical slice has two rules: `exit-required` (error) and `unreachable-after-exit` (warning). |
 
-## R-0018 — parseRefList: generic-функция с параметром типа токена
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | Несколько операторов парсят comma-separated списки ссылок разных типов: SEND.FOR (`@name`), THINK.AS (`$name`), THINK.USING (`!name`), WAIT.ON (`?name`). Кодер спрашивает: одна generic-функция или четыре отдельных? |
-| **Решение** | Одна generic-функция `parseRefList(expectedType)`, параметризованная типом токена. Логика парсинга одинакова: `expect(type) → while(Comma) → expect(type)`. Тип токена определяет, что ожидается. |
-| **Альтернативы** | Дублирование Comma-separated разбора в 4 местах — нарушение DRY с одинаковой логикой. Generic-функция — один источник истины для паттерна «список ссылок через запятую». |
-| **Последствия** | Return type зависит от параметра — нужна либо перегрузка, либо discriminated union на выходе. Минимальная сложность, оправданная устранением дублирования. Scope: `src/parser/parser.ts`. |
-
-## R-0019 — parse() принимает source string для raw-text условий
+## R-0010 — KeywordIndex: one phrase -> array of possible IDs
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | D-006-1 требует хранить условия IF и REPEAT как raw string. Парсер работает с токенами, а не с исходным текстом. Для реконструкции raw text (включая пробелы) нужен доступ к исходной строке. |
-| **Решение** | Сигнатура `parse()` расширяется: `parse(tokens, dialect, source)`. Для IF/REPEAT парсер вычисляет span условия и берёт `source.slice(startOffset, endOffset)`. В AST условие хранится как `condition: string` (raw text). |
-| **Альтернативы** | Реконструировать текст из token values — теряет пробелы и форматирование, не соответствует принципу «сырой текст до конца строки». Source — единственный надёжный источник. |
-| **Последствия** | Один дополнительный параметр в публичном API `parse()`. Все вызовы (CLI, IDE, тесты) обновляются тривиально — source уже доступен в каждом из них (это та же строка, что передаётся в `tokenize()`). Scope: `src/parser/parser.ts`, `cli/index.ts`, `src/browser.ts`. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | SPEC.md § 5 allows context-dependent resolution: one keyword phrase can map to multiple abstract IDs (example: `НЕ БОЛЕЕ` -> `Mod.Timeout` in SEND/WAIT, `Mod.Limit` in REPEAT). The lexer doesn't know the operator context — that's the parser's job. |
+| **Decision** | `KeywordIndex.lookup(phrase)` returns `{ ids: AbstractId[] }`. If `ids.length === 1` — unambiguous, the lexer emits a token with one ID. If more — the lexer emits a `Keyword` with an array of candidates, the parser resolves by operator context. |
+| **Alternatives** | (A) One phrase -> one ID, contextual logic hardcoded in the lexer — violates lexer/parser separation, the lexer would need to know the current operator. |
+| **Consequences** | For the vertical slice, all phrases are unambiguous (REPEAT is out of scope, `НЕ БОЛЕЕ` / `NO MORE THAN` resolves to `Mod.Timeout`). The architecture is ready for extension. |
 
-## R-0020 — WAIT ON $value: парсерная ошибка, не семантическая
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | `WAIT ON` ожидает `?name` (PromiseRef). Если пользователь пишет `ON $data` (ValueRef), это ошибка. Вопрос: парсерная или семантическая? |
-| **Решение** | Парсерная. `parseRefList('PromiseRef')` для WAIT.ON ожидает токен типа PromiseRef. ValueRef — неправильный тип токена → ParseError. Это тот же уровень, что «ожидал ChannelRef, получил Identifier» в SEND.TO. |
-| **Альтернативы** | Разделение синтаксис/семантика (R-0007): парсер проверяет типы токенов, валидатор — имена и объявления. Тип токена ($ vs ?) определяется лексером и является синтаксическим свойством, не семантическим. Семантическая проверка — неоправданное усложнение. |
-| **Последствия** | Тест `wait-value-not-promise.coil` попадает в scope парсерных тестов. Scope: `src/parser/parser.ts`. |
-
-## R-0021 — BodyValue и AST-литералы: дискриминант `type` в каждом варианте union
+## R-0011 — Unimplemented operators: UnsupportedOperatorNode, not a parser error
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | `BodyValue = TemplateNode | ValueRef | NumberLiteral | StringLiteral`. Без дискриминанта `NumberLiteral { value: number }` и `StringLiteral { value: string }` различимы только через `typeof value` — хрупко в рантайме и неудобно для executor/tooling. |
-| **Решение** | Каждый вариант BodyValue получает поле `type`: `TemplateNode.type = 'template'`, `ValueRef.type = 'ref'`, `NumberLiteral.type = 'number'`, `StringLiteral.type = 'string'`. Потребители используют `switch (body.type)`. |
-| **Альтернативы** | Без дискриминанта — различение через `typeof value`, хрупко в рантайме. Discriminated union — идиоматичный TypeScript, единообразие с `TemplatePart.type`, `OperatorNode.kind`. |
-| **Последствия** | Каждое создание literal/ref в парсере получает дополнительное поле. Минимальная цена. Добавлено до появления потребителей — нулевая миграция. Scope: `src/ast/nodes.ts`, `src/parser/parser.ts`. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The lexer tokenizes all operators from the registry (Op.Think, Op.Execute, Op.If, etc.), but the parser in the vertical slice implements only RECEIVE, SEND, EXIT. What to do when encountering an unimplemented operator? |
+| **Decision** | When encountering an unimplemented operator, the parser: recognizes the keyword -> skips content until the corresponding `Kw.End` (counting nesting) -> creates `UnsupportedOperatorNode { kind: AbstractId, span: SourceSpan }`. The parser does not throw an exception on a syntactically correct block. The validator adds the rule `unsupported-operator` (error): "operator Op.Think is not supported in this version". |
+| **Alternatives** | (A) Parser throws an exception — loses tooling capabilities, the parser cannot show a file outline with THINK. |
+| **Consequences** | Tooling (highlighting, navigation, outline) works for all operators. Adding a new operator = implementing `parseThink()` + replacing `UnsupportedOperatorNode` with `ThinkNode` + removing from the unsupported list. The validator in the vertical slice has three rules: `exit-required` (error), `unreachable-after-exit` (warning), `unsupported-operator` (error). |
 
-## R-0022 — Known gaps фазы 1
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | Код-ревью фазы 1 выявило ряд замечаний, которые не блокируют текущую фазу, но требуют внимания в будущем. |
-| **Решение** | Зафиксировать известные ограничения как осознанные, с планом расширения при появлении потребности. |
-| **Альтернативы** | Исправлять всё сразу — преждевременная оптимизация, нет потребителей для большинства пунктов. |
-| **Последствия** | (1) `readNumber()` — только целые числа; дробные — при появлении потребности. (2) Comparison operators (`>`, `>=`, `<`, `<=`, `=`, `!=`) токенизируются как `Identifier`; отдельный тип токена — при реализации expression parser. (3) `WAIT ON` — обязательность не проверяется парсером; `WAIT END` без `ON` создаёт `WaitNode { on: [] }`; обязательность — scope валидатора (R-0007). (4) Silent skip неизвестных токенов в `parseThink`, `parseWait`, `parseSend`; tolerant parsing — осознанный выбор для tooling; diagnostic warning — задача будущего. (5) `expect()` использует `skipTrivia()` внутри, что позволяет комментарии между элементами arg list и RESULT; корректно по R-0015. Scope: `src/parser/parser.ts`, `src/lexer/tokenizer.ts`. |
-
-## R-0023 — Тесты и код не ссылаются на пути за пределами репозитория
+## R-0012 — ValidationDiagnostic: unified type with severity
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | При отсутствии нужного файла в `node_modules` возникает соблазн сослаться на файл за пределами репозитория через `../../` или абсолютный путь. Это нарушает R-0013 и создаёт неявную зависимость на внешнюю структуру каталогов. |
-| **Решение** | Код и тесты внутри coil-runtime запрещено ссылать на файловые пути за пределами корня репозитория: `../` выше корня, абсолютные пути к внешним директориям, fallback-пути. Все внешние данные берутся из `node_modules/` (R-0013). Если зависимость устарела — `rm package-lock.json && npm install`. |
-| **Альтернативы** | Fallback-пути с `existsSync` — нарушает автономность, тесты зависят от внешней структуры каталогов. |
-| **Последствия** | При добавлении нового файла в зависимость `coil` нужно переустановить пакеты в coil-runtime. Тесты работают при клонировании coil-runtime в изоляции. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | The validator must return both errors and warnings (R-0009). Two approaches: two separate arrays (`errors[]`, `warnings[]`) or a unified type with a `severity` field. |
+| **Decision** | Unified `ValidationDiagnostic { severity: 'error' \| 'warning', ruleId: string, message: string, span: SourceSpan }`. Result: `ValidationResult { diagnostics: ValidationDiagnostic[] }`. CLI: `diagnostics.filter(d => d.severity === 'error').length > 0` -> exit 1. |
+| **Alternatives** | (A) Two arrays `{ errors: [], warnings: [] }` — essentially the same filter hardcoded into the structure. Less extensible (for `'info'`, `'hint'` another array is needed). |
+| **Consequences** | One array: easier to sort by span, output in a single stream, extend severity without changing the structure. |
 
-## R-0024 — lookupDialectWord: вынести из parser в dialect модуль
-
-| | |
-|---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | `lookupDialectWord(id, dialect)` — приватная функция в `parser.ts` (строка 1017). Она переводит абстрактный ID (`Op.Actors`, `Mod.Via`) в диалектное ключевое слово (`УЧАСТНИКИ`, `ЧЕРЕЗ`). Сейчас используется только `formatError()` в парсере. STORY-007 требует использовать её в валидаторе для диалектно-зависимых диагностик (D-007-4). |
-| **Решение** | Вынести `lookupDialectWord()` в отдельный файл `src/dialect/lookup.ts`. Экспортировать через `src/dialect/index.ts` и `src/browser.ts`. Парсер импортирует из `dialect/lookup.ts`. |
-| **Альтернативы** | (A) Дублировать в валидаторе — нарушает DRY. (B) Положить в `dialect/types.ts` — types.ts содержит только типы, добавление рантайм-функции нарушает конвенцию. (C) Положить в `common/` — функция специфична для dialect, не common. |
-| **Последствия** | Один дополнительный файл в `dialect/`. Минимальное изменение: перенос функции + обновление импорта в `parser.ts`. Scope: `src/dialect/lookup.ts`, `src/dialect/index.ts`, `src/parser/parser.ts`, `src/browser.ts`. |
-
-## R-0025 — Parser-check автоматизация для narrative examples
+## R-0013 — Dialect tables: git dependency on coil
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Решено** | 2026-03-26 |
-| **Контекст** | Необходимо, чтобы stable executable examples были как минимум parser-checkable в автоматизированном потоке. `suite.test.ts` покрывал все `.coil` файлы в `coil/examples/` и `coil/tests/`, но не проверял COIL-C блоки, встроенные в нарративные `.md` примеры (`hello-world.md`, `research-agent.en.md`, `research-agent.ru.md`). |
-| **Решение** | Добавить в `suite.test.ts`: (1) утилиту `extractCoilBlocks()` для извлечения ` ```coil ` fenced-блоков из markdown; (2) хелперы `parseStringEN()` / `parseStringRU()` для парсинга из строки (существующие `parseFile*` выражены через них); (3) тесты для EN narrative examples и RU narrative example. Список файлов задаётся явно, а не через автообнаружение — не каждый `.md` обязан содержать parser-checkable COIL-C. |
-| **Альтернативы** | (A) Автообнаружение всех `.md` — невозможно определить диалект автоматически, и не каждый `.md` содержит полные исполняемые фрагменты. (B) Требовать `.coil` twin для каждого `.md` и проверять только twins — делегирует ответственность авторам контента, не закрывает gap для уже существующих narrative examples. |
-| **Последствия** | Scope: `src/suite.test.ts`. Если в Phase 5 (задача 1) примеры будут маркироваться fence-атрибутами (например `` ```coil {.experimental} ``), regex `extractCoilBlocks` потребует расширения. |
+| **Status** | accepted |
+| **Decided** | 2026-03-24 |
+| **Context** | coil-runtime tests use JSON dialect tables from `coil/dialects/`. |
+| **Decision** | Add `coil` as a git dependency in `devDependencies`: `"coil": "github:animata-systems/coil"`. Tests get dialects from `node_modules/coil/dialects/`. No `../` paths outside the repository. |
+| **Alternatives** | (A) Copy JSON into `test/fixtures/` — duplication, desynchronization. (B) npm package `@coil/dialects` — overhead for two JSON files. |
+| **Consequences** | `npm install` clones public `coil`, tests work autonomously. Single source of truth for dialects. Versioning: pinning to main for now, switch to tags when the spec stabilizes. |
 
-## R-0026 — ResultSchema: типовая модель и tolerant-компиляция
+## R-0014 — CommentNode: separate type, not an operator
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Дата** | 2026-03-27 |
+| **Status** | accepted |
+| **Decided** | 2026-03-25 |
+| **Context** | COIL-H (spec/11-coil-h.md § 11.6) requires displaying section comments as separator rows in the tabular projection. For this, the parser must preserve comments in the AST, not skip them. Question: is a comment a kind of operator or a separate entity? |
+| **Decision** | `CommentNode { kind: 'Comment', text: string, span: SourceSpan }` — a separate type, **not** part of the `OperatorNode` union. `ScriptNode.nodes: (OperatorNode | CommentNode)[]` — the array contains both types. The old field `operators` is renamed to `nodes`. |
+| **Alternatives** | (A) Include `CommentNode` in the `OperatorNode` union — semantically incorrect: a comment is not executed, not validated, not numbered in COIL-H. Inclusion in the union would force every validator rule and executor to filter it manually, and TypeScript exhaustiveness checks would require a Comment branch in every switch. (B) Store comments in a separate array `ScriptNode.comments[]` — loses ordering relative to operators, which is necessary for COIL-H section dividers. |
+| **Consequences** | All consumers of `ScriptNode` (validator, executor, tooling) filter `nodes` by `kind` when iterating over operators. Pattern: `ast.nodes.filter((n): n is OperatorNode => n.kind !== 'Comment')`. The COIL-H projection iterates over `nodes` as a whole, handling CommentNode as divider rows. |
+
+## R-0015 — Comments: top-level are preserved, inside blocks — not
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-25 |
+| **Context** | Comments can appear at two levels: (1) between operators (top-level), (2) inside an operator body (between the keyword and END). For COIL-H section dividers, only top-level comments are needed. Comments inside blocks are author notes with no structural significance for the projection. |
+| **Decision** | Main loop of the parser: `Comment` token -> `CommentNode` in `nodes[]`. Inside blocks (`parseReceive`, `parseSend`, `skipBlock`): the function `skipTrivia()` skips both Newline and Comment. The function `skipNewlines()` skips only Newline and is used in the main loop to preserve Comment tokens. |
+| **Alternatives** | (A) Preserve comments at all levels — complicates every `*Node` (needs `leadingComments`/`trailingComments` fields), and there are no consumers for this data yet. Can be added later if needed. (B) Don't preserve anywhere — impossible to build COIL-H dividers. |
+| **Consequences** | Contract for authors: if a comment should be visible in COIL-H as a section divider — it must be top-level (between operators), not inside a block. This matches the author's intuition: a section heading is naturally written between operators. When extending the parser (adding IF, REPEAT, etc.), block comments will remain invisible to COIL-H, which is correct: nested structure is displayed differently. |
+
+## R-0016 — Browser entry point: granular imports without node:fs
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-25 |
+| **Context** | coil-ide (Vite + React) imports the lexer, parser, validator from coil-runtime. Modules `loadDialect` (node:fs) and `executor` (node:readline) are not available in the browser. An entry point excluding Node.js dependencies is needed. |
+| **Decision** | File `src/browser.ts` re-exports modules individually: `common`, `ast`, `dialect/types`, `dialect/keyword-index`, `lexer`, `parser`, `validator`. Does **not** re-export `dialect/index` (contains `loadDialect`), `executor`, `cli`. In `package.json`: `"exports": { "./browser": "./dist/src/browser.js" }`. The playground imports dialect JSON directly (Vite JSON import) and passes `DialectTable` to `KeywordIndex.build()`. |
+| **Alternatives** | (A) Re-export through `dialect/index` with tree-shaking — Vite/Rollup doesn't guarantee removal of `node:fs` with `export *`, because `loadDialect` is exported with side-effect-free code, but the `import` of a module with `node:fs` itself causes a bundler error. (B) Conditional `export` via `package.json` `"browser"` field — less explicit, not all bundlers support it equally. |
+| **Consequences** | Granular imports in `browser.ts` are fragile: a new export in `dialect/index.ts` won't automatically appear in the browser entry point. This is a deliberate choice — safety (not pulling in node:fs) matters more than convenience. When adding new modules to the runtime, one needs to decide whether they are exported from `browser.ts`. |
+
+## R-0017 — Build for git dependency: exclude tests + prepare
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-25 |
+| **Context** | coil-ide connects coil-runtime as a git dependency (`github:animata-systems/coil-runtime`). npm clones the repository, but `dist/` is not in git. Automatic build is needed. Problem: `tsc` includes `*.test.ts` (via `include: ["src/**/*"]`), which import `vitest`. When installing from git, npm doesn't install `devDependencies` of transitive dependencies -> `vitest` is missing -> `tsc` fails. |
+| **Decision** | (1) `tsconfig.json`: add `"exclude": ["**/*.test.ts"]`. (2) `package.json`: add `"prepare": "tsc"`. `prepare` is called by npm after `npm install` from a git source and builds `dist/`. |
+| **Alternatives** | (A) `file:` dependencies — ties to the umbrella structure, breaks autonomous build (I-0001). (B) Separate `tsconfig.build.json` — excessive for a single `exclude`. (C) Commit `dist/` to git — anti-pattern, merge conflicts, repository bloat. |
+| **Consequences** | `vitest` continues to work — it compiles files via esbuild, not `tsc`. `pretest: "tsc"` continues to work: it builds `dist/` for tests, but without test files. Tests don't end up in `dist/`, which is correct — they shouldn't be part of the package. |
+
+## R-0018 — parseRefList: generic function with token type parameter
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | Several operators parse comma-separated lists of references of different types: SEND.FOR (`@name`), THINK.AS (`$name`), THINK.USING (`!name`), WAIT.ON (`?name`). The question: one generic function or four separate ones? |
+| **Decision** | One generic function `parseRefList(expectedType)`, parameterized by token type. The parsing logic is identical: `expect(type) -> while(Comma) -> expect(type)`. The token type determines what is expected. |
+| **Alternatives** | Duplicating comma-separated parsing in 4 places — DRY violation with identical logic. A generic function is a single source of truth for the "comma-separated reference list" pattern. |
+| **Consequences** | Return type depends on the parameter — either overloading or a discriminated union on output is needed. Minimal complexity, justified by eliminating duplication. Scope: `src/parser/parser.ts`. |
+
+## R-0019 — parse() accepts source string for raw-text conditions
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | D-006-1 requires storing IF and REPEAT conditions as raw strings. The parser works with tokens, not source text. To reconstruct raw text (including whitespace), access to the original string is needed. |
+| **Decision** | The `parse()` signature is extended: `parse(tokens, dialect, source)`. For IF/REPEAT, the parser computes the condition span and takes `source.slice(startOffset, endOffset)`. In the AST, the condition is stored as `condition: string` (raw text). |
+| **Alternatives** | Reconstructing text from token values — loses whitespace and formatting, doesn't match the principle "raw text to end of line". Source is the only reliable origin. |
+| **Consequences** | One additional parameter in the public API `parse()`. All call sites (CLI, IDE, tests) are updated trivially — source is already available in each of them (it's the same string passed to `tokenize()`). Scope: `src/parser/parser.ts`, `cli/index.ts`, `src/browser.ts`. |
+
+## R-0020 — WAIT ON $value: parser error, not semantic
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | `WAIT ON` expects `?name` (PromiseRef). If the user writes `ON $data` (ValueRef), that's an error. Question: parser or semantic? |
+| **Decision** | Parser error. `parseRefList('PromiseRef')` for WAIT.ON expects a token of type PromiseRef. ValueRef is the wrong token type -> ParseError. This is the same level as "expected ChannelRef, got Identifier" in SEND.TO. |
+| **Alternatives** | Syntax/semantics separation (R-0007): the parser checks token types, the validator checks names and declarations. Token type ($ vs ?) is determined by the lexer and is a syntactic property, not semantic. A semantic check would be unjustified complexity. |
+| **Consequences** | The test `wait-value-not-promise.coil` belongs in the scope of parser tests. Scope: `src/parser/parser.ts`. |
+
+## R-0021 — BodyValue and AST literals: `type` discriminant in each union variant
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | `BodyValue = TemplateNode | ValueRef | NumberLiteral | StringLiteral`. Without a discriminant, `NumberLiteral { value: number }` and `StringLiteral { value: string }` are distinguishable only via `typeof value` — fragile at runtime and inconvenient for executor/tooling. |
+| **Decision** | Each BodyValue variant gets a `type` field: `TemplateNode.type = 'template'`, `ValueRef.type = 'ref'`, `NumberLiteral.type = 'number'`, `StringLiteral.type = 'string'`. Consumers use `switch (body.type)`. |
+| **Alternatives** | Without a discriminant — distinguishing via `typeof value`, fragile at runtime. Discriminated union is idiomatic TypeScript, uniform with `TemplatePart.type`, `OperatorNode.kind`. |
+| **Consequences** | Each literal/ref creation in the parser gets an additional field. Minimal cost. Added before consumers appeared — zero migration. Scope: `src/ast/nodes.ts`, `src/parser/parser.ts`. |
+
+## R-0022 — Known gaps of phase 1
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | Phase 1 code review identified a number of issues that don't block the current phase but require attention in the future. |
+| **Decision** | Record the known limitations as deliberate, with a plan to extend when demand arises. |
+| **Alternatives** | Fix everything immediately — premature optimization, there are no consumers for most items. |
+| **Consequences** | (1) `readNumber()` — integers only; decimals when demand arises. (2) Comparison operators (`>`, `>=`, `<`, `<=`, `=`, `!=`) are tokenized as `Identifier`; a separate token type — when the expression parser is implemented. (3) `WAIT ON` — mandatory presence is not checked by the parser; `WAIT END` without `ON` creates `WaitNode { on: [] }`; mandatory check is validator scope (R-0007). (4) Silent skip of unknown tokens in `parseThink`, `parseWait`, `parseSend`; tolerant parsing is a deliberate choice for tooling; diagnostic warning is a future task. (5) `expect()` uses `skipTrivia()` internally, which allows comments between arg list elements and RESULT; correct per R-0015. Scope: `src/parser/parser.ts`, `src/lexer/tokenizer.ts`. |
+
+## R-0023 — Tests and code do not reference paths outside the repository
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | When a needed file is missing from `node_modules`, there is a temptation to reference a file outside the repository via `../../` or an absolute path. This violates R-0013 and creates an implicit dependency on the external directory structure. |
+| **Decision** | Code and tests inside coil-runtime are prohibited from referencing file paths outside the repository root: `../` above the root, absolute paths to external directories, fallback paths. All external data comes from `node_modules/` (R-0013). If a dependency is outdated — `rm package-lock.json && npm install`. |
+| **Alternatives** | Fallback paths with `existsSync` — violates autonomy, tests depend on the external directory structure. |
+| **Consequences** | When adding a new file to the `coil` dependency, packages in coil-runtime need to be reinstalled. Tests work when cloning coil-runtime in isolation. |
+
+## R-0024 — lookupDialectWord: extract from parser into dialect module
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | `lookupDialectWord(id, dialect)` is a private function in `parser.ts` (line 1017). It translates an abstract ID (`Op.Actors`, `Mod.Via`) into a dialect keyword (`УЧАСТНИКИ`, `ЧЕРЕЗ`). Currently used only by `formatError()` in the parser. The validator needs it for dialect-dependent diagnostics (D-007-4). |
+| **Decision** | Extract `lookupDialectWord()` into a separate file `src/dialect/lookup.ts`. Export through `src/dialect/index.ts` and `src/browser.ts`. The parser imports from `dialect/lookup.ts`. |
+| **Alternatives** | (A) Duplicate in the validator — violates DRY. (B) Put in `dialect/types.ts` — types.ts contains only types, adding a runtime function violates the convention. (C) Put in `common/` — the function is specific to dialect, not common. |
+| **Consequences** | One additional file in `dialect/`. Minimal change: moving the function + updating the import in `parser.ts`. Scope: `src/dialect/lookup.ts`, `src/dialect/index.ts`, `src/parser/parser.ts`, `src/browser.ts`. |
+
+## R-0025 — Parser-check automation for narrative examples
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-26 |
+| **Context** | Stable executable examples need to be at least parser-checkable in an automated flow. `suite.test.ts` covered all `.coil` files in `coil/examples/` and `coil/tests/`, but didn't check COIL-C blocks embedded in narrative `.md` examples (`hello-world.md`, `research-agent.en.md`, `research-agent.ru.md`). |
+| **Decision** | Add to `suite.test.ts`: (1) a utility `extractCoilBlocks()` for extracting ` ```coil ` fenced blocks from markdown; (2) helpers `parseStringEN()` / `parseStringRU()` for parsing from a string (existing `parseFile*` are expressed through them); (3) tests for EN narrative examples and RU narrative examples. The file list is specified explicitly, not via auto-discovery — not every `.md` is required to contain parser-checkable COIL-C. |
+| **Alternatives** | (A) Auto-discovery of all `.md` — impossible to determine the dialect automatically, and not every `.md` contains complete executable fragments. (B) Require a `.coil` twin for every `.md` and check only twins — delegates responsibility to content authors, doesn't close the gap for existing narrative examples. |
+| **Consequences** | Scope: `src/suite.test.ts`. If in the future examples are marked with fence attributes (e.g. `` ```coil {.experimental} ``), the `extractCoilBlocks` regex will need extension. |
+
+## R-0026 — ResultSchema: type model and tolerant compilation
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-27 |
 | **Scope** | `src/result/schema.ts`, `src/result/compile.ts`, `src/result/index.ts` |
 
-**Контекст.** Парсер (STORY-006) возвращает `ResultField[]` — плоский массив с `depth`. Для валидации, компиляции в JSON Schema и отображения в COIL-H нужна древовидная типовая модель. STORY-009 определяет scope: 5 типов (`text`, `number`, `flag`, `choice`, `list`), дерево по `depth`, набор структурных ограничений.
+**Context.** The parser returns `ResultField[]` — a flat array with `depth`. For validation, compilation to JSON Schema, and display in COIL-H, a tree-based type model is needed. The scope is defined as: 5 types (`text`, `number`, `flag`, `choice`, `list`), tree by `depth`, a set of structural constraints.
 
-**Решение.** Новая директория `src/result/`. Типы:
+**Decision.** New directory `src/result/`. Types:
 
-- `ResultSchema` — discriminated union по `kind`: `text`, `number`, `flag`, `choice` (с `options: string[]`), `list` (с `itemFields: ResultSchemaField[]`).
+- `ResultSchema` — discriminated union by `kind`: `text`, `number`, `flag`, `choice` (with `options: string[]`), `list` (with `itemFields: ResultSchemaField[]`).
 - `ResultSchemaField` — `{ name, description, schema: ResultSchema, span }`.
-- `compileResult(fields: ResultField[]): CompileResultOutput` — строит дерево за один линейный проход со стеком родителей по `depth`.
-- `CompileResultOutput = { fields: ResultSchemaField[], diagnostics: ValidationDiagnostic[] }` — tolerant compilation: при ошибках (вложение в скаляр, orphan depth) ошибка записывается в diagnostics, а не бросается исключение. Partial structure сохраняется для IDE.
+- `compileResult(fields: ResultField[]): CompileResultOutput` — builds the tree in a single linear pass with a parent stack by `depth`.
+- `CompileResultOutput = { fields: ResultSchemaField[], diagnostics: ValidationDiagnostic[] }` — tolerant compilation: on errors (nesting in a scalar, orphan depth), the error is recorded in diagnostics rather than thrown as an exception. Partial structure is preserved for the IDE.
 
-**Почему.** Tolerant-компиляция позволяет собрать все ошибки за один проход и не терять partial structure. Это критично для Playground (progressive authoring) и для `coil check` (все ошибки сразу, а не первая найденная). Правило `result-leaf-with-children` естественно генерируется внутри `compileResult`, потому что именно там видна попытка вложить поле в скаляр.
+**Rationale.** Tolerant compilation allows collecting all errors in a single pass without losing partial structure. This is critical for the Playground (progressive authoring) and for `coil check` (all errors at once, not just the first one found). The rule `result-leaf-with-children` is naturally generated inside `compileResult`, because that's where the attempt to nest a field in a scalar is visible.
 
-**Цена.** Вызывающий код должен проверять `diagnostics`, а не полагаться на исключение. Типовая модель может содержать неполное дерево (например, orphan-поля отброшены). Потребители должны быть устойчивы к этому.
+**Cost.** Calling code must check `diagnostics` rather than relying on exceptions. The type model may contain an incomplete tree (e.g., orphan fields are discarded). Consumers must be resilient to this.
 
-## R-0027 — Правила валидации РЕЗУЛЬТАТ: один ValidationRule-обёртка
+## R-0027 — RESULT validation rules: single ValidationRule wrapper
 
 | | |
 |---|---|
-| **Статус** | принят |
-| **Дата** | 2026-03-27 |
+| **Status** | accepted |
+| **Decided** | 2026-03-27 |
 | **Scope** | `src/result/rules.ts`, `src/validator/validator.ts` |
 
-**Контекст.** STORY-009 определяет 5 правил валидации РЕЗУЛЬТАТ. Текущий `ValidationRule` interface принимает `(ast, scope, dialect)`. Правила РЕЗУЛЬТАТ работают поверх `ResultSchemaField[]` (типовой модели), а не поверх AST напрямую. Нужен способ подключить их к реестру валидатора без дублирования компиляции.
+**Context.** The requirements define 5 RESULT validation rules. The current `ValidationRule` interface accepts `(ast, scope, dialect)`. RESULT rules operate on `ResultSchemaField[]` (the type model), not directly on the AST. A way to plug them into the validator registry without duplicating compilation is needed.
 
-**Решение.** Один `ValidationRule`-обёртка `resultSchemaRule` в `src/result/rules.ts`:
+**Decision.** One `ValidationRule` wrapper `resultSchemaRule` in `src/result/rules.ts`:
 
-1. Проходит по ThinkNode через `walkOperators`.
-2. Для каждого `think.result` (непустого) вызывает `compileResult` — один раз на ThinkNode.
-3. Прогоняет проверочные функции по `ResultSchemaField[]`.
-4. Каждая проверочная функция возвращает `ValidationDiagnostic[]` со своим `ruleId`.
-5. Диагностики из `compileResult` (включая `result-leaf-with-children`) добавляются к результату.
+1. Iterates over ThinkNode via `walkOperators`.
+2. For each non-empty `think.result`, calls `compileResult` — once per ThinkNode.
+3. Runs check functions over `ResultSchemaField[]`.
+4. Each check function returns `ValidationDiagnostic[]` with its own `ruleId`.
+5. Diagnostics from `compileResult` (including `result-leaf-with-children`) are added to the result.
 
-Правила:
-- `result-choice-min-options` (error): `kind === 'choice'` и `options.length < 2`.
-- `result-nested-list` (error): `kind === 'list'` внутри `kind === 'list'`.
-- `result-leaf-with-children` (error): генерируется в `compileResult` при попытке вложения в скаляр.
-- `result-list-no-children` (warning): `kind === 'list'` и `itemFields.length === 0`.
-- `result-duplicate-field` (error): два поля с одинаковым `name` на одном уровне.
+Rules:
+- `result-choice-min-options` (error): `kind === 'choice'` and `options.length < 2`.
+- `result-nested-list` (error): `kind === 'list'` inside `kind === 'list'`.
+- `result-leaf-with-children` (error): generated in `compileResult` when attempting to nest in a scalar.
+- `result-list-no-children` (warning): `kind === 'list'` and `itemFields.length === 0`.
+- `result-duplicate-field` (error): two fields with the same `name` at the same level.
 
-`resultSchemaRule` регистрируется в `createDefaultRegistry()` в `validator.ts`.
+`resultSchemaRule` is registered in `createDefaultRegistry()` in `validator.ts`.
 
-**Почему.** Вариант «один обёртка» избегает дублирования компиляции (5 правил × каждый ThinkNode) и сохраняет чистое разделение: `src/result/` знает о типовой модели, `src/validator/` — о AST traversal. Каждая проверка возвращает свой `ruleId`, поэтому гранулярность диагностик не теряется.
+**Rationale.** The "single wrapper" approach avoids duplicating compilation (5 rules x each ThinkNode) and preserves clean separation: `src/result/` knows about the type model, `src/validator/` knows about AST traversal. Each check returns its own `ruleId`, so diagnostic granularity is not lost.
 
-**Цена.** `resultSchemaRule` имеет составной `ruleId` (формальный ID обёртки), а реальные диагностики несут свои индивидуальные `ruleId`. Это не проблема: `RuleRegistry.runAll` собирает плоский массив диагностик, `ruleId` обёртки нигде не фигурирует в выводе.
+**Cost.** `resultSchemaRule` has a composite `ruleId` (the wrapper's formal ID), while the actual diagnostics carry their own individual `ruleId`. This is not a problem: `RuleRegistry.runAll` collects a flat array of diagnostics, the wrapper's `ruleId` never appears in the output.
+
+## R-0028 — Annotation-driven test suite
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Context** | `suite.test.ts` hardcoded file lists, dialect assignments, and syntactic/semantic split. After metadata annotations were standardized across all `.coil` and `.md` files (`@test`, `@role`, `@dialect`, `@covers`, `@description`), the test suite can discover files and derive expected behavior from annotations instead of maintaining parallel lists. |
+| **Decision** | `suite.test.ts` reads `@dialect` to load the correct dialect, `@test valid/invalid` to determine expected outcome. File discovery is recursive. Dialect README showcases (`dialects/*/README.md`) are tested alongside conformance tests and examples. Annotations use HTML comments in `.md` files (`<!-- @dialect ... -->`) and COIL comments in `.coil` files (`' @dialect ...`). |
+| **Alternatives** | Keep hardcoded lists — fragile, requires manual sync on every file add/remove/rename. |
+| **Consequences** | Adding a new test or example requires only the file itself with correct annotations — no changes to `suite.test.ts`. |
+
+## R-0029 — Runtime is an English-language repository
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Context** | COIL is dialect-agnostic, but the runtime implementation needs a single language for code, comments, error messages, and test descriptions. |
+| **Decision** | Code, comments, CLI messages, and test descriptions in `coil-runtime` are written in English. Abstract IDs use English mnemonics (`Op.Think`, `Mod.Result`). When referring to operators in code or comments, use en-standard keywords (THINK, WAIT, SEND), not keywords from other dialects. |
+| **Alternatives** | Bilingual codebase — increases maintenance burden, confuses contributors. |
+| **Consequences** | Diagnostic messages are in English by default. Localized diagnostics may be added later as a separate layer. |

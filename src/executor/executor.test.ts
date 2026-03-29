@@ -10,9 +10,9 @@ import type { Environment } from './environment.js';
 import type { DialectTable } from '../dialect/types.js';
 
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 let enTable: DialectTable;
 let ruTable: DialectTable;
@@ -136,20 +136,20 @@ EXIT`);
     expect(sent[0]).toBe('Hello, World!');
   });
 
-  it('RU: тот же скрипт на ru-matrix', async () => {
-    const ast = parseRU(`ПРИМИ имя
+  it('RU: тот же скрипт на ru-standard', async () => {
+    const ast = parseRU(`ПОЛУЧИ имя
 <<
 Как тебя зовут?
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ПЕРЕДАЙ
+НАПИШИ
 <<
 Привет, $имя!
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ`);
+ВЫХОД`);
     const { env, sent } = mockEnv('Мир');
     await execute(ast, env);
     expect(sent).toHaveLength(1);

@@ -8,10 +8,10 @@ import { KeywordIndex } from '../dialect/index.js';
 import type { Token } from './tokens.js';
 
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const TESTS_DIR = join(dirname(require.resolve('coil/package.json')), 'tests');
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 let enIndex: KeywordIndex;
 let ruIndex: KeywordIndex;
@@ -40,8 +40,8 @@ describe('keywords', () => {
     expect((tokens[1] as any).name).toBe('name');
   });
 
-  it('RU: ПРИМИ запрос → [Keyword(Op.Receive), Identifier(запрос)]', () => {
-    const tokens = significant(tokenize('ПРИМИ запрос', ruIndex));
+  it('RU: ПОЛУЧИ запрос → [Keyword(Op.Receive), Identifier(запрос)]', () => {
+    const tokens = significant(tokenize('ПОЛУЧИ запрос', ruIndex));
     expect(tokens).toHaveLength(2);
     expect(tokens[0].type).toBe('Keyword');
     expect((tokens[0] as any).ids).toContain('Op.Receive');
@@ -92,8 +92,8 @@ describe('multi-word phrases', () => {
     expect((tokens[0] as any).ids).toContain('Mod.Limit');
   });
 
-  it('RU: БЕЛЫЙ КРОЛИК << ... >> → [Keyword(Mod.Goal), TemplateOpen, ...]', () => {
-    const tokens = significant(tokenize('БЕЛЫЙ КРОЛИК <<\nцель\n>>', ruIndex));
+  it('RU: ЦЕЛЬ << ... >> → [Keyword(Mod.Goal), TemplateOpen, ...]', () => {
+    const tokens = significant(tokenize('ЦЕЛЬ <<\nцель\n>>', ruIndex));
     expect(tokens[0].type).toBe('Keyword');
     expect((tokens[0] as any).ids).toContain('Mod.Goal');
     expect(tokens[1].type).toBe('TemplateOpen');
@@ -349,19 +349,19 @@ EXIT`;
   });
 
   it('RU: полный скрипт — токенизация без ошибок', () => {
-    const src = `ПРИМИ имя
+    const src = `ПОЛУЧИ имя
 <<
 Как тебя зовут?
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ПЕРЕДАЙ
+НАПИШИ
 <<
 Привет, $имя!
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ`;
+ВЫХОД`;
     const tokens = tokenize(src, ruIndex);
     expect(tokens.some(t => t.type === 'EOF')).toBe(true);
     const keywords = tokens.filter(t => t.type === 'Keyword');

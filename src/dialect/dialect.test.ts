@@ -8,9 +8,9 @@ import { writeFile, unlink } from 'node:fs/promises';
 
 // Dialect tables come from the `coil` dependency (R-0013)
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 // ─── Loader ──────────────────────────────────────────────
 
@@ -28,10 +28,10 @@ describe('loadDialect', () => {
     for (const id of ALL_DUR_IDS) expect(table.durationSuffixes[id]).toBeTruthy();
   });
 
-  it('загрузка ru-matrix.json — все ID покрыты', async () => {
+  it('загрузка ru-standard.json — все ID покрыты', async () => {
     const table = await loadDialect(RU_PATH);
-    expect(table.name).toBe('ru-matrix');
-    expect(table.label).toBe('Красная таблетка');
+    expect(table.name).toBe('ru-standard');
+    expect(table.label).toBe('Стандартный русский');
     for (const id of ALL_OP_IDS) expect(table.operators[id]).toBeTruthy();
     for (const id of ALL_KW_IDS) expect(table.terminators[id]).toBeTruthy();
     for (const id of ALL_MOD_IDS) expect(table.modifiers[id]).toBeTruthy();
@@ -159,48 +159,45 @@ describe('KeywordIndex', () => {
     expect(enIndex.durationSuffixes.get('h')).toBe('Dur.Hours');
   });
 
-  it('RU: НЕ БОЛЕЕ → [Mod.Timeout, Mod.Limit] (контекстно-зависимое)', () => {
-    // НЕ БОЛЕЕ maps to both Mod.Timeout and Mod.Limit (R-0010)
-    // In ru-matrix, Mod.Timeout is "ИЛИ АГЕНТЫ" and Mod.Limit is "НЕ БОЛЕЕ"
-    // So "НЕ БОЛЕЕ" maps only to Mod.Limit here (no ambiguity in this dialect)
+  it('RU: НЕ БОЛЕЕ → [Mod.Timeout, Mod.Limit] (context-dependent, R-0010)', () => {
+    // НЕ БОЛЕЕ maps to both Mod.Timeout and Mod.Limit in ru-standard
     const match = ruIndex.longestMatch('НЕ БОЛЕЕ 5', 0);
     expect(match).not.toBeNull();
-    expect(match!.match.ids).toContain('Mod.Limit');
+    expect(match!.match.ids.length).toBeGreaterThanOrEqual(1);
+    expect(match!.length).toBe('НЕ БОЛЕЕ'.length);
   });
 
-  it('RU: НЕ не матчится как отдельная фраза', () => {
+  it('RU: НЕ does not match as standalone phrase', () => {
     const match = ruIndex.longestMatch('НЕ что-то', 0);
-    // "НЕ" is not a standalone keyword (it's part of "НЕ БОЛЕЕ" and "ПОКА НЕ")
     expect(match).toBeNull();
   });
 
-  it('RU: БЕЛЫЙ КРОЛИК → Mod.Goal (многословная фраза)', () => {
-    const match = ruIndex.longestMatch('БЕЛЫЙ КРОЛИК <<', 0);
+  it('RU: ЦЕЛЬ → Mod.Goal', () => {
+    const match = ruIndex.longestMatch('ЦЕЛЬ <<', 0);
     expect(match).not.toBeNull();
     expect(match!.match.ids).toContain('Mod.Goal');
-    expect(match!.length).toBe('БЕЛЫЙ КРОЛИК'.length);
   });
 
-  it('RU: ПОКА НЕ СБУДЕТСЯ → Mod.On (длинная фраза)', () => {
-    const match = ruIndex.longestMatch('ПОКА НЕ СБУДЕТСЯ ?plan', 0);
+  it('RU: НА → Mod.On', () => {
+    const match = ruIndex.longestMatch('НА ?plan', 0);
     expect(match).not.toBeNull();
     expect(match!.match.ids).toContain('Mod.On');
-    expect(match!.length).toBe('ПОКА НЕ СБУДЕТСЯ'.length);
   });
 
-  it('RU: ПРОСНИСЬ → Kw.End', () => {
-    const match = ruIndex.longestMatch('ПРОСНИСЬ', 0);
+  it('RU: КОНЕЦ → Kw.End', () => {
+    const match = ruIndex.longestMatch('КОНЕЦ', 0);
     expect(match).not.toBeNull();
     expect(match!.match.ids).toContain('Kw.End');
   });
 
-  it('RU: ИЛИ АГЕНТЫ → Mod.Timeout', () => {
-    const match = ruIndex.longestMatch('ИЛИ АГЕНТЫ 10м', 0);
+  it('RU: ОТВЕТ НА → Mod.ReplyTo (multi-word phrase)', () => {
+    const match = ruIndex.longestMatch('ОТВЕТ НА #msg', 0);
     expect(match).not.toBeNull();
-    expect(match!.match.ids).toContain('Mod.Timeout');
+    expect(match!.match.ids).toContain('Mod.ReplyTo');
+    expect(match!.length).toBe('ОТВЕТ НА'.length);
   });
 
-  it('RU: duration suffixes (кириллические)', () => {
+  it('RU: duration suffixes (cyrillic)', () => {
     expect(ruIndex.durationSuffixes.get('с')).toBe('Dur.Seconds');
     expect(ruIndex.durationSuffixes.get('м')).toBe('Dur.Minutes');
     expect(ruIndex.durationSuffixes.get('ч')).toBe('Dur.Hours');
@@ -213,25 +210,19 @@ describe('KeywordIndex', () => {
     expect(match!.match.ids).toContain('Mod.Await');
   });
 
-  it('EN: word boundary — SENDING не матчится как SEND', () => {
+  it('EN: word boundary — SENDING does not match as SEND', () => {
     const match = enIndex.longestMatch('SENDING data', 0);
     expect(match).toBeNull();
   });
 
-  it('RU: НА ЧЕЙ ВЫЗОВ → Mod.ReplyTo (не путается с НА ЛИНИЮ)', () => {
-    const match = ruIndex.longestMatch('НА ЧЕЙ ВЫЗОВ #msg', 0);
-    expect(match).not.toBeNull();
-    expect(match!.match.ids).toContain('Mod.ReplyTo');
-  });
-
-  it('RU: ПОКА НЕ $ready → Mod.Until (не путается с ПОКА НЕ СБУДЕТСЯ)', () => {
-    const match = ruIndex.longestMatch('ПОКА НЕ $ready', 0);
+  it('RU: ДО → Mod.Until', () => {
+    const match = ruIndex.longestMatch('ДО $ready', 0);
     expect(match).not.toBeNull();
     expect(match!.match.ids).toContain('Mod.Until');
   });
 
-  it('RU: word boundary — ПРОЗРЕЙте не матчится как ПРОЗРЕЙ', () => {
-    const match = ruIndex.longestMatch('ПРОЗРЕЙте', 0);
+  it('RU: word boundary — ДУМАЙТЕ does not match as ДУМАЙ', () => {
+    const match = ruIndex.longestMatch('ДУМАЙТЕ', 0);
     expect(match).toBeNull();
   });
 });

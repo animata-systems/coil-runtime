@@ -9,9 +9,9 @@ import { validate } from './validator.js';
 import type { DialectTable } from '../dialect/types.js';
 
 const require = createRequire(import.meta.url);
-const DIALECTS_DIR = dirname(require.resolve('coil/dialects/SPEC.md'));
+const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
 const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
+const RU_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
 let enTable: DialectTable;
 let enIndex: KeywordIndex;
@@ -435,34 +435,34 @@ EXIT`;
   });
 });
 
-// ─── ru-matrix smoke tests ─────────────────────────────────
+// ─── ru-standard smoke tests ─────────────────────────────────
 
-describe('ru-matrix dialect', () => {
-  it('валидный скрипт на ru-matrix → 0 errors', () => {
-    const src = `ПРИМИ имя
+describe('ru-standard dialect', () => {
+  it('валидный скрипт на ru-standard → 0 errors', () => {
+    const src = `ПОЛУЧИ имя
 <<
 Как вас зовут?
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ПЕРЕДАЙ
+НАПИШИ
 <<
 Привет, $имя!
 >>
-ПРОСНИСЬ
+КОНЕЦ
 
-ОТКЛЮЧИСЬ`;
+ВЫХОД`;
     const result = validateRU(src);
     expect(result.diagnostics.filter(d => d.severity === 'error')).toHaveLength(0);
   });
 
-  it('undefined-variable на ru-matrix → error', () => {
-    const src = `ПЕРЕДАЙ
+  it('undefined-variable на ru-standard → error', () => {
+    const src = `НАПИШИ
 <<
 $неизвестная
 >>
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+КОНЕЦ
+ВЫХОД`;
     const result = validateRU(src);
     const errors = result.diagnostics.filter(d => d.ruleId === 'undefined-variable');
     expect(errors).toHaveLength(1);
@@ -631,13 +631,13 @@ EXIT`;
     expect(error!.message).toContain('variable $unknown is not defined');
   });
 
-  it('ru-matrix → русское сообщение', () => {
-    const src = `ПЕРЕДАЙ
+  it('ru-standard → русское сообщение', () => {
+    const src = `НАПИШИ
 <<
 $неизвестная
 >>
-ПРОСНИСЬ
-ОТКЛЮЧИСЬ`;
+КОНЕЦ
+ВЫХОД`;
     const result = validateRU(src);
     const error = result.diagnostics.find(d => d.ruleId === 'undefined-variable');
     expect(error).toBeDefined();

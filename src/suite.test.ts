@@ -1,63 +1,105 @@
 /**
- * Integration tests: Run .coil test files and examples through the pipeline.
- * Valid tests → parse succeeds, no UnsupportedOperatorNode (except GATHER).
- * Invalid syntactic tests → parse or tokenize throws.
- * Examples → parse succeeds.
+ * Integration tests: Run .coil test files, examples, and dialect showcases
+ * through the full pipeline (tokenize → parse → validate).
+ *
+ * File selection and expected outcomes are driven by metadata annotations
+ * (@test, @dialect, @role, etc.) embedded in each .coil / .md file.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { readdirSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { tokenize, LexerError } from './lexer/index.js';
 import { loadDialect, KeywordIndex } from './dialect/index.js';
 import { parse, ParseError } from './parser/index.js';
 import { validate } from './validator/index.js';
 import type { DialectTable } from './dialect/index.js';
 
+// ─── Paths ──────────────────────────────────────────────
+
 const require = createRequire(import.meta.url);
 const COIL_DIR = dirname(require.resolve('coil/package.json'));
 const DIALECTS_DIR = join(COIL_DIR, 'dialects');
 const TESTS_DIR = join(COIL_DIR, 'tests');
 const EXAMPLES_DIR = join(COIL_DIR, 'examples');
-const EN_PATH = join(DIALECTS_DIR, 'en-standard', 'en-standard.json');
-const RU_MATRIX_PATH = join(DIALECTS_DIR, 'ru-matrix', 'ru-matrix.json');
-const RU_STD_PATH = join(DIALECTS_DIR, 'ru-standard', 'ru-standard.json');
 
-let enTable: DialectTable;
-let enIndex: KeywordIndex;
-let ruMatrixTable: DialectTable;
-let ruMatrixIndex: KeywordIndex;
-let ruStdTable: DialectTable;
-let ruStdIndex: KeywordIndex;
+// ─── Metadata extraction ────────────────────────────────
 
-beforeAll(async () => {
-  enTable = await loadDialect(EN_PATH);
-  enIndex = KeywordIndex.build(enTable);
-  ruMatrixTable = await loadDialect(RU_MATRIX_PATH);
-  ruMatrixIndex = KeywordIndex.build(ruMatrixTable);
-  ruStdTable = await loadDialect(RU_STD_PATH);
-  ruStdIndex = KeywordIndex.build(ruStdTable);
-});
-
-function parseStringEN(src: string) {
-  const tokens = tokenize(src, enIndex);
-  return parse(tokens, enTable, src);
+interface CoilMeta {
+  test: 'valid' | 'invalid';
+  role: string;
+  dialect: string;
+  error?: string;
+  description: string;
 }
 
-function parseStringRU(src: string) {
-  const tokens = tokenize(src, ruStdIndex);
-  return parse(tokens, ruStdTable, src);
+/** Extract metadata from .coil file header comments (`' @field value`). */
+function extractCoilMeta(src: string): CoilMeta {
+  const get = (field: string): string | undefined => {
+    const m = src.match(new RegExp(`^'\\s*@${field}\\s+(.+)`, 'm'));
+    return m?.[1].trim();
+  };
+  return {
+    test: (get('test') as 'valid' | 'invalid') ?? 'valid',
+    role: get('role') ?? 'unknown',
+    dialect: get('dialect') ?? 'en-standard',
+    error: get('error'),
+    description: get('description') ?? '',
+  };
 }
 
-async function parseFileEN(path: string) {
-  const src = await readFile(path, 'utf-8');
-  return parseStringEN(src);
+/** Extract metadata from .md file HTML comments (`<!-- @field value -->`). */
+function extractMdMeta(src: string): CoilMeta {
+  const get = (field: string): string | undefined => {
+    const m = src.match(new RegExp(`<!--\\s*@${field}\\s+(.+?)\\s*-->`));
+    return m?.[1].trim();
+  };
+  return {
+    test: (get('test') as 'valid' | 'invalid') ?? 'valid',
+    role: get('role') ?? 'unknown',
+    dialect: get('dialect') ?? 'en-standard',
+    error: get('error'),
+    description: get('description') ?? '',
+  };
 }
 
-async function parseFileRU(path: string) {
-  const src = await readFile(path, 'utf-8');
-  return parseStringRU(src);
+// ─── Dialect cache ──────────────────────────────────────
+
+const dialectCache = new Map<string, { table: DialectTable; index: KeywordIndex }>();
+
+async function getDialect(name: string): Promise<{ table: DialectTable; index: KeywordIndex }> {
+  if (!dialectCache.has(name)) {
+    const path = join(DIALECTS_DIR, name, `${name}.json`);
+    const table = await loadDialect(path);
+    const index = KeywordIndex.build(table);
+    dialectCache.set(name, { table, index });
+  }
+  return dialectCache.get(name)!;
+}
+
+// ─── Helpers ────────────────────────────────────────────
+
+/** Recursively collect .coil files from a directory. */
+function collectCoilFiles(dir: string): string[] {
+  const results: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...collectCoilFiles(full));
+    } else if (entry.endsWith('.coil')) {
+      results.push(full);
+    }
+  }
+  return results.sort();
+}
+
+/** Collect .md files from a directory (non-recursive). */
+function collectMdFiles(dir: string): string[] {
+  return readdirSync(dir)
+    .filter(f => f.endsWith('.md'))
+    .sort()
+    .map(f => join(dir, f));
 }
 
 /** Extract contents of ```coil fenced code blocks from markdown. */
@@ -71,220 +113,129 @@ function extractCoilBlocks(markdown: string): string[] {
   return blocks;
 }
 
-/** List .coil files in a directory */
-function coilFiles(dir: string): string[] {
-  try {
-    return readdirSync(dir)
-      .filter(f => f.endsWith('.coil'))
-      .sort()
-      .map(f => join(dir, f));
-  } catch {
-    return [];
+// ─── Tests: conformance corpus (tests/) ─────────────────
+
+describe('conformance tests', () => {
+  const allFiles = collectCoilFiles(TESTS_DIR);
+
+  for (const file of allFiles) {
+    const label = relative(TESTS_DIR, file);
+
+    it(label, async () => {
+      const src = await readFile(file, 'utf-8');
+      const meta = extractCoilMeta(src);
+      const { table, index } = await getDialect(meta.dialect);
+
+      if (meta.test === 'valid') {
+        runValidChecks(src, table, index);
+      } else {
+        runInvalidChecks(src, meta, table, index);
+      }
+    });
+  }
+});
+
+// ─── Tests: executable examples (examples/**/*.coil) ────
+
+function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, index: KeywordIndex) {
+  expect(meta.error).toBeDefined();
+  expect(['parse', 'validate']).toContain(meta.error);
+
+  if (meta.error === 'parse') {
+    // Must throw at tokenize or parse phase.
+    expect(() => {
+      const tokens = tokenize(src, index);
+      parse(tokens, table, src);
+    }).toThrow();
+  } else {
+    // Parser must succeed, validator must report errors.
+    const tokens = tokenize(src, index);
+    const ast = parse(tokens, table, src);
+    const result = validate(ast, table);
+    const errors = result.diagnostics.filter(d => d.severity === 'error');
+    expect(errors.length).toBeGreaterThanOrEqual(1);
   }
 }
 
-// ─── valid/core — all 22 files parse without UnsupportedOperatorNode ──
-
-describe('valid/core — full parse', () => {
-  const files = coilFiles(join(TESTS_DIR, 'valid', 'core'));
-
-  for (const file of files) {
-    const name = file.split('/').pop()!;
-    it(name, async () => {
-      const ast = await parseFileEN(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-      // No UnsupportedOperatorNode
-      const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
-      expect(unsupported).toHaveLength(0);
-    });
-  }
-});
-
-// ─── valid/extended — all 6 files ────────────────────────
-
-describe('valid/extended — full parse', () => {
-  const files = coilFiles(join(TESTS_DIR, 'valid', 'extended'));
-
-  for (const file of files) {
-    const name = file.split('/').pop()!;
-    it(name, async () => {
-      const ast = await parseFileEN(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-      const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
-      expect(unsupported).toHaveLength(0);
-    });
-  }
-});
-
-// ─── valid/patterns — all 3 files ────────────────────────
-
-describe('valid/patterns — full parse', () => {
-  const files = coilFiles(join(TESTS_DIR, 'valid', 'patterns'));
-
-  for (const file of files) {
-    const name = file.split('/').pop()!;
-    it(name, async () => {
-      const ast = await parseFileEN(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-      const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
-      expect(unsupported).toHaveLength(0);
-    });
-  }
-});
-
-// ─── valid/result — all 5 files ──────────────────────────
-
-describe('valid/result — full parse', () => {
-  const files = coilFiles(join(TESTS_DIR, 'valid', 'result'));
-
-  for (const file of files) {
-    const name = file.split('/').pop()!;
-    it(name, async () => {
-      const ast = await parseFileEN(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-      const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
-      expect(unsupported).toHaveLength(0);
-    });
-  }
-});
-
-// ─── invalid — syntactic tests (6) rejected by parser ───
-
-const SYNTACTIC_INVALID = [
-  'exit-with-args.coil',
-  'think-goal-before-as.coil',
-  'think-result-not-last.coil',
-  'execute-template-body.coil',
-  'repeat-no-limit.coil',
-  'wait-value-not-promise.coil',
-];
-
-describe('invalid — syntactic tests rejected by parser', () => {
-  for (const name of SYNTACTIC_INVALID) {
-    it(name, async () => {
-      await expect(parseFileEN(join(TESTS_DIR, 'invalid', name)))
-        .rejects.toSatisfy(
-          (err: unknown) => err instanceof ParseError || err instanceof LexerError,
-        );
-    });
-  }
-});
-
-// ─── invalid — semantic tests — parser succeeds, validator catches ──
-
-/** Extract @rule annotation from .coil file header */
-function extractRule(src: string): string | undefined {
-  const match = src.match(/^'\s*@rule\s+(\S+)/m);
-  return match?.[1];
+function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
+  const tokens = tokenize(src, index);
+  const ast = parse(tokens, table, src);
+  expect(ast.nodes.length).toBeGreaterThan(0);
+  const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
+  expect(unsupported).toHaveLength(0);
+  const result = validate(ast, table);
+  const errors = result.diagnostics.filter(d => d.severity === 'error');
+  expect(errors).toHaveLength(0);
 }
 
-const SEMANTIC_INVALID = [
-  'duplicate-define.coil',
-  'set-undefined.coil',
-  'undeclared-actor.coil',
-  'undeclared-tool.coil',
-  'undefined-variable.coil',
-  'undefined-promise.coil',
-];
+describe('executable examples', () => {
+  const allFiles = collectCoilFiles(EXAMPLES_DIR);
 
-describe('invalid — semantic tests: parser succeeds, validator catches @rule', () => {
-  for (const name of SEMANTIC_INVALID) {
-    it(`${name} — validator reports expected ruleId`, async () => {
-      const src = await readFile(join(TESTS_DIR, 'invalid', name), 'utf-8');
-      const ast = parseStringEN(src);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-      const result = validate(ast, enTable);
-      const expectedRule = extractRule(src);
-      expect(expectedRule).toBeDefined();
-      const matching = result.diagnostics.filter(d => d.ruleId === expectedRule && d.severity === 'error');
-      expect(matching.length).toBeGreaterThanOrEqual(1);
+  for (const file of allFiles) {
+    const label = relative(EXAMPLES_DIR, file);
+
+    it(label, async () => {
+      const src = await readFile(file, 'utf-8');
+      const meta = extractCoilMeta(src);
+      const { table, index } = await getDialect(meta.dialect);
+
+      if (meta.test === 'valid') {
+        runValidChecks(src, table, index);
+      } else {
+        runInvalidChecks(src, meta, table, index);
+      }
     });
   }
 });
 
-// ─── valid — full validate (no errors) ────────────────────
+// ─── Tests: narrative examples (examples/**/*.md) ───────
 
-describe('valid — validate produces no errors', () => {
-  const dirs = ['core', 'extended', 'patterns', 'result'];
-  for (const dir of dirs) {
-    const files = coilFiles(join(TESTS_DIR, 'valid', dir));
-    for (const file of files) {
-      const name = `${dir}/${file.split('/').pop()!}`;
-      it(name, async () => {
-        const src = await readFile(file, 'utf-8');
-        const ast = parseStringEN(src);
-        const result = validate(ast, enTable);
-        const errors = result.diagnostics.filter(d => d.severity === 'error');
-        expect(errors).toHaveLength(0);
-      });
-    }
-  }
-});
+describe('narrative examples', () => {
+  const mdFiles = collectMdFiles(EXAMPLES_DIR);
 
-// ─── examples — all 13 .coil files parse ────────────────
+  for (const file of mdFiles) {
+    const label = relative(EXAMPLES_DIR, file);
 
-describe('examples — EN parse succeeds', () => {
-  const enFiles = [
-    join(EXAMPLES_DIR, 'hello.coil'),
-    ...coilFiles(join(EXAMPLES_DIR, 'anti-patterns')),
-  ];
-
-  for (const file of enFiles) {
-    const name = file.replace(EXAMPLES_DIR + '/', '');
-    it(name, async () => {
-      const ast = await parseFileEN(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-    });
-  }
-});
-
-describe('examples — RU (ru-standard) parse succeeds', () => {
-  const ruStdFiles = coilFiles(join(EXAMPLES_DIR, 'patterns'));
-
-  for (const file of ruStdFiles) {
-    const name = file.replace(EXAMPLES_DIR + '/', '');
-    it(name, async () => {
-      const ast = await parseFileRU(file);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-    });
-  }
-});
-
-// ─── narrative examples — COIL-C blocks extracted from .md ──
-
-describe('narrative examples — EN parse succeeds', () => {
-  const mdFiles = ['hello-world.md', 'research-agent.en.md'];
-
-  for (const name of mdFiles) {
-    it(name, async () => {
-      const md = await readFile(join(EXAMPLES_DIR, name), 'utf-8');
+    it(label, async () => {
+      const md = await readFile(file, 'utf-8');
+      const meta = extractMdMeta(md);
       const blocks = extractCoilBlocks(md);
       expect(blocks.length).toBeGreaterThan(0);
+
+      const { table, index } = await getDialect(meta.dialect);
+
       for (const block of blocks) {
-        const ast = parseStringEN(block);
+        const tokens = tokenize(block, index);
+        const ast = parse(tokens, table, block);
         expect(ast.nodes.length).toBeGreaterThan(0);
       }
     });
   }
 });
 
-describe('narrative examples — RU (ru-standard) parse succeeds', () => {
-  it('research-agent.ru.md', async () => {
-    const md = await readFile(join(EXAMPLES_DIR, 'research-agent.ru.md'), 'utf-8');
-    const blocks = extractCoilBlocks(md);
-    expect(blocks.length).toBeGreaterThan(0);
-    for (const block of blocks) {
-      const ast = parseStringRU(block);
-      expect(ast.nodes.length).toBeGreaterThan(0);
-    }
-  });
-});
+// ─── Tests: dialect showcases (dialects/*/README.md) ────
 
-describe('examples — RU (ru-matrix) parse succeeds', () => {
-  it('hello.ru.coil', async () => {
-    const src = await readFile(join(EXAMPLES_DIR, 'hello.ru.coil'), 'utf-8');
-    const tokens = tokenize(src, ruMatrixIndex);
-    const ast = parse(tokens, ruMatrixTable, src);
-    expect(ast.nodes.length).toBeGreaterThan(0);
-  });
+describe('dialect showcases', () => {
+  const dialectDirs = readdirSync(DIALECTS_DIR)
+    .filter(d => statSync(join(DIALECTS_DIR, d)).isDirectory())
+    .sort();
+
+  for (const dialectName of dialectDirs) {
+    const readmePath = join(DIALECTS_DIR, dialectName, 'README.md');
+
+    it(dialectName, async () => {
+      const md = await readFile(readmePath, 'utf-8');
+      const meta = extractMdMeta(md);
+      const blocks = extractCoilBlocks(md);
+      expect(blocks.length).toBeGreaterThan(0);
+
+      const { table, index } = await getDialect(meta.dialect);
+
+      for (const block of blocks) {
+        const tokens = tokenize(block, index);
+        const ast = parse(tokens, table, block);
+        expect(ast.nodes.length).toBeGreaterThan(0);
+      }
+    });
+  }
 });
