@@ -1,4 +1,5 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/animata-systems/coil-runtime)
+[![CI](https://github.com/animata-systems/coil-runtime/actions/workflows/ci.yml/badge.svg)](https://github.com/animata-systems/coil-runtime/actions/workflows/ci.yml)
 
 # coil-runtime
 
