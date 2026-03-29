@@ -4009,6 +4009,4557 @@ exports[`conformance tests > valid/result/result-text.coil 1`] = `
 }
 `;
 
+exports[`dialect showcases > de-standard 1`] = `
+{
+  "dialect": "de-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Umgebung",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "experte",
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "suche",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Rollen — Expertenprofile für das LLM.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Welches Wissen und welchen Ansatz",
+    },
+    {
+      "kind": "Comment",
+      "text": "das LLM bei der Aufgabe einsetzen soll.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Du bist ein Research-Analyst.
+Du arbeitest mit unstrukturierten Anfragen.
+Du suchst immer nach Primärquellen und gibst
+den Grad deiner Sicherheit bei Schlussfolgerungen an.
+Du vermeidest Spekulationen.
+Wenn die Datenlage unzureichend ist — sagst du das direkt.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "recherche_skill",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Du kennst dich mit Produktanalyse aus.
+Du verstehst Retention, Activation und Churn.
+Du kannst Funnels und Kohortenberichte lesen.
+Bei der Analyse unterscheidest du immer zwischen
+Korrelation und Kausalität.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "fachkompetenz",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Eingabedaten — die Umgebung muss diese Werte",
+    },
+    {
+      "kind": "Comment",
+      "text": "liefern, bevor das Protokoll fortfährt.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "anfrage",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Nutzeranfrage zur Recherche.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "anfragenverlauf",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Verlauf früherer Anfragen zu diesem Thema.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "fall_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Kennung des aktuellen Falls.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Aufgabenstellung — wie ein mathematisches",
+    },
+    {
+      "kind": "Comment",
+      "text": "Problem strukturiert:",
+    },
+    {
+      "kind": "Comment",
+      "text": "ALS      — Rolle / Expertenprofil",
+    },
+    {
+      "kind": "Comment",
+      "text": "ZIEL     — was erreicht werden soll",
+    },
+    {
+      "kind": "Comment",
+      "text": "EINGABE  — Aufgabendaten",
+    },
+    {
+      "kind": "Comment",
+      "text": "KONTEXT  — Hintergrundinformationen",
+    },
+    {
+      "kind": "Comment",
+      "text": "ERGEBNIS — was bestimmt werden soll",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "DENKE läuft im Hintergrund. Erzeugt ein",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ergebnisversprechen ?analyse und einen",
+    },
+    {
+      "kind": "Comment",
+      "text": "Live-Strom ~analyse. Eingaben können",
+    },
+    {
+      "kind": "Comment",
+      "text": "während des Denkens über SIGNAL ergänzt werden.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "recherche_skill",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "fachkompetenz",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Anfrage: ",
+          },
+          {
+            "name": "anfrage",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Anfragenverlauf: ",
+          },
+          {
+            "name": "anfragenverlauf",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Eine fundierte Antwort mit Quellen vorbereiten.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Recherchiere die Nutzeranfrage. Berücksichtige
+  alle Daten, die während der Analyse über den
+  Strom eintreffen.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "analyse",
+      "result": [
+        {
+          "depth": 0,
+          "description": "endgültige Antwort",
+          "name": "antwort",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "herangezogene Referenzen",
+          "name": "quellen",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "Quellenlink",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "warum relevant",
+          "name": "warum",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "sicherheit",
+          "typeArgs": [
+            "hoch",
+            "mittel",
+            "niedrig",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Datenerhebung — parallel zum Denkprozess.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Suche und Expertenanfrage blockieren",
+    },
+    {
+      "kind": "Comment",
+      "text": "weder einander noch DENKE.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "anfrage",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "gefunden",
+      "tool": {
+        "name": "suche",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Brauche Expertenmeinung zur Anfrage: ",
+          },
+          {
+            "name": "anfrage",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "experte",
+      ],
+      "kind": "Op.Send",
+      "name": "meinung",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "beratung",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Eingaben während des Denkens ergänzen.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Daten treffen in beliebiger Reihenfolge ein —",
+    },
+    {
+      "kind": "Comment",
+      "text": "jedes Ergebnis fließt sofort in ~analyse ein.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Das LLM berücksichtigt es ohne Neustart.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "daten",
+          "on": [
+            {
+              "name": "gefunden",
+            },
+            {
+              "name": "meinung",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "daten",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "analyse",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. Die Analyse ist abgeschlossen.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Das Ergebnis berücksichtigt Ausgangsdaten,",
+    },
+    {
+      "kind": "Comment",
+      "text": "Suchergebnisse und Expertenfeedback.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analyse",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Antwort übermitteln.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "analyse",
+            "path": [
+              "antwort",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "autor",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "ergebnisse",
+          },
+          {
+            "kind": "dynamic",
+            "name": "fall_id",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > en-standard 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Environment",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "expert",
+        "author",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Roles — expert profiles for LLM.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Define the knowledge and approach",
+    },
+    {
+      "kind": "Comment",
+      "text": "the LLM should adopt for a task.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a research analyst.
+You work with unstructured queries.
+You always look for primary sources and indicate
+your confidence level in conclusions. You avoid speculation.
+If the data is insufficient — you say so directly.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "research_skill",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are well-versed in product analytics.
+You know retention, activation, and churn metrics.
+You can read funnels and cohort reports.
+When analyzing, you always distinguish between
+correlation and causation.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "domain_expertise",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Input data — the environment must provide",
+    },
+    {
+      "kind": "Comment",
+      "text": "values before the protocol continues.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "query",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+User query for research.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "request_history",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+History of previous requests on this topic.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "case_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Current case identifier.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Task definition — structured like a math problem:",
+    },
+    {
+      "kind": "Comment",
+      "text": "AS      — role / expert profile",
+    },
+    {
+      "kind": "Comment",
+      "text": "GOAL    — objective",
+    },
+    {
+      "kind": "Comment",
+      "text": "INPUT   — problem data",
+    },
+    {
+      "kind": "Comment",
+      "text": "CONTEXT — background info",
+    },
+    {
+      "kind": "Comment",
+      "text": "RESULT  — what to determine",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "THINK runs in the background. Creates a result",
+    },
+    {
+      "kind": "Comment",
+      "text": "promise ?analysis and a live stream ~analysis.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Input can be supplemented while thinking",
+    },
+    {
+      "kind": "Comment",
+      "text": "is in progress via SIGNAL.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "research_skill",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "domain_expertise",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Query: ",
+          },
+          {
+            "name": "query",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Request history: ",
+          },
+          {
+            "name": "request_history",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Prepare a well-grounded answer with sources.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Research the user's query. Incorporate any data
+  that arrives via the stream during analysis.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "final answer",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "references cited",
+          "name": "sources",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "reference link",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "why it is relevant",
+          "name": "why",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "confidence",
+          "typeArgs": [
+            "high",
+            "medium",
+            "low",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Data collection — parallel to reasoning.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Search and expert request block",
+    },
+    {
+      "kind": "Comment",
+      "text": "neither each other nor THINK.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "query",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "found",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Need expertise on query: ",
+          },
+          {
+            "name": "query",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "expert",
+      ],
+      "kind": "Op.Send",
+      "name": "opinion",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "consultations",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Supplementing input while thinking.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Data arrives in arbitrary order —",
+    },
+    {
+      "kind": "Comment",
+      "text": "each result is fed into ~analysis immediately.",
+    },
+    {
+      "kind": "Comment",
+      "text": "The LLM incorporates it without restarting.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "data",
+          "on": [
+            {
+              "name": "found",
+            },
+            {
+              "name": "opinion",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "data",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "analysis",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. Analysis is complete.",
+    },
+    {
+      "kind": "Comment",
+      "text": "The result incorporates initial data,",
+    },
+    {
+      "kind": "Comment",
+      "text": "search results, and expert feedback.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Deliver the answer.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "analysis",
+            "path": [
+              "answer",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "author",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "results",
+          },
+          {
+            "kind": "dynamic",
+            "name": "case_id",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > es-standard 1`] = `
+{
+  "dialect": "es-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Entorno",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "experto",
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "búsqueda",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Roles — perfiles de experiencia para el LLM.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Qué conocimientos y enfoque debe adoptar",
+    },
+    {
+      "kind": "Comment",
+      "text": "el LLM para la tarea.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Eres un analista investigador.
+Trabajas con consultas no estructuradas.
+Siempre buscas fuentes primarias e indicas
+tu grado de confianza en las conclusiones.
+Evitas las especulaciones.
+Si los datos son insuficientes — lo dices directamente.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "competencia_investigación",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Dominas el análisis de producto.
+Conoces las métricas de retención, activación y abandono.
+Sabes leer embudos e informes de cohorte.
+Al analizar, siempre distingues entre
+correlación y causalidad.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "experiencia_dominio",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Datos de entrada — el entorno debe proporcionar",
+    },
+    {
+      "kind": "Comment",
+      "text": "estos valores antes de que el protocolo continúe.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "consulta",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Consulta del usuario para la investigación.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "historial",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Historial de consultas anteriores sobre este tema.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "caso_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Identificador del caso actual.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Enunciado de la tarea — estructurado como",
+    },
+    {
+      "kind": "Comment",
+      "text": "un problema matemático:",
+    },
+    {
+      "kind": "Comment",
+      "text": "COMO      — rol / perfil de experto",
+    },
+    {
+      "kind": "Comment",
+      "text": "OBJETIVO  — qué queremos lograr",
+    },
+    {
+      "kind": "Comment",
+      "text": "ENTRADA   — datos del problema",
+    },
+    {
+      "kind": "Comment",
+      "text": "CONTEXTO  — información de fondo",
+    },
+    {
+      "kind": "Comment",
+      "text": "RESULTADO — qué hay que determinar",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "PIENSA se ejecuta en segundo plano. Crea una",
+    },
+    {
+      "kind": "Comment",
+      "text": "promesa de resultado ?análisis y un flujo",
+    },
+    {
+      "kind": "Comment",
+      "text": "en vivo ~análisis. Las entradas pueden",
+    },
+    {
+      "kind": "Comment",
+      "text": "complementarse durante la reflexión vía SEÑAL.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "competencia_investigación",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "experiencia_dominio",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Consulta: ",
+          },
+          {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Historial: ",
+          },
+          {
+            "name": "historial",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Preparar una respuesta fundamentada con fuentes.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Investiga la consulta del usuario. Incorpora
+  todos los datos que lleguen por el flujo
+  durante el análisis.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "análisis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "respuesta final",
+          "name": "respuesta",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "referencias citadas",
+          "name": "fuentes",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "enlace de la fuente",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "por qué es relevante",
+          "name": "porqué",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "confianza",
+          "typeArgs": [
+            "alta",
+            "media",
+            "baja",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Recopilación de datos — en paralelo con",
+    },
+    {
+      "kind": "Comment",
+      "text": "la reflexión. La búsqueda y la consulta",
+    },
+    {
+      "kind": "Comment",
+      "text": "al experto no se bloquean mutuamente",
+    },
+    {
+      "kind": "Comment",
+      "text": "ni bloquean PIENSA.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "encontrado",
+      "tool": {
+        "name": "búsqueda",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Necesito opinión experta sobre la consulta: ",
+          },
+          {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "experto",
+      ],
+      "kind": "Op.Send",
+      "name": "opinión",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "consultas",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Complementar entradas durante la reflexión.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Los datos llegan en orden arbitrario —",
+    },
+    {
+      "kind": "Comment",
+      "text": "cada resultado se inyecta en ~análisis",
+    },
+    {
+      "kind": "Comment",
+      "text": "de inmediato. El LLM lo incorpora",
+    },
+    {
+      "kind": "Comment",
+      "text": "sin reiniciarse.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "datos",
+          "on": [
+            {
+              "name": "encontrado",
+            },
+            {
+              "name": "opinión",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "datos",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "análisis",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. El análisis está completo.",
+    },
+    {
+      "kind": "Comment",
+      "text": "El resultado incorpora los datos iniciales,",
+    },
+    {
+      "kind": "Comment",
+      "text": "los resultados de búsqueda y la opinión",
+    },
+    {
+      "kind": "Comment",
+      "text": "del experto.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "análisis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Entregar la respuesta.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "análisis",
+            "path": [
+              "respuesta",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "autor",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "resultados",
+          },
+          {
+            "kind": "dynamic",
+            "name": "caso_id",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > fr-standard 1`] = `
+{
+  "dialect": "fr-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Environnement",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "expert",
+        "auteur",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "recherche",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Rôles — profils d'expertise pour le LLM.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Quelles connaissances et quelle approche",
+    },
+    {
+      "kind": "Comment",
+      "text": "le LLM doit adopter pour la tâche.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Tu es un analyste-chercheur.
+Tu travailles avec des requêtes non structurées.
+Tu cherches toujours les sources primaires et indiques
+ton degré de confiance dans tes conclusions.
+Tu évites les spéculations.
+Si les données sont insuffisantes — tu le dis clairement.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "compétence_recherche",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Tu maîtrises l'analyse produit.
+Tu connais les métriques de rétention, d'activation et de churn.
+Tu sais lire les funnels et les rapports de cohorte.
+Dans ton analyse, tu distingues toujours
+la corrélation de la causalité.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "expertise_domaine",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Données d'entrée — l'environnement doit fournir",
+    },
+    {
+      "kind": "Comment",
+      "text": "ces valeurs avant que le protocole ne continue.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "requête",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Requête utilisateur pour la recherche.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "historique",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Historique des requêtes précédentes sur ce sujet.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "dossier_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Identifiant du dossier en cours.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Énoncé de la tâche — structuré comme un",
+    },
+    {
+      "kind": "Comment",
+      "text": "problème de mathématiques :",
+    },
+    {
+      "kind": "Comment",
+      "text": "COMME    — rôle / profil d'expert",
+    },
+    {
+      "kind": "Comment",
+      "text": "OBJECTIF — ce que l'on veut atteindre",
+    },
+    {
+      "kind": "Comment",
+      "text": "ENTRÉE   — données du problème",
+    },
+    {
+      "kind": "Comment",
+      "text": "CONTEXTE — informations de fond",
+    },
+    {
+      "kind": "Comment",
+      "text": "RÉSULTAT — ce qu'il faut déterminer",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "PENSE s'exécute en arrière-plan. Crée une",
+    },
+    {
+      "kind": "Comment",
+      "text": "promesse de résultat ?analyse et un flux",
+    },
+    {
+      "kind": "Comment",
+      "text": "en direct ~analyse. Les entrées peuvent être",
+    },
+    {
+      "kind": "Comment",
+      "text": "complétées pendant la réflexion via SIGNAL.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "compétence_recherche",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "expertise_domaine",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Requête : ",
+          },
+          {
+            "name": "requête",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Historique : ",
+          },
+          {
+            "name": "historique",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Préparer une réponse fondée avec des sources.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Recherche la requête de l'utilisateur. Intègre
+  toutes les données qui arrivent via le flux
+  pendant l'analyse.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "analyse",
+      "result": [
+        {
+          "depth": 0,
+          "description": "réponse finale",
+          "name": "réponse",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "références citées",
+          "name": "sources",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "lien de la source",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "en quoi c'est pertinent",
+          "name": "pourquoi",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "confiance",
+          "typeArgs": [
+            "haute",
+            "moyenne",
+            "faible",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Collecte de données — en parallèle avec",
+    },
+    {
+      "kind": "Comment",
+      "text": "la réflexion. La recherche et la demande",
+    },
+    {
+      "kind": "Comment",
+      "text": "d'avis ne bloquent ni l'une l'autre ni PENSE.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "requête",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "trouvé",
+      "tool": {
+        "name": "recherche",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Besoin d'un avis d'expert sur la requête : ",
+          },
+          {
+            "name": "requête",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "expert",
+      ],
+      "kind": "Op.Send",
+      "name": "avis",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "consultations",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Compléter les entrées pendant la réflexion.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Les données arrivent dans un ordre quelconque —",
+    },
+    {
+      "kind": "Comment",
+      "text": "chaque résultat est injecté dans ~analyse",
+    },
+    {
+      "kind": "Comment",
+      "text": "immédiatement. Le LLM l'intègre sans redémarrer.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "données",
+          "on": [
+            {
+              "name": "trouvé",
+            },
+            {
+              "name": "avis",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "données",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "analyse",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. L'analyse est terminée.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Le résultat intègre les données initiales,",
+    },
+    {
+      "kind": "Comment",
+      "text": "les résultats de recherche et l'avis d'expert.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analyse",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Transmettre la réponse.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "analyse",
+            "path": [
+              "réponse",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "auteur",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "résultats",
+          },
+          {
+            "kind": "dynamic",
+            "name": "dossier_id",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > ja-standard 1`] = `
+{
+  "dialect": "ja-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "環境",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "専門家",
+        "著者",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "検索",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "役割 —— LLMの専門的背景。",
+    },
+    {
+      "kind": "Comment",
+      "text": "定義 は、LLMが課題に取り組む際に",
+    },
+    {
+      "kind": "Comment",
+      "text": "備えるべき知識と手法を設定する。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+あなたは調査アナリストです。
+構造化されていない問い合わせを処理します。
+常に一次資料を探し、結論の確信度を明示します。
+推測を避けます。
+データが不足している場合は、その旨を率直に述べます。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "調査技能",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+あなたはプロダクト分析の専門家です。
+リテンション、アクティベーション、チャーン指標に精通しています。
+ファネル図とコホートレポートを解読できます。
+分析に際し、相関と因果の区別を常に行います。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "領域専門性",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "入力データ —— プロトコルが続行する前に、",
+    },
+    {
+      "kind": "Comment",
+      "text": "環境がこれらの値を提供しなければならない。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "問い合わせ",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+ユーザーの調査に関する問い合わせ。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "問い合わせ履歴",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+このテーマに関する過去の問い合わせ記録。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "案件番号",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+現在の案件の識別子。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. 課題設定 —— 数学の問題に似た構造：",
+    },
+    {
+      "kind": "Comment",
+      "text": "として —— 役割 / 専門的背景",
+    },
+    {
+      "kind": "Comment",
+      "text": "目標   —— 達成したいこと",
+    },
+    {
+      "kind": "Comment",
+      "text": "入力   —— 問題データ",
+    },
+    {
+      "kind": "Comment",
+      "text": "背景   —— 背景情報",
+    },
+    {
+      "kind": "Comment",
+      "text": "結果   —— 確定すべき項目",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "思考 はバックグラウンドで動く。結果の約束",
+    },
+    {
+      "kind": "Comment",
+      "text": "?分析 とリアルタイムストリーム ~分析 を生成する。",
+    },
+    {
+      "kind": "Comment",
+      "text": "思考 の途中で 信号 により入力を追加できる。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "調査技能",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "領域専門性",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  問い合わせ：",
+          },
+          {
+            "name": "問い合わせ",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  問い合わせ履歴：",
+          },
+          {
+            "name": "問い合わせ履歴",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  裏付けのある回答を準備する。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ユーザーの問い合わせを調査する。分析中に
+  ストリーム経由で届くすべてのデータを考慮に入れる。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "分析",
+      "result": [
+        {
+          "depth": 0,
+          "description": "最終的な回答",
+          "name": "回答",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "引用した参考資料",
+          "name": "出典",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "出典のURL",
+          "name": "リンク",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "なぜ関連するか",
+          "name": "理由",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "確信度",
+          "typeArgs": [
+            "高",
+            "中",
+            "低",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. データ収集 —— 思考と並行して実行。",
+    },
+    {
+      "kind": "Comment",
+      "text": "検索と専門家への依頼は互いにブロックせず、",
+    },
+    {
+      "kind": "Comment",
+      "text": "思考もブロックしない。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "問い合わせ",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "検索結果",
+      "tool": {
+        "name": "検索",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  この問い合わせについて専門家の意見を求めます：",
+          },
+          {
+            "name": "問い合わせ",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "専門家",
+      ],
+      "kind": "Op.Send",
+      "name": "意見",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "相談",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. 思考の途中で入力を補充する。",
+    },
+    {
+      "kind": "Comment",
+      "text": "データは任意の順序で届く——",
+    },
+    {
+      "kind": "Comment",
+      "text": "各結果は即座に ~分析 に注入される。",
+    },
+    {
+      "kind": "Comment",
+      "text": "LLMは再起動なしに新データを取り込む。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "データ",
+          "on": [
+            {
+              "name": "検索結果",
+            },
+            {
+              "name": "意見",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "データ",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "分析",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. 分析完了。",
+    },
+    {
+      "kind": "Comment",
+      "text": "結果には初期データ、検索結果、",
+    },
+    {
+      "kind": "Comment",
+      "text": "専門家の意見が統合されている。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "分析",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. 回答を届ける。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "分析",
+            "path": [
+              "回答",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "著者",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "結果",
+          },
+          {
+            "kind": "dynamic",
+            "name": "案件番号",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > pt-br-standard 1`] = `
+{
+  "dialect": "pt-br-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ambiente",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "especialista",
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "busca",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Papéis — perfis de expertise para o LLM.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Que conhecimentos e abordagem o LLM",
+    },
+    {
+      "kind": "Comment",
+      "text": "deve adotar para a tarefa.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Você é um analista pesquisador.
+Trabalha com consultas não estruturadas.
+Sempre busca fontes primárias e indica
+o grau de confiança nas conclusões.
+Evita especulações.
+Se os dados são insuficientes — diz isso diretamente.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "competência_pesquisa",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Você domina análise de produto.
+Conhece métricas de retenção, ativação e churn.
+Sabe ler funis e relatórios de coorte.
+Na análise, sempre distingue entre
+correlação e causalidade.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "expertise_domínio",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Dados de entrada — o ambiente deve fornecer",
+    },
+    {
+      "kind": "Comment",
+      "text": "esses valores antes que o protocolo continue.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "consulta",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Consulta do usuário para pesquisa.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "histórico",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Histórico de consultas anteriores sobre o tema.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "caso_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Identificador do caso atual.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Enunciado da tarefa — estruturado como",
+    },
+    {
+      "kind": "Comment",
+      "text": "um problema de matemática:",
+    },
+    {
+      "kind": "Comment",
+      "text": "COMO      — papel / perfil de especialista",
+    },
+    {
+      "kind": "Comment",
+      "text": "OBJETIVO  — o que queremos alcançar",
+    },
+    {
+      "kind": "Comment",
+      "text": "ENTRADA   — dados do problema",
+    },
+    {
+      "kind": "Comment",
+      "text": "CONTEXTO  — informações de fundo",
+    },
+    {
+      "kind": "Comment",
+      "text": "RESULTADO — o que precisa ser determinado",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "PENSE roda em segundo plano. Cria uma",
+    },
+    {
+      "kind": "Comment",
+      "text": "promessa de resultado ?análise e um fluxo",
+    },
+    {
+      "kind": "Comment",
+      "text": "ao vivo ~análise. As entradas podem ser",
+    },
+    {
+      "kind": "Comment",
+      "text": "complementadas durante a reflexão via SINAL.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "competência_pesquisa",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "expertise_domínio",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Consulta: ",
+          },
+          {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Histórico: ",
+          },
+          {
+            "name": "histórico",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Preparar uma resposta fundamentada com fontes.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Pesquise a consulta do usuário. Incorpore
+  todos os dados que chegarem pelo fluxo
+  durante a análise.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "análise",
+      "result": [
+        {
+          "depth": 0,
+          "description": "resposta final",
+          "name": "resposta",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "referências citadas",
+          "name": "fontes",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "link da fonte",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "por que é relevante",
+          "name": "porquê",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "confiança",
+          "typeArgs": [
+            "alta",
+            "média",
+            "baixa",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Coleta de dados — em paralelo com",
+    },
+    {
+      "kind": "Comment",
+      "text": "a reflexão. A busca e o pedido ao",
+    },
+    {
+      "kind": "Comment",
+      "text": "especialista não bloqueiam um ao outro",
+    },
+    {
+      "kind": "Comment",
+      "text": "nem bloqueiam PENSE.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "encontrado",
+      "tool": {
+        "name": "busca",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Preciso de opinião especializada sobre a consulta: ",
+          },
+          {
+            "name": "consulta",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "especialista",
+      ],
+      "kind": "Op.Send",
+      "name": "opinião",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "consultas",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Complementar entradas durante a reflexão.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Os dados chegam em ordem arbitrária —",
+    },
+    {
+      "kind": "Comment",
+      "text": "cada resultado é injetado em ~análise",
+    },
+    {
+      "kind": "Comment",
+      "text": "imediatamente. O LLM incorpora sem",
+    },
+    {
+      "kind": "Comment",
+      "text": "reiniciar.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "dados",
+          "on": [
+            {
+              "name": "encontrado",
+            },
+            {
+              "name": "opinião",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "dados",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "análise",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. A análise está completa.",
+    },
+    {
+      "kind": "Comment",
+      "text": "O resultado incorpora os dados iniciais,",
+    },
+    {
+      "kind": "Comment",
+      "text": "os resultados da busca e a opinião",
+    },
+    {
+      "kind": "Comment",
+      "text": "do especialista.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "análise",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Entregar a resposta.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "análise",
+            "path": [
+              "resposta",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "autor",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "resultados",
+          },
+          {
+            "kind": "dynamic",
+            "name": "caso_id",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > ru-standard 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Окружение",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "эксперт",
+        "автор",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "поиск",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Скиллы — квалификация решателя.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Определяем, какими знаниями и подходом",
+    },
+    {
+      "kind": "Comment",
+      "text": "должна обладать LLM при решении задачи.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты — аналитик-исследователь.
+Работаешь с неструктурированными запросами.
+Всегда ищешь первоисточники и указываешь
+степень уверенности в выводах. Избегаешь спекуляций.
+Если данных недостаточно — говоришь об этом прямо.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "research_skill",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты разбираешься в продуктовой аналитике.
+Знаешь метрики retention, activation, churn.
+Умеешь читать воронки и когортные отчёты.
+При анализе всегда разделяешь корреляцию
+и причинно-следственную связь.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "domain_expertise",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Входные данные — среда обязана предоставить",
+    },
+    {
+      "kind": "Comment",
+      "text": "значения, прежде чем протокол продолжится.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "запрос",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Запрос пользователя для исследования.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "история_обращений",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+История предыдущих обращений по этой теме.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "кейс",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Идентификатор текущего кейса.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Постановка задачи — как в математике:",
+    },
+    {
+      "kind": "Comment",
+      "text": "КАК      — квалификация решателя",
+    },
+    {
+      "kind": "Comment",
+      "text": "ЦЕЛЬ     — зачем решаем",
+    },
+    {
+      "kind": "Comment",
+      "text": "ВХОД     — условие задачи",
+    },
+    {
+      "kind": "Comment",
+      "text": "КОНТЕКСТ — дополнительные данные",
+    },
+    {
+      "kind": "Comment",
+      "text": "РЕЗУЛЬТАТ — что найти",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "ДУМАЙ запускается в фоне. Создаёт обещание",
+    },
+    {
+      "kind": "Comment",
+      "text": "?анализ и поток ~анализ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Условия можно дополнять во время решения",
+    },
+    {
+      "kind": "Comment",
+      "text": "через СИГНАЛ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "research_skill",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "domain_expertise",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Запрос: ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  История обращений: ",
+          },
+          {
+            "name": "история_обращений",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Подготовить обоснованный ответ с источниками.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Исследуй запрос пользователя. Учитывай все данные,
+  которые поступят в процессе через поток.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "анализ",
+      "result": [
+        {
+          "depth": 0,
+          "description": "итоговый ответ",
+          "name": "ответ",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "использованные материалы",
+          "name": "источники",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "ссылка",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "почему релевантен",
+          "name": "why",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "уверенность",
+          "typeArgs": [
+            "высокая",
+            "средняя",
+            "низкая",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Сбор данных — параллельно с размышлением.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Поиск и запрос эксперту не блокируют",
+    },
+    {
+      "kind": "Comment",
+      "text": "ни друг друга, ни ДУМАЙ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "найденное",
+      "tool": {
+        "name": "поиск",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Нужна экспертиза по запросу: ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "эксперт",
+      ],
+      "kind": "Op.Send",
+      "name": "мнение",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "консультации",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Дополнение условий во время решения.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Данные приходят в произвольном порядке —",
+    },
+    {
+      "kind": "Comment",
+      "text": "каждый результат сразу попадает в ~анализ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "LLM учитывает их без перезапуска.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "данные",
+          "on": [
+            {
+              "name": "найденное",
+            },
+            {
+              "name": "мнение",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "данные",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "анализ",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. Решение готово.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Анализ учёл исходные данные,",
+    },
+    {
+      "kind": "Comment",
+      "text": "результаты поиска и мнение эксперта.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "анализ",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Ответ автору запроса.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "анализ",
+            "path": [
+              "ответ",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "автор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "результаты",
+          },
+          {
+            "kind": "dynamic",
+            "name": "кейс",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`dialect showcases > zh-standard 1`] = `
+{
+  "dialect": "zh-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "环境",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "专家",
+        "作者",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "搜索",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "角色 —— LLM 的专业背景。",
+    },
+    {
+      "kind": "Comment",
+      "text": "定义 LLM 在执行任务时应具备的",
+    },
+    {
+      "kind": "Comment",
+      "text": "知识和方法。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+你是一名研究分析师。
+你处理非结构化查询。
+你始终寻找一手资料，并标明
+结论的可信度。你避免推测。
+如果数据不足——你直说。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "研究技能",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+你精通产品分析。
+你了解留存、激活和流失指标。
+你能解读漏斗图和队列报告。
+分析时，你始终区分
+相关性和因果关系。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "领域专长",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "输入数据 —— 环境必须在协议继续之前",
+    },
+    {
+      "kind": "Comment",
+      "text": "提供这些值。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "查询",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+用户的研究查询。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "查询历史",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+该主题的历史查询记录。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "案例编号",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+当前案例的标识符。
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. 任务陈述 —— 结构类似数学题：",
+    },
+    {
+      "kind": "Comment",
+      "text": "作为   —— 角色 / 专家背景",
+    },
+    {
+      "kind": "Comment",
+      "text": "目标   —— 想要达成什么",
+    },
+    {
+      "kind": "Comment",
+      "text": "输入   —— 问题数据",
+    },
+    {
+      "kind": "Comment",
+      "text": "背景   —— 背景信息",
+    },
+    {
+      "kind": "Comment",
+      "text": "结果   —— 需要确定什么",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "思考 在后台运行。创建结果承诺",
+    },
+    {
+      "kind": "Comment",
+      "text": "?分析 和实时流 ~分析。",
+    },
+    {
+      "kind": "Comment",
+      "text": "输入可以在思考过程中通过 信号 补充。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "研究技能",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "领域专长",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  查询：",
+          },
+          {
+            "name": "查询",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  查询历史：",
+          },
+          {
+            "name": "查询历史",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  准备一份有据可查的回答。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  研究用户的查询。将分析过程中
+  通过流到达的所有数据纳入考量。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "分析",
+      "result": [
+        {
+          "depth": 0,
+          "description": "最终回答",
+          "name": "回答",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "引用的参考资料",
+          "name": "来源",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "来源链接",
+          "name": "链接",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "为什么相关",
+          "name": "原因",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "置信度",
+          "typeArgs": [
+            "高",
+            "中",
+            "低",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. 数据收集 —— 与思考并行。",
+    },
+    {
+      "kind": "Comment",
+      "text": "搜索和专家请求互不阻塞，",
+    },
+    {
+      "kind": "Comment",
+      "text": "也不阻塞 思考。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "查询",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "已找到",
+      "tool": {
+        "name": "搜索",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  需要关于此查询的专家意见：",
+          },
+          {
+            "name": "查询",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "专家",
+      ],
+      "kind": "Op.Send",
+      "name": "意见",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "咨询",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. 在思考过程中补充输入。",
+    },
+    {
+      "kind": "Comment",
+      "text": "数据以任意顺序到达——",
+    },
+    {
+      "kind": "Comment",
+      "text": "每个结果立即注入 ~分析。",
+    },
+    {
+      "kind": "Comment",
+      "text": "LLM 无需重启即可纳入。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "数据",
+          "on": [
+            {
+              "name": "已找到",
+            },
+            {
+              "name": "意见",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "数据",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "分析",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. 分析完成。",
+    },
+    {
+      "kind": "Comment",
+      "text": "结果综合了初始数据、",
+    },
+    {
+      "kind": "Comment",
+      "text": "搜索结果和专家意见。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "分析",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. 交付回答。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "分析",
+            "path": [
+              "回答",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "作者",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "结果",
+          },
+          {
+            "kind": "dynamic",
+            "name": "案例编号",
+            "path": [],
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`executable examples > anti-patterns/missing-wait.coil 1`] = `
 {
   "dialect": "ru-standard",
@@ -7456,6 +12007,546 @@ exports[`executable examples > patterns/routing.coil 1`] = `
       "replyTo": null,
       "timeout": null,
       "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`narrative examples > research-agent.md 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Среда",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "эксперт",
+        "автор",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "поиск",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Скиллы — квалификация решателя.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Определяют, какими знаниями и подходом",
+    },
+    {
+      "kind": "Comment",
+      "text": "должен обладать LLM при решении задачи.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты — аналитик-исследователь.
+Работаешь с неструктурированными запросами.
+Всегда ищешь первоисточники и указываешь степень
+уверенности в выводах. Избегаешь спекуляций.
+Если данных недостаточно — говоришь об этом прямо.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "скилл_исследователя",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты разбираешься в продуктовой аналитике.
+Знаешь метрики retention, activation, churn.
+Умеешь читать воронки и когортные отчёты.
+При анализе всегда разделяешь корреляцию
+и причинно-следственную связь.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "доменная_экспертиза",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Входные данные — среда обязана предоставить",
+    },
+    {
+      "kind": "Comment",
+      "text": "значения до продолжения протокола.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "запрос",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Запрос пользователя для исследования.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "история_обращений",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+История предыдущих обращений по этой теме.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "кейс",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Идентификатор текущего кейса.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "1. Постановка задачи.",
+    },
+    {
+      "kind": "Comment",
+      "text": "ДУМАЙ работает в фоне. Создаёт обещание",
+    },
+    {
+      "kind": "Comment",
+      "text": "результата ?анализ и живой поток ~анализ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Условие задачи можно дополнять по ходу",
+    },
+    {
+      "kind": "Comment",
+      "text": "решения через СИГНАЛ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "скилл_исследователя",
+          "path": [],
+          "type": "ref",
+        },
+        {
+          "name": "доменная_экспертиза",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Запрос: ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  История обращений: ",
+          },
+          {
+            "name": "история_обращений",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Подготовить обоснованный ответ с источниками.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Исследуй запрос пользователя. Учитывай все данные,
+  которые поступят в процессе через поток.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "анализ",
+      "result": [
+        {
+          "depth": 0,
+          "description": "итоговый ответ",
+          "name": "ответ",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "использованные материалы",
+          "name": "источники",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "ссылка",
+          "name": "ref",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "почему релевантен",
+          "name": "why",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "уверенность",
+          "typeArgs": [
+            "высокая",
+            "средняя",
+            "низкая",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "2. Сбор данных — параллельно с размышлением.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Поиск и запрос эксперту не блокируют",
+    },
+    {
+      "kind": "Comment",
+      "text": "ни друг друга, ни ДУМАЙ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "limit",
+          "value": {
+            "type": "number",
+            "value": 10,
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "найденное",
+      "tool": {
+        "name": "поиск",
+      },
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Нужна экспертиза по запросу: ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "эксперт",
+      ],
+      "kind": "Op.Send",
+      "name": "мнение",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "консультации",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "3. Дополнение условия по ходу решения.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Данные приходят в произвольном порядке —",
+    },
+    {
+      "kind": "Comment",
+      "text": "каждый результат сразу уходит в ~анализ.",
+    },
+    {
+      "kind": "Comment",
+      "text": "LLM учитывает их, не начиная заново.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "kind": "Op.Wait",
+          "mode": "any",
+          "name": "данные",
+          "on": [
+            {
+              "name": "найденное",
+            },
+            {
+              "name": "мнение",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "данные",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Signal",
+          "target": {
+            "name": "анализ",
+          },
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "4. Решение готово.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Анализ учёл исходные данные, поиск",
+    },
+    {
+      "kind": "Comment",
+      "text": "и мнение эксперта.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "анализ",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "5. Ответ автору запроса.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "анализ",
+            "path": [
+              "ответ",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "автор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "результаты",
+          },
+          {
+            "kind": "dynamic",
+            "name": "кейс",
+            "path": [],
+          },
+        ],
+      },
     },
     {
       "kind": "Op.Exit",

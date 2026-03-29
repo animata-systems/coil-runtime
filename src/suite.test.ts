@@ -257,9 +257,7 @@ describe('narrative examples', () => {
       const { table, index } = await getDialect(meta.dialect);
 
       for (const block of blocks) {
-        const tokens = tokenize(block, index);
-        const ast = parse(tokens, table, block);
-        expect(ast.nodes.length).toBeGreaterThan(0);
+        runValidChecks(block, table, index);
       }
     });
   }
@@ -284,9 +282,7 @@ describe('dialect showcases', () => {
       const { table, index } = await getDialect(meta.dialect);
 
       for (const block of blocks) {
-        const tokens = tokenize(block, index);
-        const ast = parse(tokens, table, block);
-        expect(ast.nodes.length).toBeGreaterThan(0);
+        runValidChecks(block, table, index);
       }
     });
   }
