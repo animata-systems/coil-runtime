@@ -1,0 +1,7465 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`conformance tests > valid/core/actors-block.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Actors",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description ACTORS declaration in block form",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "analyst",
+        "client",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Hello.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "analyst",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/actors-inline.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Actors",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description ACTORS declaration in inline form",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "analyst",
+        "client",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Hello.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "client",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/define-literal.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Define",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description DEFINE with a literal value",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 3,
+      },
+      "kind": "Op.Define",
+      "name": "max_retries",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/define-template.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Define",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description DEFINE with a template body",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a senior analyst.
+You answer concisely and back up claims with data.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "analyst_role",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/execute-oneshot.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Execute, Mod.Using, Op.Tools, Op.Wait",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description One-shot tool execution with arguments",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "url",
+      "prompt": null,
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "load_article",
+      ],
+    },
+    {
+      "args": [
+        {
+          "key": "url",
+          "value": {
+            "name": "url",
+            "path": [],
+            "type": "ref",
+          },
+        },
+        {
+          "key": "format",
+          "value": {
+            "type": "string",
+            "value": "markdown",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "article",
+      "tool": {
+        "name": "load_article",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "article",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/exit.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Exit",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description EXIT terminates the protocol — no arguments, no END",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/receive-with-prompt.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Receive",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RECEIVE blocks until the environment provides a value",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "contract_id",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Enter the contract number.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/send-await-all.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Send, Mod.Await, Pol.All, Mod.For",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SEND with AWAIT ALL — wait for all recipients to reply",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "reviewer_a",
+        "reviewer_b",
+      ],
+    },
+    {
+      "await": "all",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Please review the attached document.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "reviewer_a",
+        "reviewer_b",
+      ],
+      "kind": "Op.Send",
+      "name": "review_request",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 30,
+      },
+      "to": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review_request",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/send-await-any.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Send, Mod.Await, Mod.For, Op.Wait",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SEND with AWAIT ANY — wait for at least one reply",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "expert",
+      ],
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  What is the root cause of the outage?
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "expert",
+      ],
+      "kind": "Op.Send",
+      "name": "question",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 10,
+      },
+      "to": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "question",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/send-fire-and-forget.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Send, Mod.To, Mod.For",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SEND without AWAIT — fire and forget",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "user",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Task completed successfully.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "user",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/send-reply-to.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Send, Mod.To, Mod.For, Mod.ReplyTo",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SEND as a reply to a specific message",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "client",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Your issue has been resolved.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "client",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "support",
+          },
+          {
+            "kind": "literal",
+            "value": "1230",
+          },
+        ],
+      },
+      "timeout": null,
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "support",
+          },
+          {
+            "kind": "literal",
+            "value": "1234",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/set-value.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Define, Op.Set",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SET modifies an existing value",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "counter",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 1,
+      },
+      "kind": "Op.Set",
+      "target": {
+        "name": "counter",
+        "path": [],
+        "type": "ref",
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/think-full.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Mod.Via, Mod.As, Mod.Using, Mod.Goal, Mod.Input, Mod.Context, Mod.Result",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description THINK with all rigging and formulation modifiers",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "query",
+      "prompt": null,
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "history",
+      "prompt": null,
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "analyst",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "gpt-4",
+      },
+      "kind": "Op.Define",
+      "name": "model",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a senior data analyst.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "analyst_skill",
+    },
+    {
+      "as": [
+        {
+          "name": "analyst_skill",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Previous history: ",
+          },
+          {
+            "name": "history",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Identify artifacts that need changes.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  User request: ",
+          },
+          {
+            "name": "query",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "brief overview",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "artifacts requiring changes",
+          "name": "artifacts",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "artifact path",
+          "name": "path",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "change type",
+          "name": "action",
+          "typeArgs": [
+            "create",
+            "modify",
+            "delete",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 1,
+          "description": "why the change is needed",
+          "name": "reason",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [
+        {
+          "name": "search",
+        },
+      ],
+      "via": {
+        "name": "model",
+        "path": [],
+        "type": "ref",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/think-minimal.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Mod.Result, Op.Wait, Op.Exit",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Minimal THINK with one RESULT field",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "verdict",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "category",
+          "typeArgs": [
+            "bug",
+            "feature",
+            "question",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "verdict",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/think-result-with-body.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Mod.Result",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description THINK with RESULT and anonymous body coexisting (D-0032)",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "request",
+      "prompt": null,
+    },
+    {
+      "as": [],
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify this request: ",
+          },
+          {
+            "name": "request",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "context": null,
+      "goal": null,
+      "input": null,
+      "kind": "Op.Think",
+      "name": "verdict",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "category",
+          "typeArgs": [
+            "bug",
+            "feature",
+            "question",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "verdict",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/think-using-tools.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Mod.Using, Op.Tools",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description THINK with multiple tools available to LLM",
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+        "calculator",
+      ],
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Research the topic and calculate metrics.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "research findings",
+          "name": "findings",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "calculated metric",
+          "name": "metric",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [
+        {
+          "name": "search",
+        },
+        {
+          "name": "calculator",
+        },
+      ],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/tools-block.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Tools",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description TOOLS declaration in block form",
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+        "calculator",
+      ],
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/tools-inline.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Tools",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description TOOLS declaration in inline form",
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+        "calculator",
+      ],
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/wait-bound.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Wait, Mod.On, Pol.Any",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description WAIT bound form: bind resolved value to $data",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Create a plan.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "plan steps",
+          "name": "steps",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Review the plan.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "review verdict",
+          "name": "verdict",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": "any",
+      "name": "data",
+      "on": [
+        {
+          "name": "plan",
+        },
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/wait-multiple-all.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Wait, Mod.On, Mod.Mode, Pol.All",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description WAIT for multiple promises with MODE ALL (default)",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Analyze section A.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "part_a",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Analyze section B.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "part_b",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": "all",
+      "name": null,
+      "on": [
+        {
+          "name": "part_a",
+        },
+        {
+          "name": "part_b",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/wait-multiple-any.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Wait, Mod.On, Mod.Mode, Pol.Any",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description WAIT for any one of multiple promises",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Try the quick approach.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "fast_path",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Try the thorough approach.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "slow_path",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": "any",
+      "name": null,
+      "on": [
+        {
+          "name": "fast_path",
+        },
+        {
+          "name": "slow_path",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/wait-single.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Wait, Mod.On, Op.Think",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description WAIT for a single promise",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Create a plan.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "plan steps",
+          "name": "steps",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/wait-timeout.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Wait, Mod.Timeout",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description WAIT with a timeout",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Perform deep analysis.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "report",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 5,
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/each-from-list.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Each, Mod.From, Op.Think",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description EACH iterates over list elements",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Create a list of tasks.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "tasks to complete",
+          "name": "tasks",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "task name",
+          "name": "name",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "",
+          "name": "priority",
+          "typeArgs": [
+            "high",
+            "medium",
+            "low",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Complete the task.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Task: ",
+              },
+              {
+                "name": "task",
+                "path": [
+                  "name",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Priority: ",
+              },
+              {
+                "name": "task",
+                "path": [
+                  "priority",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "work",
+          "result": [
+            {
+              "depth": 0,
+              "description": "task result",
+              "name": "output",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "work",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "element": {
+        "name": "task",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "plan",
+        "path": [
+          "tasks",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If, Op.Think",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with numeric comparison",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Rate the quality.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "evaluation",
+      "result": [
+        {
+          "depth": 0,
+          "description": "quality score from 1 to 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "evaluation",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "done",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "number",
+            "value": 1,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "done",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$evaluation.score >= 8",
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/if-equals.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If, Op.Think, Op.Define",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with equality check — deterministic branching",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "verdict",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "type",
+          "typeArgs": [
+            "general",
+            "technical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "verdict",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+General support agent.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "role",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+  Technical support specialist.
+  ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "role",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$verdict.type == "technical"",
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/repeat-count-only.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Repeat",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description REPEAT with count only (no UNTIL condition)",
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Try to solve the problem.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "attempt",
+          "result": [
+            {
+              "depth": 0,
+              "description": "",
+              "name": "solution",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "attempt",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 2,
+      "until": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Repeat, Mod.Until, Mod.Limit, Op.Set",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description REPEAT with condition and mandatory upper limit",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "done",
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Check if the task is complete.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "check",
+          "result": [
+            {
+              "depth": 0,
+              "description": "is the task done",
+              "name": "complete",
+              "typeArgs": [],
+              "typeId": "Typ.Flag",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "check",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": [
+            {
+              "body": {
+                "type": "number",
+                "value": 1,
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "done",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": "$check.complete == 1",
+          "kind": "Op.If",
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 3,
+      "until": "$done",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/signal-context.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Signal, Op.Think, Op.Execute, Op.Tools",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description SIGNAL sends data into an active stream",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "query",
+      "prompt": null,
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Analyze the topic using all available data.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "query",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "results",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "results",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Additional search results: ",
+          },
+          {
+            "name": "results",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "analysis",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/patterns/classify-and-route.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.If, Op.Define, Op.Set, Mod.As, Typ.Choice",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Classification followed by deterministic routing",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a general support agent.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "general_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a technical support specialist.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "technical_role",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Customer request text.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the customer request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "classification",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "type",
+          "typeArgs": [
+            "general",
+            "technical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "classification",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "name": "general_role",
+        "path": [],
+        "type": "ref",
+      },
+      "kind": "Op.Define",
+      "name": "current_role",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "name": "technical_role",
+            "path": [],
+            "type": "ref",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "current_role",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$classification.type == "technical"",
+      "kind": "Op.If",
+    },
+    {
+      "as": [
+        {
+          "name": "current_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": null,
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "response",
+      "result": [
+        {
+          "depth": 0,
+          "description": "response to customer",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "response",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "user",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "response",
+            "path": [
+              "answer",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "user",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/patterns/conditional-define.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Define, Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description DEFINE same name in different IF branches is valid (D-007-1)",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "input",
+      "prompt": null,
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "unknown",
+      },
+      "kind": "Op.Define",
+      "name": "category",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the input.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "input",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "classification",
+      "result": [
+        {
+          "depth": 0,
+          "description": "category",
+          "name": "type",
+          "typeArgs": [
+            "a",
+            "b",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "classification",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+  You handle category A.
+  ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Define",
+          "name": "role",
+        },
+      ],
+      "condition": "$classification.type == "a"",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+  You handle category B.
+  ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Define",
+          "name": "role",
+        },
+      ],
+      "condition": "$classification.type == "b"",
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/patterns/iterative-improve.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Repeat, Mod.Until, Op.If, Op.Set, Op.Think, Op.Wait, Op.Define",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Iterative improvement loop with evaluator and optimizer",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "brief",
+      "prompt": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a skilled copywriter.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "writer_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a strict editor who evaluates text quality.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "editor_role",
+    },
+    {
+      "as": [
+        {
+          "name": "writer_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Write a short marketing text.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "brief",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "first_draft",
+      "result": [
+        {
+          "depth": 0,
+          "description": "marketing copy",
+          "name": "text",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "first_draft",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "name": "first_draft",
+        "path": [
+          "text",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Define",
+      "name": "current",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "done",
+    },
+    {
+      "body": [
+        {
+          "as": [
+            {
+              "name": "editor_role",
+              "path": [],
+              "type": "ref",
+            },
+          ],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Evaluate the quality of the text.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "current",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "evaluation",
+          "result": [
+            {
+              "depth": 0,
+              "description": "quality from 1 to 10",
+              "name": "score",
+              "typeArgs": [],
+              "typeId": "Typ.Number",
+            },
+            {
+              "depth": 0,
+              "description": "specific issues",
+              "name": "feedback",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "evaluation",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": [
+            {
+              "body": {
+                "type": "number",
+                "value": 1,
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "done",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": "$evaluation.score >= 8",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "as": [
+                {
+                  "name": "writer_role",
+                  "path": [],
+                  "type": "ref",
+                },
+              ],
+              "body": null,
+              "context": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Feedback: ",
+                  },
+                  {
+                    "name": "evaluation",
+                    "path": [
+                      "feedback",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Improve the text based on feedback.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                  {
+                    "name": "current",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "revision",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "improved version",
+                  "name": "text",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "revision",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "body": {
+                "name": "revision",
+                "path": [
+                  "text",
+                ],
+                "type": "ref",
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "current",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": "$done == 0",
+          "kind": "Op.If",
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 3,
+      "until": "$done",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/patterns/parallel-think-wait-all.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Wait, Mod.Mode, Pol.All, Op.Define, Mod.As, Mod.Context",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Two parallel THINK steps, WAIT ALL, then aggregation",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "code",
+      "prompt": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a code security expert.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "security_expert",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+You are a performance optimization expert.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "perf_expert",
+    },
+    {
+      "as": [
+        {
+          "name": "security_expert",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": null,
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "code",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "security_review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "security issues found",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "risk",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [
+        {
+          "name": "perf_expert",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": null,
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "code",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "perf_review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "performance issues found",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "",
+          "name": "impact",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": "all",
+      "name": null,
+      "on": [
+        {
+          "name": "security_review",
+        },
+        {
+          "name": "perf_review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Security: ",
+          },
+          {
+            "name": "security_review",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Performance: ",
+          },
+          {
+            "name": "perf_review",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Combine the two reviews into a single report.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "summary",
+      "result": [
+        {
+          "depth": 0,
+          "description": "combined report",
+          "name": "report",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "prioritized actions",
+          "name": "action_items",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "summary",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/result/result-choice.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result, Typ.Choice",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT with CHOICE enum field",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Determine the severity of the issue.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "triage",
+      "result": [
+        {
+          "depth": 0,
+          "description": "issue severity",
+          "name": "severity",
+          "typeArgs": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "issue type",
+          "name": "category",
+          "typeArgs": [
+            "bug",
+            "feature",
+            "question",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "triage",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/result/result-flag.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result, Typ.Flag",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT with FLAG (boolean) field",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Does the text contain personal data?
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "check",
+      "result": [
+        {
+          "depth": 0,
+          "description": "true if personal data found",
+          "name": "contains_pii",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "check",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/result/result-list-nested.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result, Typ.List, Typ.Text, Typ.Choice",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT with nested LIST containing multiple typed fields",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Create an implementation plan.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "plan overview",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "implementation steps",
+          "name": "steps",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "what to do",
+          "name": "description",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "estimated effort",
+          "name": "effort",
+          "typeArgs": [
+            "small",
+            "medium",
+            "large",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 1,
+          "description": "what this step depends on",
+          "name": "dependencies",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/result/result-number.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result, Typ.Number",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT with NUMBER field",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Rate the quality of the text.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "scoring",
+      "result": [
+        {
+          "depth": 0,
+          "description": "quality from 1 to 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "scoring",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/result/result-text.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result, Typ.Text",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT with TEXT field",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Summarize the document.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "summary",
+      "result": [
+        {
+          "depth": 0,
+          "description": "document summary",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "summary",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > anti-patterns/missing-wait.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role anti-pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Wait",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Всегда ЖДИ НА ?имя перед использованием $имя",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Антипаттерн: отсутствующий ЖДИ",
+    },
+    {
+      "kind": "Comment",
+      "text": "После ДУМАЙ обещание ?план существует, но значение $план",
+    },
+    {
+      "kind": "Comment",
+      "text": "ещё недоступно. Протокол обязан явно синхронизироваться",
+    },
+    {
+      "kind": "Comment",
+      "text": "через ЖДИ перед обращением к результату.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Составь план проекта.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "план",
+      "result": [
+        {
+          "depth": 0,
+          "description": "шаги плана",
+          "name": "шаги",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "ориентировочные сроки",
+          "name": "сроки",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "БАГ: нет ЖДИ — $план.шаги ещё не разрешён",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "пользователь",
+      ],
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Вот твой план: ",
+          },
+          {
+            "name": "план",
+            "path": [
+              "шаги",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Сроки: ",
+          },
+          {
+            "name": "план",
+            "path": [
+              "сроки",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "пользователь",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > hello-world.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role demo",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Receive, Op.Send, Op.Exit",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Hello World — демо вертикального среза COIL",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "Запуск: npx coil run --dialect ./dialects/ru-standard/ru-standard.json examples/hello-world.coil",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "имя",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Как тебя зовут?
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Привет, ",
+          },
+          {
+            "name": "имя",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "!
+",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Repeat, Op.If, Op.Set",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Итеративная оценка и улучшение",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: итеративная оценка и улучшение",
+    },
+    {
+      "kind": "Comment",
+      "text": "Переводчик делает перевод, оценщик проверяет,",
+    },
+    {
+      "kind": "Comment",
+      "text": "цикл повторяется до достижения качества.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Введите текст для перевода.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "target_language",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+На какой язык перевести?
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты эксперт по литературному переводу.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "translator_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты эксперт по оценке литературных переводов.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "evaluator_role",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Первый перевод",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "translator_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Переведите текст на ",
+          },
+          {
+            "name": "target_language",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": ",
+  сохраняя тон и культурные нюансы.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "initial_translation",
+      "result": [
+        {
+          "depth": 0,
+          "description": "перевод",
+          "name": "text",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "initial_translation",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "name": "initial_translation",
+        "path": [
+          "text",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Define",
+      "name": "current_translation",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "done",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Цикл оценки и улучшения",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "as": [
+            {
+              "name": "evaluator_role",
+              "path": [],
+              "type": "ref",
+            },
+          ],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Оцените качество перевода.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Оригинал: ",
+              },
+              {
+                "name": "message",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Перевод: ",
+              },
+              {
+                "name": "current_translation",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "evaluation",
+          "result": [
+            {
+              "depth": 0,
+              "description": "общее качество от 1 до 10",
+              "name": "quality_score",
+              "typeArgs": [],
+              "typeId": "Typ.Number",
+            },
+            {
+              "depth": 0,
+              "description": "сохранён ли тон оригинала",
+              "name": "preserves_tone",
+              "typeArgs": [],
+              "typeId": "Typ.Flag",
+            },
+            {
+              "depth": 0,
+              "description": "сохранены ли нюансы",
+              "name": "preserves_nuance",
+              "typeArgs": [],
+              "typeId": "Typ.Flag",
+            },
+            {
+              "depth": 0,
+              "description": "культурная точность",
+              "name": "culturally_accurate",
+              "typeArgs": [],
+              "typeId": "Typ.Flag",
+            },
+            {
+              "depth": 0,
+              "description": "конкретные проблемы",
+              "name": "specific_issues",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+            {
+              "depth": 0,
+              "description": "предложения по улучшению",
+              "name": "improvement_suggestions",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "evaluation",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "body": [
+            {
+              "body": {
+                "type": "number",
+                "value": 1,
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "done",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": "$evaluation.quality_score >= 8",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "as": [
+                {
+                  "name": "translator_role",
+                  "path": [],
+                  "type": "ref",
+                },
+              ],
+              "body": null,
+              "context": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Проблемы: ",
+                  },
+                  {
+                    "name": "evaluation",
+                    "path": [
+                      "specific_issues",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Предложения: ",
+                  },
+                  {
+                    "name": "evaluation",
+                    "path": [
+                      "improvement_suggestions",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Улучшите перевод на основе замечаний.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Оригинал: ",
+                  },
+                  {
+                    "name": "message",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Текущий перевод: ",
+                  },
+                  {
+                    "name": "current_translation",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "improved_translation",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "улучшенный перевод",
+                  "name": "text",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "improved_translation",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "body": {
+                "name": "improved_translation",
+                "path": [
+                  "text",
+                ],
+                "type": "ref",
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "current_translation",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": "$done == 0",
+          "kind": "Op.If",
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 3,
+      "until": "$done",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Отправка финального перевода",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "current_translation",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/internal-delegation.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Mod.As, Op.If, Op.Send",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Внутренняя делегация",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: внутренняя делегация",
+    },
+    {
+      "kind": "Comment",
+      "text": "Один LLM, разные роли через КАК.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Архитектор планирует, воркеры реализуют —",
+    },
+    {
+      "kind": "Comment",
+      "text": "но всё происходит внутри одного протокола.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ср. multi-agent-orchestration.coil",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Опишите функцию для реализации.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты старший архитектор ПО. Планируй реализацию функций.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "architect_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты эксперт по созданию новых файлов.
+Следуй лучшим практикам и паттернам проекта.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "worker_create_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты эксперт по модификации существующего кода.
+Сохраняй консистентность и избегай регрессий.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "worker_modify_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты эксперт по безопасному удалению кода.
+Убедись, что нет сломанных зависимостей.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "worker_delete_role",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Планирование",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "architect_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проанализируй запрос на реализацию функции
+  и создай план реализации.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "оценка сложности",
+          "name": "estimated_complexity",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "файлы для изменения",
+          "name": "files",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "путь к файлу",
+          "name": "file_path",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "назначение изменения",
+          "name": "purpose",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "тип изменения",
+          "name": "change_type",
+          "typeArgs": [
+            "create",
+            "modify",
+            "delete",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Реализация каждого шага плана",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "body": {
+                "name": "worker_create_role",
+                "path": [],
+                "type": "ref",
+              },
+              "kind": "Op.Define",
+              "name": "current_role",
+            },
+          ],
+          "condition": "$task.change_type == "create"",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "body": {
+                "name": "worker_modify_role",
+                "path": [],
+                "type": "ref",
+              },
+              "kind": "Op.Define",
+              "name": "current_role",
+            },
+          ],
+          "condition": "$task.change_type == "modify"",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "body": {
+                "name": "worker_delete_role",
+                "path": [],
+                "type": "ref",
+              },
+              "kind": "Op.Define",
+              "name": "current_role",
+            },
+          ],
+          "condition": "$task.change_type == "delete"",
+          "kind": "Op.If",
+        },
+        {
+          "as": [
+            {
+              "name": "current_role",
+              "path": [],
+              "type": "ref",
+            },
+          ],
+          "body": null,
+          "context": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Общая задача: ",
+              },
+              {
+                "name": "message",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    План: ",
+              },
+              {
+                "name": "plan",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Реализуй изменение для файла.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Файл: ",
+              },
+              {
+                "name": "task",
+                "path": [
+                  "file_path",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Назначение: ",
+              },
+              {
+                "name": "task",
+                "path": [
+                  "purpose",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Тип изменения: ",
+              },
+              {
+                "name": "task",
+                "path": [
+                  "change_type",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "implementation",
+          "result": [
+            {
+              "depth": 0,
+              "description": "что было сделано и почему",
+              "name": "explanation",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+            {
+              "depth": 0,
+              "description": "реализованный код",
+              "name": "code",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "implementation",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "element": {
+        "name": "task",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "plan",
+        "path": [
+          "files",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Отправка результата",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  План: ",
+          },
+          {
+            "name": "plan",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Реализация завершена.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Send, Mod.Await, Op.Wait, Op.Gather",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Multi-agent оркестрация",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: multi-agent оркестрация",
+    },
+    {
+      "kind": "Comment",
+      "text": "Реальные агенты общаются через каналы.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Архитектор планирует, воркеры реализуют —",
+    },
+    {
+      "kind": "Comment",
+      "text": "каждый агент отвечает самостоятельно.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ср. internal-delegation.coil",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+        "архитектор",
+        "создатель",
+        "модификатор",
+        "удалятор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Опишите функцию для реализации.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Запрос архитектору: создать план",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": "all",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проанализируй запрос на реализацию функции
+  и создай план реализации.
+
+  Запрос: ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "архитектор",
+      ],
+      "kind": "Op.Send",
+      "name": "plan_request",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 5,
+      },
+      "to": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "планирование",
+          },
+        ],
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "plan_request",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Парсим план архитектора",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Извлеки структурированный план из ответа архитектора.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "plan_request",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "parsed_plan",
+      "result": [
+        {
+          "depth": 0,
+          "description": "файлы для изменения",
+          "name": "files",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "путь к файлу",
+          "name": "file_path",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "назначение изменения",
+          "name": "purpose",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "тип изменения",
+          "name": "change_type",
+          "typeArgs": [
+            "create",
+            "modify",
+            "delete",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "parsed_plan",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Раздаём задачи воркерам",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "await": "all",
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Создай файл: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "file_path",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Назначение: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "purpose",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+
+      Контекст задачи: ",
+                  },
+                  {
+                    "name": "message",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "создатель",
+              ],
+              "kind": "Op.Send",
+              "name": "work_result",
+              "replyTo": null,
+              "timeout": {
+                "unitId": "Dur.Minutes",
+                "value": 10,
+              },
+              "to": {
+                "segments": [
+                  {
+                    "kind": "literal",
+                    "value": "реализация",
+                  },
+                ],
+              },
+            },
+          ],
+          "condition": "$task.change_type == "create"",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "await": "all",
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Модифицируй файл: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "file_path",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Назначение: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "purpose",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+
+      Контекст задачи: ",
+                  },
+                  {
+                    "name": "message",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "модификатор",
+              ],
+              "kind": "Op.Send",
+              "name": "work_result",
+              "replyTo": null,
+              "timeout": {
+                "unitId": "Dur.Minutes",
+                "value": 10,
+              },
+              "to": {
+                "segments": [
+                  {
+                    "kind": "literal",
+                    "value": "реализация",
+                  },
+                ],
+              },
+            },
+          ],
+          "condition": "$task.change_type == "modify"",
+          "kind": "Op.If",
+        },
+        {
+          "body": [
+            {
+              "await": "all",
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Удали файл: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "file_path",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Назначение: ",
+                  },
+                  {
+                    "name": "task",
+                    "path": [
+                      "purpose",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+
+      Контекст задачи: ",
+                  },
+                  {
+                    "name": "message",
+                    "path": [],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "удалятор",
+              ],
+              "kind": "Op.Send",
+              "name": "work_result",
+              "replyTo": null,
+              "timeout": {
+                "unitId": "Dur.Minutes",
+                "value": 10,
+              },
+              "to": {
+                "segments": [
+                  {
+                    "kind": "literal",
+                    "value": "реализация",
+                  },
+                ],
+              },
+            },
+          ],
+          "condition": "$task.change_type == "delete"",
+          "kind": "Op.If",
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "work_result",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "element": {
+        "name": "task",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "parsed_plan",
+        "path": [
+          "files",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ответ инициатору",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Реализация завершена.
+  План: ",
+          },
+          {
+            "name": "parsed_plan",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/parallelization.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Wait, Mod.As, Mod.Mode",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Параллельный code review",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: параллельный code review",
+    },
+    {
+      "kind": "Comment",
+      "text": "Три эксперта анализируют код параллельно,",
+    },
+    {
+      "kind": "Comment",
+      "text": "техлид агрегирует результаты.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Отправьте код на ревью.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы эксперт в области безопасности кода. Сосредоточьтесь на выявлении
+уязвимостей безопасности, рисков внедрения кода и проблем аутентификации.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "security_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы эксперт в области производительности кода. Сосредоточьтесь на выявлении
+узких мест производительности, утечек памяти и возможностей оптимизации.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "performance_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы эксперт в области качества кода. Сосредоточьтесь на структуре кода,
+читаемости и соблюдении лучших практик.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "quality_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы технический руководитель, подводите итоги нескольких проверок кода.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "tech_lead_role",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Три параллельных ревью",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "security_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проверьте код на уязвимости безопасности.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "security_review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "найденные уязвимости",
+          "name": "vulnerabilities",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "уровень риска",
+          "name": "risk_level",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "предложения по исправлению",
+          "name": "suggestions",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [
+        {
+          "name": "performance_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проверьте код на проблемы производительности.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "performance_review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "найденные проблемы",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "влияние на производительность",
+          "name": "impact",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "предлагаемые оптимизации",
+          "name": "optimizations",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "as": [
+        {
+          "name": "quality_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проверьте качество кода.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "quality_review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "замечания по качеству",
+          "name": "concerns",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "оценка качества от 1 до 10",
+          "name": "quality_score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 0,
+          "description": "рекомендации по улучшению",
+          "name": "recommendations",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ждём все три ревью",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": "all",
+      "name": null,
+      "on": [
+        {
+          "name": "security_review",
+        },
+        {
+          "name": "performance_review",
+        },
+        {
+          "name": "quality_review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Агрегация результатов",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "tech_lead_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Безопасность: ",
+          },
+          {
+            "name": "security_review",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Производительность: ",
+          },
+          {
+            "name": "performance_review",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  Качество кода: ",
+          },
+          {
+            "name": "quality_review",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Объедините результаты проверок кода в краткое резюме
+  с указанием ключевых действий.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "summary",
+      "result": [
+        {
+          "depth": 0,
+          "description": "краткое резюме всех проверок",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "ключевые действия по приоритету",
+          "name": "action_items",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "summary",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "summary",
+            "path": [
+              "summary",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+
+  Действия: ",
+          },
+          {
+            "name": "summary",
+            "path": [
+              "action_items",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Wait, Op.If, Op.Send",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Цепочка промптов с оценкой",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: цепочка промптов с оценкой",
+    },
+    {
+      "kind": "Comment",
+      "text": "Маркетолог пишет текст, лингвист оценивает,",
+    },
+    {
+      "kind": "Comment",
+      "text": "если качество недостаточное — маркетолог переписывает.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Опишите продукт или услугу для маркетингового текста.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты маркетолог по контенту. Создавай тексты, которые продают:
+посты, лендинги, рекламные объявления. Пиши ясно, убедительно
+и ориентируясь на целевую аудиторию.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "marketer_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Ты специалист по сравнительной лингвистике. Объясняй различия
+между языками, переводами и языковыми конструкциями.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "linguist_role",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Первый черновик",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "marketer_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Напишите убедительный маркетинговый текст.
+  Сосредоточьтесь на преимуществах и эмоциональном воздействии.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "draft",
+      "result": [
+        {
+          "depth": 0,
+          "description": "маркетинговый текст",
+          "name": "text",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "draft",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Оценка качества",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "linguist_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Оцените рекламный текст по критериям качества.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "draft",
+            "path": [
+              "text",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "quality_metrics",
+      "result": [
+        {
+          "depth": 0,
+          "description": "есть ли призыв к действию",
+          "name": "has_call_to_action",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "эмоциональное воздействие от 1 до 10",
+          "name": "emotional_appeal",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 0,
+          "description": "ясность текста от 1 до 10",
+          "name": "clarity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "quality_metrics",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Если качество недостаточное — улучшаем",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 0,
+      },
+      "kind": "Op.Define",
+      "name": "needs_improvement",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "number",
+            "value": 1,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_improvement",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$quality_metrics.has_call_to_action == 0",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "number",
+            "value": 1,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_improvement",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$quality_metrics.emotional_appeal < 7",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "number",
+            "value": 1,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_improvement",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": "$quality_metrics.clarity < 7",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "as": [
+            {
+              "name": "marketer_role",
+              "path": [],
+              "type": "ref",
+            },
+          ],
+          "body": null,
+          "context": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Призыв к действию: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "has_call_to_action",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Эмоциональное воздействие: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "emotional_appeal",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Ясность: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "clarity",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Перепишите маркетинговый текст, устранив слабые места
+    по результатам оценки.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "draft",
+                "path": [
+                  "text",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "improved",
+          "result": [
+            {
+              "depth": 0,
+              "description": "улучшенный маркетинговый текст",
+              "name": "text",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "improved",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+              {
+                "name": "improved",
+                "path": [
+                  "text",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+
+    Метрики до улучшения:
+    - Призыв к действию: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "has_call_to_action",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    - Эмоциональное воздействие: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "emotional_appeal",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    - Ясность: ",
+              },
+              {
+                "name": "quality_metrics",
+                "path": [
+                  "clarity",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "инициатор",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+        {
+          "kind": "Op.Exit",
+        },
+      ],
+      "condition": "$needs_improvement == 1",
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Качество достаточное — отправляем как есть",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "draft",
+            "path": [
+              "text",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+
+  Метрики:
+  - Призыв к действию: ",
+          },
+          {
+            "name": "quality_metrics",
+            "path": [
+              "has_call_to_action",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  - Эмоциональное воздействие: ",
+          },
+          {
+            "name": "quality_metrics",
+            "path": [
+              "emotional_appeal",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  - Ясность: ",
+          },
+          {
+            "name": "quality_metrics",
+            "path": [
+              "clarity",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/routing.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.If, Op.Send, Op.Receive",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Маршрутизация по классификации",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: маршрутизация по классификации",
+    },
+    {
+      "kind": "Comment",
+      "text": "Классифицируем запрос клиента, выбираем",
+    },
+    {
+      "kind": "Comment",
+      "text": "подходящего специалиста, отвечаем.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "message",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Опишите ваш запрос.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы опытный специалист по обслуживанию клиентов,
+занимающийся общими запросами.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "general_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы специалист по обслуживанию клиентов, специализирующийся
+на запросах на возврат средств. Следуйте политике компании
+и собирайте необходимую информацию.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "refund_role",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вы специалист технической поддержки с глубокими знаниями продукта.
+Сосредоточьтесь на чётком пошаговом устранении неполадок.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Define",
+      "name": "technical_role",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Классификация запроса",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Классифицируйте запрос клиента.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "classification",
+      "result": [
+        {
+          "depth": 0,
+          "description": "тип запроса",
+          "name": "type",
+          "typeArgs": [
+            "general",
+            "refund",
+            "technical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "сложность",
+          "name": "complexity",
+          "typeArgs": [
+            "simple",
+            "complex",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "краткое обоснование классификации",
+          "name": "reasoning",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "classification",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Выбор роли по типу запроса",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "name": "general_role",
+            "path": [],
+            "type": "ref",
+          },
+          "kind": "Op.Define",
+          "name": "current_role",
+        },
+      ],
+      "condition": "$classification.type == "general"",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "name": "refund_role",
+            "path": [],
+            "type": "ref",
+          },
+          "kind": "Op.Define",
+          "name": "current_role",
+        },
+      ],
+      "condition": "$classification.type == "refund"",
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "name": "technical_role",
+            "path": [],
+            "type": "ref",
+          },
+          "kind": "Op.Define",
+          "name": "current_role",
+        },
+      ],
+      "condition": "$classification.type == "technical"",
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Ответ от выбранного специалиста",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [
+        {
+          "name": "current_role",
+          "path": [],
+          "type": "ref",
+        },
+      ],
+      "body": null,
+      "context": null,
+      "goal": null,
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "message",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "response",
+      "result": [
+        {
+          "depth": 0,
+          "description": "ответ клиенту",
+          "name": "answer",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "response",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "response",
+            "path": [
+              "answer",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+
+  Классификация: ",
+          },
+          {
+            "name": "classification",
+            "path": [
+              "type",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": " (",
+          },
+          {
+            "name": "classification",
+            "path": [
+              "reasoning",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": ")
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;

@@ -140,6 +140,19 @@ function extractCoilBlocks(markdown: string): string[] {
   return blocks;
 }
 
+/** Recursively remove `span` keys from an object tree for snapshot comparison. */
+function stripSpans(obj: unknown): unknown {
+  if (Array.isArray(obj)) return obj.map(stripSpans);
+  if (obj !== null && typeof obj === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (k !== 'span') out[k] = stripSpans(v);
+    }
+    return out;
+  }
+  return obj;
+}
+
 function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
   const tokens = tokenize(src, index);
   const ast = parse(tokens, table, src);
@@ -149,6 +162,7 @@ function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
   const result = validate(ast, table);
   const errors = result.diagnostics.filter(d => d.severity === 'error');
   expect(errors).toHaveLength(0);
+  expect(stripSpans(ast)).toMatchSnapshot();
 }
 
 function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, index: KeywordIndex) {
