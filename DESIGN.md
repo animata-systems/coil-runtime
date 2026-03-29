@@ -414,3 +414,50 @@ Rules:
 **Rationale.** `ruleId` values are stable kebab-case strings, present on every `ValidationDiagnostic` (R-0012). `abstractId` on `ParseError` is optional (R-0005) and not consistently set across all error sites in the parser. Forcing parse codes now would require auditing every `throw new ParseError(...)` — out of scope.
 
 **Cost.** Parse error matching is weaker than validate matching in this phase. Acceptable: `instanceof` check already eliminates the main risk (TypeError masquerading as expected parse failure).
+
+## R-0033 — Visitor pattern for validator: single AST walk with rule hooks
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Scope** | `src/validator/walk.ts`, `src/validator/scope.ts`, `src/validator/validator.ts`, `src/validator/rules/*` |
+
+**Context.** 11 validation rules, 9 of which call `walkOperators()` independently — up to 9 redundant AST traversals per validation. As the rule count grows, this duplicates traversal logic and complicates adding new rules. D-007-6 noted this as acceptable at 8 rules but anticipated the need for a visitor pattern at 15+.
+
+**Decision.** Introduce `VisitorRule` interface and `ScopeWalker`:
+
+(1) New interface:
+
+```typescript
+interface VisitorContext extends WalkContext {
+  dialect: DialectTable;
+  report(diagnostic: ValidationDiagnostic): void;
+}
+
+interface VisitorRule {
+  ruleId: string;
+  enter?(node: OperatorNode, scope: Readonly<ScopeModel>, ctx: VisitorContext): void;
+  leave?(node: OperatorNode, scope: Readonly<ScopeModel>, ctx: VisitorContext): void;
+  finalize?(scope: Readonly<ScopeModel>, ast: ScriptNode, ctx: VisitorContext): void;
+}
+```
+
+(2) `ScopeWalker.walk(ast, rules, dialect)` performs a single pre-order traversal. For each node: call `enter` on all rules → update scope (logic from current `buildScope()`) → recurse into children → call `leave` on all rules. After the walk: call `finalize` on all rules. Returns `{ scope, diagnostics }`.
+
+(3) **`enter` is called BEFORE scope update** for the current node. This preserves the contract of positional rules: `use-before-wait` checks refs against scope that does not yet include the current node's contributions; `duplicate-define` checks its seen map before adding.
+
+(4) Scope is passed as `Readonly<ScopeModel>` — mutable internally, read-only for rules. No cloning.
+
+(5) `RuleRegistry` supports both `VisitorRule` and `ValidationRule`. `runAll()`: first runs `ScopeWalker` with all visitor rules → then runs `run()` for standalone rules with the final scope.
+
+(6) Migration map:
+- **Visitor `enter`**: `use-before-wait`, `duplicate-define`, `unsupported-operator`, `resultSchemaRule`
+- **Visitor `finalize`**: `undeclared-participant`, `undeclared-tool`, `undefined-variable`, `set-without-define`, `undefined-promise`
+- **Standalone `run()`** (no change): `exit-required`, `unreachable-after-exit`
+
+(7) **No semantic changes.** Rules that currently check against the final global scope use `finalize()` — behavior is identical. Making rules positional (e.g. `undefined-variable` catching forward references) is a separate semantic decision, not part of this refactoring.
+
+**Rationale.** Single walk eliminates 8 redundant traversals. `VisitorRule` / `ValidationRule` split keeps top-level-only rules simple. `enter`-before-update contract is natural for positional rules and matches ESLint's visitor model. `finalize()` provides a clean migration path for global rules without changing their semantics.
+
+**Cost.** `ScopeWalker` duplicates the scope-building logic currently in `buildScope()` — `buildScope()` can delegate to `ScopeWalker` internally to avoid duplication. Rules that maintain internal state across nodes (`duplicate-define`'s `seen` map, `use-before-wait`'s `reported` set) must manage state lifecycle: initialized once per `walk()` call. The `leave` hook has no consumers today but is included for forward compatibility.
