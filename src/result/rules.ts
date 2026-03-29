@@ -1,8 +1,6 @@
-import type { ScriptNode, ThinkNode } from '../ast/nodes.js';
+import type { OperatorNode, ThinkNode } from '../ast/nodes.js';
 import type { ScopeModel } from '../validator/scope.js';
-import type { DialectTable } from '../dialect/types.js';
-import type { ValidationDiagnostic, ValidationRule } from '../validator/validator.js';
-import { walkOperators } from '../validator/walk.js';
+import type { ValidationDiagnostic, VisitorRule, VisitorContext } from '../validator/validator.js';
 import { formatMessage } from '../validator/messages.js';
 import type { ResultSchemaField } from './schema.js';
 import { compileResult } from './compile.js';
@@ -12,7 +10,7 @@ import { compileResult } from './compile.js';
 /** CHOICE with fewer than 2 options → error */
 export function checkChoiceMinOptions(
   fields: ResultSchemaField[],
-  dialect: DialectTable,
+  dialect: VisitorContext['dialect'],
 ): ValidationDiagnostic[] {
   const diagnostics: ValidationDiagnostic[] = [];
 
@@ -37,7 +35,7 @@ export function checkChoiceMinOptions(
 /** LIST nested inside LIST → error */
 export function checkNestedList(
   fields: ResultSchemaField[],
-  dialect: DialectTable,
+  dialect: VisitorContext['dialect'],
   parentIsList = false,
 ): ValidationDiagnostic[] {
   const diagnostics: ValidationDiagnostic[] = [];
@@ -63,7 +61,7 @@ export function checkNestedList(
 /** LIST without children → warning */
 export function checkListNoChildren(
   fields: ResultSchemaField[],
-  dialect: DialectTable,
+  dialect: VisitorContext['dialect'],
 ): ValidationDiagnostic[] {
   const diagnostics: ValidationDiagnostic[] = [];
 
@@ -88,7 +86,7 @@ export function checkListNoChildren(
 /** Duplicate field names at the same level → error */
 export function checkDuplicateField(
   fields: ResultSchemaField[],
-  dialect: DialectTable,
+  dialect: VisitorContext['dialect'],
 ): ValidationDiagnostic[] {
   const diagnostics: ValidationDiagnostic[] = [];
   const seen = new Map<string, ResultSchemaField>();
@@ -115,35 +113,29 @@ export function checkDuplicateField(
   return diagnostics;
 }
 
-// ─── Wrapper rule (R-0027) ────────────────────────────────
+// ─── Visitor rule (R-0027, R-0033) ──────────────────────────
 
 /**
- * Single ValidationRule wrapper for all RESULT validation.
- * Walks ThinkNodes, compiles result once per node, runs all checks.
+ * VisitorRule for all RESULT validation.
+ * enter() fires on ThinkNodes, compiles result once per node, runs all checks.
  */
-export const resultSchemaRule: ValidationRule = {
+export const resultSchemaRule: VisitorRule = {
   ruleId: 'result-schema',
-  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
-    const diagnostics: ValidationDiagnostic[] = [];
+  enter(node: OperatorNode, _scope: Readonly<ScopeModel>, ctx: VisitorContext): void {
+    if (node.kind !== 'Op.Think') return;
+    const think = node as ThinkNode;
+    if (think.result.length === 0) return;
 
-    walkOperators(ast.nodes, (op) => {
-      if (op.kind !== 'Op.Think') return;
-      const think = op as ThinkNode;
-      if (think.result.length === 0) return;
+    // Compile once per ThinkNode
+    const compiled = compileResult(think.result, ctx.dialect);
 
-      // Compile once per ThinkNode
-      const compiled = compileResult(think.result, dialect);
+    // Diagnostics from compilation (result-leaf-with-children, result-orphan-depth)
+    for (const d of compiled.diagnostics) ctx.report(d);
 
-      // Diagnostics from compilation (result-leaf-with-children, result-orphan-depth)
-      diagnostics.push(...compiled.diagnostics);
-
-      // Run check functions on the compiled tree
-      diagnostics.push(...checkChoiceMinOptions(compiled.fields, dialect));
-      diagnostics.push(...checkNestedList(compiled.fields, dialect));
-      diagnostics.push(...checkListNoChildren(compiled.fields, dialect));
-      diagnostics.push(...checkDuplicateField(compiled.fields, dialect));
-    });
-
-    return diagnostics;
+    // Run check functions on the compiled tree
+    for (const d of checkChoiceMinOptions(compiled.fields, ctx.dialect)) ctx.report(d);
+    for (const d of checkNestedList(compiled.fields, ctx.dialect)) ctx.report(d);
+    for (const d of checkListNoChildren(compiled.fields, ctx.dialect)) ctx.report(d);
+    for (const d of checkDuplicateField(compiled.fields, ctx.dialect)) ctx.report(d);
   },
 };

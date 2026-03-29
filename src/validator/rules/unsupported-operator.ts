@@ -1,27 +1,19 @@
-import type { ScriptNode, UnsupportedOperatorNode } from '../../ast/nodes.js';
+import type { OperatorNode, UnsupportedOperatorNode } from '../../ast/nodes.js';
 import type { ScopeModel } from '../scope.js';
-import type { DialectTable } from '../../dialect/types.js';
-import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
-import { walkOperators } from '../walk.js';
+import type { VisitorRule, VisitorContext } from '../validator.js';
 import { formatMessage } from '../messages.js';
 
-export const unsupportedOperator: ValidationRule = {
+export const unsupportedOperator: VisitorRule = {
   ruleId: 'unsupported-operator',
-  run(ast: ScriptNode, _scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
-    const diagnostics: ValidationDiagnostic[] = [];
-
-    walkOperators(ast.nodes, (op) => {
-      if (op.kind === 'Unsupported') {
-        const unsup = op as UnsupportedOperatorNode;
-        diagnostics.push({
-          severity: 'error',
-          ruleId: 'unsupported-operator',
-          message: formatMessage('unsupported-operator', dialect, unsup.operatorId),
-          span: unsup.span,
-        });
-      }
-    });
-
-    return diagnostics;
+  enter(node: OperatorNode, _scope: Readonly<ScopeModel>, ctx: VisitorContext): void {
+    if (node.kind === 'Unsupported') {
+      const unsup = node as UnsupportedOperatorNode;
+      ctx.report({
+        severity: 'error',
+        ruleId: 'unsupported-operator',
+        message: formatMessage('unsupported-operator', ctx.dialect, unsup.operatorId),
+        span: unsup.span,
+      });
+    }
   },
 };

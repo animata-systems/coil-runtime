@@ -1,15 +1,12 @@
 import type { ScriptNode, SetNode } from '../../ast/nodes.js';
 import type { ScopeModel } from '../scope.js';
-import type { DialectTable } from '../../dialect/types.js';
-import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
+import type { VisitorRule, VisitorContext } from '../validator.js';
 import { walkOperators } from '../walk.js';
 import { formatMessage } from '../messages.js';
 
-export const setWithoutDefine: ValidationRule = {
+export const setWithoutDefine: VisitorRule = {
   ruleId: 'set-without-define',
-  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
-    const diagnostics: ValidationDiagnostic[] = [];
-
+  finalize(scope: Readonly<ScopeModel>, ast: ScriptNode, ctx: VisitorContext): void {
     walkOperators(ast.nodes, (op) => {
       if (op.kind !== 'Op.Set') return;
       const set = op as SetNode;
@@ -17,22 +14,20 @@ export const setWithoutDefine: ValidationRule = {
       const entry = scope.variables.get(name);
 
       if (!entry) {
-        diagnostics.push({
+        ctx.report({
           severity: 'error',
           ruleId: 'set-without-define',
-          message: formatMessage('set-without-define', dialect, name),
+          message: formatMessage('set-without-define', ctx.dialect, name),
           span: set.span,
         });
       } else if (entry.state === 'promised') {
-        diagnostics.push({
+        ctx.report({
           severity: 'error',
           ruleId: 'set-without-define',
-          message: formatMessage('set-without-define:promised', dialect, name),
+          message: formatMessage('set-without-define:promised', ctx.dialect, name),
           span: set.span,
         });
       }
     });
-
-    return diagnostics;
   },
 };

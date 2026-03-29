@@ -1,15 +1,13 @@
 import type { ScriptNode } from '../../ast/nodes.js';
 import type { ScopeModel } from '../scope.js';
-import type { DialectTable } from '../../dialect/types.js';
-import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
+import type { VisitorRule, VisitorContext } from '../validator.js';
 import { walkOperators } from '../walk.js';
 import { collectVariableRefs } from '../refs.js';
 import { formatMessage } from '../messages.js';
 
-export const undefinedVariable: ValidationRule = {
+export const undefinedVariable: VisitorRule = {
   ruleId: 'undefined-variable',
-  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
-    const diagnostics: ValidationDiagnostic[] = [];
+  finalize(scope: Readonly<ScopeModel>, ast: ScriptNode, ctx: VisitorContext): void {
     const reported = new Set<string>();
 
     walkOperators(ast.nodes, (op) => {
@@ -18,18 +16,16 @@ export const undefinedVariable: ValidationRule = {
         if (reported.has(ref.name)) continue;
         if (!scope.variables.has(ref.name)) {
           reported.add(ref.name);
-          diagnostics.push({
+          ctx.report({
             severity: 'error',
             ruleId: 'undefined-variable',
-            message: formatMessage('undefined-variable', dialect, ref.name),
+            message: formatMessage('undefined-variable', ctx.dialect, ref.name),
             span: ref.span,
           });
         }
         // conditional: true → NOT an error (D-007-1)
-        // state: 'promised' → NOT an error (use-before-wait handles this in phase 3)
+        // state: 'promised' → NOT an error (use-before-wait handles this)
       }
     });
-
-    return diagnostics;
   },
 };

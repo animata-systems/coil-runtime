@@ -1,31 +1,26 @@
 import type { ScriptNode, SendNode } from '../../ast/nodes.js';
 import type { ScopeModel } from '../scope.js';
-import type { DialectTable } from '../../dialect/types.js';
-import type { ValidationDiagnostic, ValidationRule } from '../validator.js';
+import type { VisitorRule, VisitorContext } from '../validator.js';
 import { walkOperators } from '../walk.js';
 import { formatMessage } from '../messages.js';
 
-export const undeclaredParticipant: ValidationRule = {
+export const undeclaredParticipant: VisitorRule = {
   ruleId: 'undeclared-participant',
-  run(ast: ScriptNode, scope: ScopeModel, dialect: DialectTable): ValidationDiagnostic[] {
-    const diagnostics: ValidationDiagnostic[] = [];
-
+  finalize(scope: Readonly<ScopeModel>, ast: ScriptNode, ctx: VisitorContext): void {
     walkOperators(ast.nodes, (op) => {
       if (op.kind === 'Op.Send') {
         const send = op as SendNode;
         for (const name of send.for) {
           if (!scope.participants.has(name)) {
-            diagnostics.push({
+            ctx.report({
               severity: 'error',
               ruleId: 'undeclared-participant',
-              message: formatMessage('undeclared-participant', dialect, name),
+              message: formatMessage('undeclared-participant', ctx.dialect, name),
               span: send.span,
             });
           }
         }
       }
     });
-
-    return diagnostics;
   },
 };
