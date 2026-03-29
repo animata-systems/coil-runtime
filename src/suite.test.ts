@@ -182,9 +182,8 @@ function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, inde
     expect(
       thrown instanceof ParseError || thrown instanceof LexerError,
     ).toBe(true);
-    if (meta.errorCode && thrown instanceof ParseError) {
-      expect(thrown.abstractId).toBe(meta.errorCode);
-    }
+    expect(meta.errorCode, 'parse tests must specify error code').toBeTruthy();
+    expect((thrown as ParseError | LexerError).errorCode).toBe(meta.errorCode);
   } else {
     // Parser must succeed, validator must report errors with specific ruleId.
     expect(meta.errorCode, 'validate tests must specify error code').toBeTruthy();

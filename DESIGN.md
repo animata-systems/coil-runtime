@@ -399,21 +399,22 @@ Rules:
 
 **Cost.** All call sites of `extractCoilMeta` and `extractMdMeta` must pass the file path. Trivial — the path is already available at every call site.
 
-## R-0032 — Error matching: validate codes mandatory, parse codes optional
+## R-0032 — Error matching: all error codes mandatory
 
 | | |
 |---|---|
 | **Status** | accepted |
 | **Decided** | 2026-03-29 |
-| **Scope** | `src/suite.test.ts`, `coil/tests/invalid/*.coil` |
+| **Updated** | 2026-03-29 |
+| **Scope** | `src/suite.test.ts`, `src/parser/parser.ts`, `src/lexer/tokenizer.ts`, `coil/tests/invalid/*.coil` |
 
-**Context.** Invalid tests check only the fact of failure — any error passes. `@error validate` doesn't verify which rule fired; `@error parse` doesn't verify the error is a ParseError (not a TypeError from a runtime bug).
+**Context.** Originally, invalid tests for parse errors used only `instanceof` check — `abstractId` on `ParseError` was optional (R-0005) and not consistently set. Validate tests already matched by `ruleId`. This was a deliberate transitional compromise.
 
-**Decision.** (1) `@error` annotation syntax: `@error <phase> [<code>]`. (2) For `validate`: if `<code>` is present, assert `errors.some(e => e.ruleId === code)`. If absent — fallback to `errors.length >= 1` (transitional). (3) For `parse`: assert `instanceof ParseError | LexerError`. If `<code>` is present, assert `(err as ParseError).abstractId === code`. If absent — instanceof check only. (4) All existing validate tests get explicit ruleId codes immediately. Parse tests keep phase-only annotation for now — `abstractId` coverage in the parser is incomplete.
+**Decision.** (1) `ParseError` and `LexerError` gain a mandatory `errorCode: string` field — kebab-case, stable, machine-readable, by analogy with validator `ruleId`. (2) All 37 `throw new ParseError(...)` and all 6 `throw new LexerError(...)` sites carry a specific code from the registry in STORY-011 phase 4. (3) `@error parse <code>` in invalid tests is now mandatory — every parse/lexer invalid test specifies the expected code. (4) `runInvalidChecks` matches by `errorCode` unconditionally; the `instanceof`-only fallback is removed. (5) `ParseError.abstractId` remains as an optional fourth parameter for dialect-aware diagnostic formatting (R-0005) — it is orthogonal to `errorCode`.
 
-**Rationale.** `ruleId` values are stable kebab-case strings, present on every `ValidationDiagnostic` (R-0012). `abstractId` on `ParseError` is optional (R-0005) and not consistently set across all error sites in the parser. Forcing parse codes now would require auditing every `throw new ParseError(...)` — out of scope.
+**Rationale.** STORY-011 phase 3 (parser hardening) added 5 new error points. With 37 parser + 6 lexer throw sites, the cost of auditing all sites is justified and the transitional regime is no longer needed. Uniform mandatory codes enable downstream tooling (IDE diagnostics, `coil check --json`) to match errors programmatically.
 
-**Cost.** Parse error matching is weaker than validate matching in this phase. Acceptable: `instanceof` check already eliminates the main risk (TypeError masquerading as expected parse failure).
+**Cost.** Every new `throw new ParseError(...)` or `throw new LexerError(...)` must assign a code and register it. Minor overhead, large gain in test precision and tooling support.
 
 ## R-0033 — Visitor pattern for validator: single AST walk with rule hooks
 

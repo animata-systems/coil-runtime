@@ -19,12 +19,14 @@ import type {
 
 export class ParseError extends Error {
   readonly span: SourceSpan;
+  readonly errorCode: string;
   readonly abstractId?: AbstractId;
 
-  constructor(message: string, span: SourceSpan, abstractId?: AbstractId) {
+  constructor(message: string, span: SourceSpan, errorCode: string, abstractId?: AbstractId) {
     super(message);
     this.name = 'ParseError';
     this.span = span;
+    this.errorCode = errorCode;
     this.abstractId = abstractId;
   }
 }
@@ -97,7 +99,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     skipTrivia();
     const t = peek();
     if (t.type !== type) {
-      throw new ParseError(`expected ${type}, got ${t.type}`, t.span);
+      throw new ParseError(`expected ${type}, got ${t.type}`, t.span, 'expected-token-type');
     }
     return advance();
   }
@@ -111,7 +113,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     const t = peek();
     if (t.type !== 'Keyword' || !(t as KeywordToken).ids.includes(id)) {
       const dialectWord = lookupDialectWord(id, dialect);
-      throw new ParseError(`expected ${dialectWord} (${id})`, t.span, id);
+      throw new ParseError(`expected ${dialectWord} (${id})`, t.span, 'expected-keyword', id);
     }
     return advance() as KeywordToken;
   }
@@ -163,7 +165,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     skipTrivia();
     const t = peek();
     if (t.type !== expectedType) {
-      throw new ParseError(`expected ${expectedType}, got ${t.type}`, t.span);
+      throw new ParseError(`expected ${expectedType}, got ${t.type}`, t.span, 'expected-ref-type');
     }
     const refs: Extract<Token, { type: T }>[] = [];
     refs.push(advance() as Extract<Token, { type: T }>);
@@ -172,7 +174,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       skipTrivia();
       const next = peek();
       if (next.type !== expectedType) {
-        throw new ParseError(`expected ${expectedType}, got ${next.type}`, next.span);
+        throw new ParseError(`expected ${expectedType}, got ${next.type}`, next.span, 'expected-ref-type');
       }
       refs.push(advance() as Extract<Token, { type: T }>);
     }
@@ -186,7 +188,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     if (polId === 'Pol.None') { advance(); return 'none'; }
     if (polId === 'Pol.Any') { advance(); return 'any'; }
     if (polId === 'Pol.All') { advance(); return 'all'; }
-    throw new ParseError('expected NONE, ANY, or ALL', peek().span);
+    throw new ParseError('expected NONE, ANY, or ALL', peek().span, 'expected-policy');
   }
 
   /** C3: Parse duration literal */
@@ -197,7 +199,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       advance();
       return { value: dur.value, unitId: dur.unitId, span: dur.span };
     }
-    throw new ParseError('expected duration literal', peek().span);
+    throw new ParseError('expected duration literal', peek().span, 'expected-duration');
   }
 
   /** C4: Parse binding name (bare identifier in operator signature) */
@@ -205,7 +207,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     skipTrivia();
     const t = peek();
     if (t.type !== 'Identifier') {
-      throw new ParseError(`expected identifier, got ${t.type}`, t.span);
+      throw new ParseError(`expected identifier, got ${t.type}`, t.span, 'expected-binding-name');
     }
     return (advance() as IdentifierToken).name;
   }
@@ -215,7 +217,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     skipTrivia();
     const t = peek();
     if (t.type !== 'ValueRef') {
-      throw new ParseError(`expected $reference, got ${t.type}`, t.span);
+      throw new ParseError(`expected $reference, got ${t.type}`, t.span, 'expected-value-ref');
     }
     const vr = advance() as ValueRefToken;
     return { type: 'ref', name: vr.name, path: vr.path, span: vr.span };
@@ -240,7 +242,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       skipTrivia();
       if (isKeyword('Kw.End') || peek().type === 'EOF') break;
       if (peek().type === 'TemplateOpen') {
-        throw new ParseError('template body << >> is not allowed in EXECUTE', peek().span, 'Op.Execute');
+        throw new ParseError('template body << >> is not allowed in EXECUTE', peek().span, 'execute-template-forbidden', 'Op.Execute');
       }
       if (peek().type !== 'Dash') break;
 
@@ -262,7 +264,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         const nl = advance() as NumberLiteralToken;
         value = { type: 'number', value: nl.value, span: nl.span };
       } else {
-        throw new ParseError(`expected value ($ref, "string", or number), got ${vt.type}`, vt.span);
+        throw new ParseError(`expected value ($ref, "string", or number), got ${vt.type}`, vt.span, 'execute-expected-value');
       }
 
       args.push({
@@ -310,11 +312,11 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       // Type keyword
       const typeToken = peek();
       if (typeToken.type !== 'Keyword') {
-        throw new ParseError('expected result type keyword', typeToken.span);
+        throw new ParseError('expected result type keyword', typeToken.span, 'result-expected-type-keyword');
       }
       const typeId = isAnyKeywordOf(['Typ.Text', 'Typ.Number', 'Typ.Flag', 'Typ.Choice', 'Typ.List']);
       if (!typeId) {
-        throw new ParseError('expected result type (TEXT, NUMBER, FLAG, CHOICE, LIST)', typeToken.span);
+        throw new ParseError('expected result type (TEXT, NUMBER, FLAG, CHOICE, LIST)', typeToken.span, 'result-unknown-type');
       }
       advance(); // consume type keyword
 
@@ -333,6 +335,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
             throw new ParseError(
               `unexpected token in CHOICE options: ${peek().type}`,
               peek().span,
+              'result-unexpected-choice-token',
             );
           }
         }
@@ -408,7 +411,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       const sl = advance() as StringLiteralToken;
       return { type: 'string', value: sl.value, span: sl.span };
     }
-    throw new ParseError(`expected body value (template, $reference, number, or "string"), got ${t.type}`, t.span);
+    throw new ParseError(`expected body value (template, $reference, number, or "string"), got ${t.type}`, t.span, 'expected-body-value');
   }
 
   // ─── RECEIVE ───────────────────────────────────────────
@@ -461,7 +464,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       // Template body
       if (peek().type === 'TemplateOpen') {
         if (bodyParsed) {
-          throw new ParseError('duplicate body in SEND block', peek().span, 'Op.Send');
+          throw new ParseError('duplicate body in SEND block', peek().span, 'send-duplicate-body', 'Op.Send');
         }
         body = parseTemplate();
         bodyParsed = true;
@@ -476,6 +479,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
           throw new ParseError(
             `modifier ${dialectWord} after body is not allowed (body must be last in block)`,
             peek().span,
+            'send-modifier-after-body',
             modId,
           );
         }
@@ -486,7 +490,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         switch (modId) {
           case 'Mod.To': {
             if (to !== null) {
-              throw new ParseError('duplicate TO modifier', peek().span, 'Mod.To');
+              throw new ParseError('duplicate TO modifier', peek().span, 'send-duplicate-to', 'Mod.To');
             }
             to = toChannelRef(expectChannelRef());
             break;
@@ -498,21 +502,21 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
           }
           case 'Mod.ReplyTo': {
             if (replyTo !== null) {
-              throw new ParseError('duplicate REPLY TO modifier', peek().span, 'Mod.ReplyTo');
+              throw new ParseError('duplicate REPLY TO modifier', peek().span, 'send-duplicate-reply-to', 'Mod.ReplyTo');
             }
             replyTo = toChannelRef(expectChannelRef());
             break;
           }
           case 'Mod.Await': {
             if (awaitPolicy !== null) {
-              throw new ParseError('duplicate AWAIT modifier', peek().span, 'Mod.Await');
+              throw new ParseError('duplicate AWAIT modifier', peek().span, 'send-duplicate-await', 'Mod.Await');
             }
             awaitPolicy = parsePolicy();
             break;
           }
           case 'Mod.Timeout': {
             if (timeout !== null) {
-              throw new ParseError('duplicate TIMEOUT modifier', peek().span, 'Mod.Timeout');
+              throw new ParseError('duplicate TIMEOUT modifier', peek().span, 'send-duplicate-timeout', 'Mod.Timeout');
             }
             timeout = parseDuration();
             break;
@@ -523,7 +527,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
       // Unexpected token inside SEND — strict error
       const t = peek();
-      throw new ParseError(`unexpected token in SEND block: ${t.type}`, t.span, 'Op.Send');
+      throw new ParseError(`unexpected token in SEND block: ${t.type}`, t.span, 'send-unexpected-token', 'Op.Send');
     }
 
     expectKeyword('Kw.End');
@@ -545,7 +549,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
   function parseExit(kwToken: KeywordToken): ExitNode {
     if (peek().type !== 'Newline' && peek().type !== 'EOF' && peek().type !== 'Comment') {
-      throw new ParseError('EXIT takes no arguments', peek().span, 'Op.Exit');
+      throw new ParseError('EXIT takes no arguments', peek().span, 'exit-no-arguments', 'Op.Exit');
     }
     return { kind: 'Op.Exit', span: kwToken.span };
   }
@@ -634,7 +638,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       // Anonymous body: TemplateOpen not preceded by a modifier keyword (D-0032)
       if (peek().type === 'TemplateOpen') {
         if (body !== null) {
-          throw new ParseError('duplicate anonymous body in THINK block', peek().span, 'Op.Think');
+          throw new ParseError('duplicate anonymous body in THINK block', peek().span, 'think-duplicate-body', 'Op.Think');
         }
         body = parseTemplate();
         continue;
@@ -643,7 +647,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       const modId = isAnyKeywordOf(THINK_MODIFIERS);
       if (!modId) {
         const t = peek();
-        throw new ParseError(`unexpected token in THINK block: ${t.type}`, t.span, 'Op.Think');
+        throw new ParseError(`unexpected token in THINK block: ${t.type}`, t.span, 'think-unexpected-token', 'Op.Think');
       }
 
       // Body was already parsed — no modifiers after body
@@ -651,7 +655,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         const dialectWord = lookupDialectWord(modId, dialect);
         throw new ParseError(
           `modifier ${dialectWord} after anonymous body is not allowed (body must be last in block)`,
-          peek().span, modId,
+          peek().span, 'think-modifier-after-body', modId,
         );
       }
 
@@ -660,14 +664,14 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         const dialectWord = lookupDialectWord(modId, dialect);
         throw new ParseError(
           `modifier ${dialectWord} after RESULT is not allowed (RESULT must be the last modifier)`,
-          peek().span, modId,
+          peek().span, 'think-modifier-after-result', modId,
         );
       }
 
       // Check duplicate
       if (seen.has(modId)) {
         const dialectWord = lookupDialectWord(modId, dialect);
-        throw new ParseError(`duplicate modifier ${dialectWord}`, peek().span, modId);
+        throw new ParseError(`duplicate modifier ${dialectWord}`, peek().span, 'think-duplicate-modifier', modId);
       }
       seen.add(modId);
 
@@ -676,7 +680,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         const dialectWord = lookupDialectWord(modId, dialect);
         throw new ParseError(
           `rigging modifier ${dialectWord} after formulation modifier is not allowed`,
-          peek().span, modId,
+          peek().span, 'think-rigging-after-formulation', modId,
         );
       }
       if (THINK_FORMULATION.includes(modId)) {
@@ -765,12 +769,12 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       const modId = isAnyKeywordOf(WAIT_MODIFIERS);
       if (!modId) {
         const t = peek();
-        throw new ParseError(`unexpected token in WAIT block: ${t.type}`, t.span, 'Op.Wait');
+        throw new ParseError(`unexpected token in WAIT block: ${t.type}`, t.span, 'wait-unexpected-token', 'Op.Wait');
       }
 
       if (seen.has(modId)) {
         const dialectWord = lookupDialectWord(modId, dialect);
-        throw new ParseError(`duplicate modifier ${dialectWord}`, peek().span, modId);
+        throw new ParseError(`duplicate modifier ${dialectWord}`, peek().span, 'wait-duplicate-modifier', modId);
       }
       seen.add(modId);
 
@@ -786,7 +790,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         case 'Mod.Mode': {
           const pol = parsePolicy();
           if (pol === 'none') {
-            throw new ParseError('WAIT MODE does not accept NONE', peek().span, 'Mod.Mode');
+            throw new ParseError('WAIT MODE does not accept NONE', peek().span, 'wait-mode-none', 'Mod.Mode');
           }
           mode = pol;
           break;
@@ -799,7 +803,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
     // ON is mandatory for stable WAIT form
     if (on.length === 0) {
-      throw new ParseError('WAIT requires ON modifier with at least one promise', kwToken.span, 'Mod.On');
+      throw new ParseError('WAIT requires ON modifier with at least one promise', kwToken.span, 'wait-requires-on', 'Mod.On');
     }
 
     expectKeyword('Kw.End');
@@ -881,18 +885,18 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       if (!isAnyKeywordOf(['Mod.Limit'])) {
         throw new ParseError(
           'REPEAT UNTIL requires a limit (NO MORE THAN <count>)',
-          peek().span, 'Mod.Limit',
+          peek().span, 'repeat-until-requires-limit', 'Mod.Limit',
         );
       }
       advance(); // consume NO MORE THAN
       skipTrivia();
 
       if (peek().type !== 'NumberLiteral') {
-        throw new ParseError('expected number after NO MORE THAN', peek().span);
+        throw new ParseError('expected number after NO MORE THAN', peek().span, 'repeat-expected-limit-number');
       }
       limit = (advance() as NumberLiteralToken).value;
     } else {
-      throw new ParseError('expected number or UNTIL after REPEAT', peek().span, 'Op.Repeat');
+      throw new ParseError('expected number or UNTIL after REPEAT', peek().span, 'repeat-expected-count-or-until', 'Op.Repeat');
     }
 
     const body = parseBody();
@@ -942,7 +946,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
       // Unexpected token inside block body — strict error (consistent with main loop)
       const t = peek();
-      throw new ParseError(`unexpected token in block body: ${t.type}`, t.span);
+      throw new ParseError(`unexpected token in block body: ${t.type}`, t.span, 'unexpected-token-in-body');
     }
 
     return bodyNodes;
@@ -1019,7 +1023,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     }
 
     const t = peek();
-    throw new ParseError(`unexpected token at top level: ${t.type}`, t.span);
+    throw new ParseError(`unexpected token at top level: ${t.type}`, t.span, 'unexpected-top-level');
   }
 
   return { nodes, dialect: dialect.name };

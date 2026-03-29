@@ -5,10 +5,12 @@ import type {
 
 export class LexerError extends Error {
   readonly span: SourceSpan;
-  constructor(message: string, span: SourceSpan) {
+  readonly errorCode: string;
+  constructor(message: string, span: SourceSpan, errorCode: string) {
     super(message);
     this.name = 'LexerError';
     this.span = span;
+    this.errorCode = errorCode;
   }
 }
 
@@ -77,14 +79,14 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     advance(); // skip $
     const name = readIdentifier();
     if (name === '') {
-      throw new LexerError('expected identifier after $', makeSpan(startLine, startCol, startOffset, 1));
+      throw new LexerError('expected identifier after $', makeSpan(startLine, startCol, startOffset, 1), 'expected-identifier-after-sigil');
     }
     const path: string[] = [];
     while (!atEnd() && peek() === '.') {
       advance(); // skip .
       const field = readIdentifier();
       if (field === '') {
-        throw new LexerError('expected field name after .', makeSpan(line, col - 1, pos - 1, 1));
+        throw new LexerError('expected field name after .', makeSpan(line, col - 1, pos - 1, 1), 'expected-field-after-dot');
       }
       path.push(field);
     }
@@ -129,7 +131,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
 
     const first = readSegment();
     if (!first) {
-      throw new LexerError('expected channel name after #', makeSpan(startLine, startCol, startOffset, 1));
+      throw new LexerError('expected channel name after #', makeSpan(startLine, startCol, startOffset, 1), 'expected-channel-name');
     }
     segments.push(first);
 
@@ -158,7 +160,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     advance(); // skip sigil
     const name = readIdentifier();
     if (name === '') {
-      throw new LexerError(`expected identifier after ${sigil}`, makeSpan(startLine, startCol, startOffset, 1));
+      throw new LexerError(`expected identifier after ${sigil}`, makeSpan(startLine, startCol, startOffset, 1), 'expected-ref-name');
     }
     return {
       type: tokenType,
@@ -235,7 +237,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     }
 
     // Unterminated template
-    throw new LexerError('unterminated template: expected >>', makeSpan(textStartLine, textStartCol, textStart, 0));
+    throw new LexerError('unterminated template: expected >>', makeSpan(textStartLine, textStartCol, textStart, 0), 'unterminated-template');
   }
 
   // ─── Main loop ─────────────────────────────────────────
@@ -442,6 +444,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     throw new LexerError(
       `unexpected character: '${ch}' (U+${ch.codePointAt(0)!.toString(16).padStart(4, '0')})`,
       makeSpan(startLine, startCol, startOffset, 1),
+      'unexpected-character',
     );
   }
 
