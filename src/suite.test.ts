@@ -30,7 +30,8 @@ interface CoilMeta {
   test: 'valid' | 'invalid';
   role: string;
   dialect: string;
-  error?: string;
+  errorPhase?: 'parse' | 'validate';
+  errorCode?: string;
   description: string;
 }
 
@@ -46,11 +47,20 @@ function extractCoilMeta(src: string, filePath: string): CoilMeta {
   if (!test) throw new Error(`Missing required @test in ${filePath}`);
   if (!dialect) throw new Error(`Missing required @dialect in ${filePath}`);
   if (!role) throw new Error(`Missing required @role in ${filePath}`);
+  const errorRaw = get('error');
+  let errorPhase: 'parse' | 'validate' | undefined;
+  let errorCode: string | undefined;
+  if (errorRaw) {
+    const parts = errorRaw.split(/\s+/);
+    errorPhase = parts[0] as 'parse' | 'validate';
+    errorCode = parts[1];
+  }
   return {
     test,
     role,
     dialect,
-    error: get('error'),
+    errorPhase,
+    errorCode,
     description: get('description') ?? '',
   };
 }
@@ -63,11 +73,20 @@ function extractMdMeta(src: string, filePath: string): CoilMeta {
   };
   const dialect = get('dialect');
   if (!dialect) throw new Error(`Missing required @dialect in ${filePath}`);
+  const errorRaw = get('error');
+  let errorPhase: 'parse' | 'validate' | undefined;
+  let errorCode: string | undefined;
+  if (errorRaw) {
+    const parts = errorRaw.split(/\s+/);
+    errorPhase = parts[0] as 'parse' | 'validate';
+    errorCode = parts[1];
+  }
   return {
     test: (get('test') as 'valid' | 'invalid') ?? 'valid',
     role: get('role') ?? 'unknown',
     dialect,
-    error: get('error'),
+    errorPhase,
+    errorCode,
     description: get('description') ?? '',
   };
 }
@@ -133,22 +152,33 @@ function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
 }
 
 function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, index: KeywordIndex) {
-  expect(meta.error).toBeDefined();
-  expect(['parse', 'validate']).toContain(meta.error);
+  expect(meta.errorPhase).toBeDefined();
+  expect(['parse', 'validate']).toContain(meta.errorPhase);
 
-  if (meta.error === 'parse') {
-    // Must throw at tokenize or parse phase.
-    expect(() => {
+  if (meta.errorPhase === 'parse') {
+    // Must throw a ParseError or LexerError at tokenize/parse phase.
+    let thrown: unknown;
+    try {
       const tokens = tokenize(src, index);
       parse(tokens, table, src);
-    }).toThrow();
+    } catch (e) {
+      thrown = e;
+    }
+    expect(thrown).toBeDefined();
+    expect(
+      thrown instanceof ParseError || thrown instanceof LexerError,
+    ).toBe(true);
+    if (meta.errorCode && thrown instanceof ParseError) {
+      expect(thrown.abstractId).toBe(meta.errorCode);
+    }
   } else {
-    // Parser must succeed, validator must report errors.
+    // Parser must succeed, validator must report errors with specific ruleId.
+    expect(meta.errorCode, 'validate tests must specify error code').toBeTruthy();
     const tokens = tokenize(src, index);
     const ast = parse(tokens, table, src);
     const result = validate(ast, table);
     const errors = result.diagnostics.filter(d => d.severity === 'error');
-    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors.some(e => e.ruleId === meta.errorCode)).toBe(true);
   }
 }
 
