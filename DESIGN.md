@@ -382,3 +382,35 @@ Rules:
 | **Decision** | `WaitNode` gains `name: string | null`. The parser reads an optional `Identifier` token after the WAIT keyword and before modifiers. No ambiguity: modifiers (`ON`, `MODE`, `TIMEOUT`) and `END` lex as `Keyword`, not `Identifier`. Scope model and `use-before-wait` rule register the bound name as a `'defined'` variable. No MODE restriction in this phase (open question deferred to language review). |
 | **Alternatives** | (A) Store binding as a separate wrapper node — over-engineering for a single optional field. (B) Require sigil (`$data`) in syntax — contradicts spec, which uses bare identifier. |
 | **Consequences** | Scope: `src/ast/nodes.ts`, `src/parser/parser.ts`, `src/validator/scope.ts`, `src/validator/rules/use-before-wait.ts`. Existing tests updated with `name: null` regression assertions. New tests: EN bound (MODE ANY, single), RU bound. Integration test: `coil/tests/valid/core/wait-bound.coil`. |
+
+## R-0031 — Test suite hardening: strict metadata with filePath
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Scope** | `src/suite.test.ts` |
+
+**Context.** `extractCoilMeta` and `extractMdMeta` silently default `@test`, `@dialect`, `@role` when missing. This masks annotation omissions — a test with no `@dialect` silently runs as `en-standard`, potentially hiding a real bug.
+
+**Decision.** (1) `extractCoilMeta(src, filePath)` throws `Error('Missing required @<field> in <filePath>')` when `@test`, `@dialect`, or `@role` is absent. `@description` keeps `?? ''` — it's informational. (2) `extractMdMeta(src, filePath)` throws on missing `@dialect`. `@test` defaults to `'valid'` and `@role` to `'unknown'` — all markdown examples are valid scenarios. (3) Both functions gain a `filePath: string` parameter for diagnostic quality.
+
+**Rationale.** Errors thrown from metadata extraction may occur outside `it()` blocks during file collection. Without `filePath`, vitest shows "unhandled error in describe" with no indication of which file is broken. The `filePath` parameter makes diagnostics unambiguous.
+
+**Cost.** All call sites of `extractCoilMeta` and `extractMdMeta` must pass the file path. Trivial — the path is already available at every call site.
+
+## R-0032 — Error matching: validate codes mandatory, parse codes optional
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Scope** | `src/suite.test.ts`, `coil/tests/invalid/*.coil` |
+
+**Context.** Invalid tests check only the fact of failure — any error passes. `@error validate` doesn't verify which rule fired; `@error parse` doesn't verify the error is a ParseError (not a TypeError from a runtime bug).
+
+**Decision.** (1) `@error` annotation syntax: `@error <phase> [<code>]`. (2) For `validate`: if `<code>` is present, assert `errors.some(e => e.ruleId === code)`. If absent — fallback to `errors.length >= 1` (transitional). (3) For `parse`: assert `instanceof ParseError | LexerError`. If `<code>` is present, assert `(err as ParseError).abstractId === code`. If absent — instanceof check only. (4) All existing validate tests get explicit ruleId codes immediately. Parse tests keep phase-only annotation for now — `abstractId` coverage in the parser is incomplete.
+
+**Rationale.** `ruleId` values are stable kebab-case strings, present on every `ValidationDiagnostic` (R-0012). `abstractId` on `ParseError` is optional (R-0005) and not consistently set across all error sites in the parser. Forcing parse codes now would require auditing every `throw new ParseError(...)` — out of scope.
+
+**Cost.** Parse error matching is weaker than validate matching in this phase. Acceptable: `instanceof` check already eliminates the main risk (TypeError masquerading as expected parse failure).

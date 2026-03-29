@@ -35,30 +35,38 @@ interface CoilMeta {
 }
 
 /** Extract metadata from .coil file header comments (`' @field value`). */
-function extractCoilMeta(src: string): CoilMeta {
+function extractCoilMeta(src: string, filePath: string): CoilMeta {
   const get = (field: string): string | undefined => {
     const m = src.match(new RegExp(`^'\\s*@${field}\\s+(.+)`, 'm'));
     return m?.[1].trim();
   };
+  const test = get('test') as 'valid' | 'invalid' | undefined;
+  const dialect = get('dialect');
+  const role = get('role');
+  if (!test) throw new Error(`Missing required @test in ${filePath}`);
+  if (!dialect) throw new Error(`Missing required @dialect in ${filePath}`);
+  if (!role) throw new Error(`Missing required @role in ${filePath}`);
   return {
-    test: (get('test') as 'valid' | 'invalid') ?? 'valid',
-    role: get('role') ?? 'unknown',
-    dialect: get('dialect') ?? 'en-standard',
+    test,
+    role,
+    dialect,
     error: get('error'),
     description: get('description') ?? '',
   };
 }
 
 /** Extract metadata from .md file HTML comments (`<!-- @field value -->`). */
-function extractMdMeta(src: string): CoilMeta {
+function extractMdMeta(src: string, filePath: string): CoilMeta {
   const get = (field: string): string | undefined => {
     const m = src.match(new RegExp(`<!--\\s*@${field}\\s+(.+?)\\s*-->`));
     return m?.[1].trim();
   };
+  const dialect = get('dialect');
+  if (!dialect) throw new Error(`Missing required @dialect in ${filePath}`);
   return {
     test: (get('test') as 'valid' | 'invalid') ?? 'valid',
     role: get('role') ?? 'unknown',
-    dialect: get('dialect') ?? 'en-standard',
+    dialect,
     error: get('error'),
     description: get('description') ?? '',
   };
@@ -113,29 +121,16 @@ function extractCoilBlocks(markdown: string): string[] {
   return blocks;
 }
 
-// ─── Tests: conformance corpus (tests/) ─────────────────
-
-describe('conformance tests', () => {
-  const allFiles = collectCoilFiles(TESTS_DIR);
-
-  for (const file of allFiles) {
-    const label = relative(TESTS_DIR, file);
-
-    it(label, async () => {
-      const src = await readFile(file, 'utf-8');
-      const meta = extractCoilMeta(src);
-      const { table, index } = await getDialect(meta.dialect);
-
-      if (meta.test === 'valid') {
-        runValidChecks(src, table, index);
-      } else {
-        runInvalidChecks(src, meta, table, index);
-      }
-    });
-  }
-});
-
-// ─── Tests: executable examples (examples/**/*.coil) ────
+function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
+  const tokens = tokenize(src, index);
+  const ast = parse(tokens, table, src);
+  expect(ast.nodes.length).toBeGreaterThan(0);
+  const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
+  expect(unsupported).toHaveLength(0);
+  const result = validate(ast, table);
+  const errors = result.diagnostics.filter(d => d.severity === 'error');
+  expect(errors).toHaveLength(0);
+}
 
 function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, index: KeywordIndex) {
   expect(meta.error).toBeDefined();
@@ -157,16 +152,29 @@ function runInvalidChecks(src: string, meta: CoilMeta, table: DialectTable, inde
   }
 }
 
-function runValidChecks(src: string, table: DialectTable, index: KeywordIndex) {
-  const tokens = tokenize(src, index);
-  const ast = parse(tokens, table, src);
-  expect(ast.nodes.length).toBeGreaterThan(0);
-  const unsupported = ast.nodes.filter(n => n.kind === 'Unsupported');
-  expect(unsupported).toHaveLength(0);
-  const result = validate(ast, table);
-  const errors = result.diagnostics.filter(d => d.severity === 'error');
-  expect(errors).toHaveLength(0);
-}
+// ─── Tests: conformance corpus (tests/) ─────────────────
+
+describe('conformance tests', () => {
+  const allFiles = collectCoilFiles(TESTS_DIR);
+
+  for (const file of allFiles) {
+    const label = relative(TESTS_DIR, file);
+
+    it(label, async () => {
+      const src = await readFile(file, 'utf-8');
+      const meta = extractCoilMeta(src, label);
+      const { table, index } = await getDialect(meta.dialect);
+
+      if (meta.test === 'valid') {
+        runValidChecks(src, table, index);
+      } else {
+        runInvalidChecks(src, meta, table, index);
+      }
+    });
+  }
+});
+
+// ─── Tests: executable examples (examples/**/*.coil) ────
 
 describe('executable examples', () => {
   const allFiles = collectCoilFiles(EXAMPLES_DIR);
@@ -176,7 +184,7 @@ describe('executable examples', () => {
 
     it(label, async () => {
       const src = await readFile(file, 'utf-8');
-      const meta = extractCoilMeta(src);
+      const meta = extractCoilMeta(src, label);
       const { table, index } = await getDialect(meta.dialect);
 
       if (meta.test === 'valid') {
@@ -198,7 +206,7 @@ describe('narrative examples', () => {
 
     it(label, async () => {
       const md = await readFile(file, 'utf-8');
-      const meta = extractMdMeta(md);
+      const meta = extractMdMeta(md, label);
       const blocks = extractCoilBlocks(md);
       expect(blocks.length).toBeGreaterThan(0);
 
@@ -225,7 +233,7 @@ describe('dialect showcases', () => {
 
     it(dialectName, async () => {
       const md = await readFile(readmePath, 'utf-8');
-      const meta = extractMdMeta(md);
+      const meta = extractMdMeta(md, dialectName);
       const blocks = extractCoilBlocks(md);
       expect(blocks.length).toBeGreaterThan(0);
 
