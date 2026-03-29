@@ -521,8 +521,9 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         continue;
       }
 
-      // Unexpected token inside SEND — skip with no silent swallow
-      advance();
+      // Unexpected token inside SEND — strict error
+      const t = peek();
+      throw new ParseError(`unexpected token in SEND block: ${t.type}`, t.span, 'Op.Send');
     }
 
     expectKeyword('Kw.End');
@@ -641,9 +642,8 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
       const modId = isAnyKeywordOf(THINK_MODIFIERS);
       if (!modId) {
-        // Unknown token inside THINK — skip
-        advance();
-        continue;
+        const t = peek();
+        throw new ParseError(`unexpected token in THINK block: ${t.type}`, t.span, 'Op.Think');
       }
 
       // Body was already parsed — no modifiers after body
@@ -764,8 +764,8 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
       const modId = isAnyKeywordOf(WAIT_MODIFIERS);
       if (!modId) {
-        advance();
-        continue;
+        const t = peek();
+        throw new ParseError(`unexpected token in WAIT block: ${t.type}`, t.span, 'Op.Wait');
       }
 
       if (seen.has(modId)) {
@@ -795,6 +795,11 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
           timeout = parseDuration();
           break;
       }
+    }
+
+    // ON is mandatory for stable WAIT form
+    if (on.length === 0) {
+      throw new ParseError('WAIT requires ON modifier with at least one promise', kwToken.span, 'Mod.On');
     }
 
     expectKeyword('Kw.End');
@@ -935,8 +940,9 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
         continue;
       }
 
-      // Skip unexpected tokens inside body
-      advance();
+      // Unexpected token inside block body — strict error (consistent with main loop)
+      const t = peek();
+      throw new ParseError(`unexpected token in block body: ${t.type}`, t.span);
     }
 
     return bodyNodes;
