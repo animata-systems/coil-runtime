@@ -578,6 +578,7 @@ describe('parseWait', () => {
     const src = `THINK plan\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND\nWAIT\n  ON ?plan\nEND\nEXIT`;
     const ast = parseEN(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBeNull();
     expect(wait.on).toHaveLength(1);
     expect(wait.on[0].name).toBe('plan');
     expect(wait.mode).toBeNull();
@@ -590,6 +591,7 @@ THINK b\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
 WAIT\n  ON ?a, ?b\n  MODE ALL\nEND\nEXIT`;
     const ast = parseEN(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBeNull();
     expect(wait.on).toHaveLength(2);
     expect(wait.on[0].name).toBe('a');
     expect(wait.on[1].name).toBe('b');
@@ -602,6 +604,7 @@ THINK b\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
 WAIT\n  ON ?a, ?b\n  MODE ANY\nEND\nEXIT`;
     const ast = parseEN(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBeNull();
     expect(wait.mode).toBe('any');
   });
 
@@ -609,6 +612,7 @@ WAIT\n  ON ?a, ?b\n  MODE ANY\nEND\nEXIT`;
     const src = `THINK x\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND\nWAIT\n  ON ?x\n  TIMEOUT 5m\nEND\nEXIT`;
     const ast = parseEN(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBeNull();
     expect(wait.timeout).not.toBeNull();
     expect(wait.timeout!.value).toBe(5);
     expect(wait.timeout!.unitId).toBe('Dur.Minutes');
@@ -624,8 +628,43 @@ WAIT\n  ON ?a, ?b\n  MODE ANY\nEND\nEXIT`;
     const src = `ДУМАЙ план\n  ЦЕЛЬ << x >>\n  РЕЗУЛЬТАТ\n  * s: ТЕКСТ\nКОНЕЦ\nЖДИ\n  НА ?план\nКОНЕЦ\nВЫХОД`;
     const ast = parseRU(src);
     const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBeNull();
     expect(wait.on).toHaveLength(1);
     expect(wait.on[0].name).toBe('план');
+  });
+
+  it('WAIT bound form with MODE ANY', () => {
+    const src = `THINK plan\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+THINK review\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND
+WAIT data\n  ON ?plan, ?review\n  MODE ANY\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBe('data');
+    expect(wait.on).toHaveLength(2);
+    expect(wait.on[0].name).toBe('plan');
+    expect(wait.on[1].name).toBe('review');
+    expect(wait.mode).toBe('any');
+  });
+
+  it('WAIT bound form with single promise', () => {
+    const src = `THINK plan\n  GOAL << x >>\n  RESULT\n  * s: TEXT\nEND\nWAIT result\n  ON ?plan\nEND\nEXIT`;
+    const ast = parseEN(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBe('result');
+    expect(wait.on).toHaveLength(1);
+    expect(wait.on[0].name).toBe('plan');
+    expect(wait.mode).toBeNull();
+  });
+
+  it('RU: ЖДИ связанная форма', () => {
+    const src = `ДУМАЙ план\n  ЦЕЛЬ << x >>\n  РЕЗУЛЬТАТ\n  * s: ТЕКСТ\nКОНЕЦ
+ДУМАЙ обзор\n  ЦЕЛЬ << x >>\n  РЕЗУЛЬТАТ\n  * s: ТЕКСТ\nКОНЕЦ
+ЖДИ данные\n  НА ?план, ?обзор\n  РЕЖИМ ЛЮБОЙ\nКОНЕЦ\nВЫХОД`;
+    const ast = parseRU(src);
+    const wait = ast.nodes.find(n => n.kind === 'Op.Wait') as WaitNode;
+    expect(wait.name).toBe('данные');
+    expect(wait.on).toHaveLength(2);
+    expect(wait.mode).toBe('any');
   });
 });
 

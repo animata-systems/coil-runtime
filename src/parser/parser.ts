@@ -747,10 +747,16 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
   // ─── WAIT ──────────────────────────────────────────────
 
   function parseWait(kwToken: KeywordToken): WaitNode {
+    let name: string | null = null;
     let on: PromiseRef[] = [];
     let mode: 'any' | 'all' | null = null;
     let timeout: DurationValue | null = null;
     const seen = new Set<AbstractId>();
+
+    skipTrivia();
+    if (peek().type === 'Identifier') {
+      name = (advance() as IdentifierToken).name;
+    }
 
     while (!isKeyword('Kw.End') && peek().type !== 'EOF') {
       skipTrivia();
@@ -793,7 +799,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
 
     expectKeyword('Kw.End');
 
-    return { kind: 'Op.Wait', on, mode, timeout, span: makeSpanFrom(kwToken.span) };
+    return { kind: 'Op.Wait', name, on, mode, timeout, span: makeSpanFrom(kwToken.span) };
   }
 
   // ─── SIGNAL ────────────────────────────────────────────

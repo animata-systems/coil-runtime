@@ -371,3 +371,14 @@ Rules:
 | **Decision** | Code, comments, CLI messages, and test descriptions in `coil-runtime` are written in English. Abstract IDs use English mnemonics (`Op.Think`, `Mod.Result`). When referring to operators in code or comments, use en-standard keywords (THINK, WAIT, SEND), not keywords from other dialects. |
 | **Alternatives** | Bilingual codebase — increases maintenance burden, confuses contributors. |
 | **Consequences** | Diagnostic messages are in English by default. Localized diagnostics may be added later as a separate layer. |
+
+## R-0030 — WaitNode: optional binding name for bound WAIT form
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-29 |
+| **Context** | Spec 02-core.md § 2.10 defines a bound form `WAIT data ON ?x END` where the resolved value is available as `$data`. The parser and AST did not support this — an implementation gap from STORY-010 (D-010-06). |
+| **Decision** | `WaitNode` gains `name: string | null`. The parser reads an optional `Identifier` token after the WAIT keyword and before modifiers. No ambiguity: modifiers (`ON`, `MODE`, `TIMEOUT`) and `END` lex as `Keyword`, not `Identifier`. Scope model and `use-before-wait` rule register the bound name as a `'defined'` variable. No MODE restriction in this phase (open question deferred to language review). |
+| **Alternatives** | (A) Store binding as a separate wrapper node — over-engineering for a single optional field. (B) Require sigil (`$data`) in syntax — contradicts spec, which uses bare identifier. |
+| **Consequences** | Scope: `src/ast/nodes.ts`, `src/parser/parser.ts`, `src/validator/scope.ts`, `src/validator/rules/use-before-wait.ts`. Existing tests updated with `name: null` regression assertions. New tests: EN bound (MODE ANY, single), RU bound. Integration test: `coil/tests/valid/core/wait-bound.coil`. |

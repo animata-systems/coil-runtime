@@ -77,6 +77,9 @@ export const useBeforeWait: ValidationRule = {
                 vars.set(ref.name, 'defined');
               }
             }
+            if (n.name) {
+              vars.set(n.name, 'defined');
+            }
             break;
           }
           case 'Op.Each': {

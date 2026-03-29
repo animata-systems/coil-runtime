@@ -114,6 +114,9 @@ export function buildScope(ast: ScriptNode): ScopeModel {
             scope.variables.set(ref.name, { span: n.span, state: 'defined', conditional });
           }
         }
+        if (n.name) {
+          scope.variables.set(n.name, { span: n.span, state: 'defined', conditional });
+        }
         break;
       }
       case 'Op.Each': {

@@ -203,6 +203,7 @@ export interface SignalNode {
 
 export interface WaitNode {
   kind: 'Op.Wait';
+  name: string | null;
   on: PromiseRef[];
   mode: 'any' | 'all' | null;
   timeout: DurationValue | null;
