@@ -23,9 +23,11 @@ export function checkChoiceMinOptions(
         span: field.span,
       });
     }
-    // Recurse into LIST children
+    // Recurse into LIST/OBJECT children
     if (field.schema.kind === 'list') {
       diagnostics.push(...checkChoiceMinOptions(field.schema.itemFields, dialect));
+    } else if (field.schema.kind === 'object') {
+      diagnostics.push(...checkChoiceMinOptions(field.schema.fields, dialect));
     }
   }
 
@@ -52,6 +54,9 @@ export function checkNestedList(
       }
       // Recurse — check for deeper nesting even after reporting
       diagnostics.push(...checkNestedList(field.schema.itemFields, dialect, true));
+    } else if (field.schema.kind === 'object') {
+      // Recurse into object fields — LIST inside OBJECT counts as nested if parent is LIST
+      diagnostics.push(...checkNestedList(field.schema.fields, dialect, parentIsList));
     }
   }
 
@@ -77,6 +82,8 @@ export function checkListNoChildren(
       }
       // Recurse
       diagnostics.push(...checkListNoChildren(field.schema.itemFields, dialect));
+    } else if (field.schema.kind === 'object') {
+      diagnostics.push(...checkListNoChildren(field.schema.fields, dialect));
     }
   }
 
@@ -104,9 +111,11 @@ export function checkDuplicateField(
       seen.set(field.name, field);
     }
 
-    // Recurse into LIST children (separate scope)
+    // Recurse into LIST/OBJECT children (separate scope)
     if (field.schema.kind === 'list') {
       diagnostics.push(...checkDuplicateField(field.schema.itemFields, dialect));
+    } else if (field.schema.kind === 'object') {
+      diagnostics.push(...checkDuplicateField(field.schema.fields, dialect));
     }
   }
 

@@ -2230,6 +2230,159 @@ General support agent.
 }
 `;
 
+exports[`conformance tests > valid/extended/if-field-access.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with chained field access",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Analyze the document.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "",
+          "name": "metadata",
+          "typeArgs": [],
+          "typeId": "Typ.Object",
+        },
+        {
+          "depth": 1,
+          "description": "",
+          "name": "author",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "",
+          "name": "stats",
+          "typeArgs": [],
+          "typeId": "Typ.Object",
+        },
+        {
+          "depth": 2,
+          "description": "",
+          "name": "word_count",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Summarize the long document.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "summarize",
+          "result": [],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "summarize",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "analysis",
+          "path": [
+            "metadata",
+            "stats",
+            "word_count",
+          ],
+        },
+        "op": ">",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "number",
+          "value": 1000,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`conformance tests > valid/extended/if-logical-and.coil 1`] = `
 {
   "dialect": "en-standard",

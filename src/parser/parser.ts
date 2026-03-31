@@ -315,9 +315,9 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       if (typeToken.type !== 'Keyword') {
         throw new ParseError('expected result type keyword', typeToken.span, 'result-expected-type-keyword');
       }
-      const typeId = isAnyKeywordOf(['Typ.Text', 'Typ.Number', 'Typ.Flag', 'Typ.Choice', 'Typ.List']);
+      const typeId = isAnyKeywordOf(['Typ.Text', 'Typ.Number', 'Typ.Flag', 'Typ.Choice', 'Typ.List', 'Typ.Object']);
       if (!typeId) {
-        throw new ParseError('expected result type (TEXT, NUMBER, FLAG, CHOICE, LIST)', typeToken.span, 'result-unknown-type');
+        throw new ParseError('expected result type (TEXT, NUMBER, FLAG, CHOICE, LIST, OBJECT)', typeToken.span, 'result-unknown-type');
       }
       advance(); // consume type keyword
 

@@ -631,3 +631,29 @@ Deferred: objects (entry iteration), strings (character iteration), `Symbol.iter
 **Alternatives.** (A) Any iterable via `Symbol.iterator` — opens the door to generators, custom iterables, but no COIL construct currently produces non-array iterables. Premature. (B) Array + object — ambiguous iteration order for objects across engines.
 
 **Cost.** If a provider returns a non-array collection, the author must first convert it. This is acceptable — COIL is not a general-purpose language.
+
+## R-0039 — Typ.Object: named-fields container in RESULT
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/dialect/types.ts`, `src/result/schema.ts`, `src/result/compile.ts`, `src/result/rules.ts`, `src/parser/parser.ts` |
+
+**Context.** Spec v0.4 added `Typ.Object` (OBJECT / ОБЪЕКТ / 構造 / 对象) as a RESULT type for named-fields records. Dialect tables already include it. The runtime type system, schema compiler, and validation rules don't know about it — `fieldToSchema` falls through to default `text`, and nesting into a non-list/non-object is flagged as `result-leaf-with-children`.
+
+**Decision.** Add `Typ.Object` support to the RESULT pipeline:
+
+(1) `TypId` union: add `'Typ.Object'`. Update `ALL_TYP_IDS`.
+
+(2) `ResultSchema` union: add `ObjectSchema { kind: 'object'; fields: ResultSchemaField[] }`.
+
+(3) `compileResult` / `fieldToSchema`: `case 'Typ.Object': return { kind: 'object', fields: [] }`. Nesting logic: OBJECT is a container like LIST — children go into `objectSchema.fields`, stack pushes for depth tracking.
+
+(4) Validation rules: all four check functions (`checkChoiceMinOptions`, `checkNestedList`, `checkListNoChildren`, `checkDuplicateField`) recurse into `object.fields`. `result-leaf-with-children` in `compileResult` allows nesting in `object` (same as `list`). `result-nested-list` propagates `parentIsList` through OBJECT transparently (LIST > OBJECT > LIST is still nested-list). OBJECT inside OBJECT is valid.
+
+(5) Parser: `parseResultBlock` has a hardcoded `isAnyKeywordOf([...])` list of accepted type IDs — added `'Typ.Object'`. Without this, the parser rejected OBJECT as an unknown result type despite the dialect table containing it.
+
+**Rationale.** COIL agents interact with tools and models that return nested objects. Field access `$result.metadata.author` already works in the executor (R-0037). Without OBJECT in RESULT, authors cannot describe the structure the LLM should produce for nested non-list data. This creates an artificial asymmetry: field access works, but the schema can't express the shape.
+
+**Cost.** One more variant in the discriminated union. Minimal — OBJECT behaves identically to LIST in the compiler, just semantically different (single record vs array of records).

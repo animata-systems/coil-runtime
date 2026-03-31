@@ -24,13 +24,19 @@ export interface ListSchema {
   itemFields: ResultSchemaField[];
 }
 
+export interface ObjectSchema {
+  kind: 'object';
+  fields: ResultSchemaField[];
+}
+
 /** Discriminated union — one variant per RESULT type (spec § 5.4) */
 export type ResultSchema =
   | TextSchema
   | NumberSchema
   | FlagSchema
   | ChoiceSchema
-  | ListSchema;
+  | ListSchema
+  | ObjectSchema;
 
 /** A named field in the result tree */
 export interface ResultSchemaField {

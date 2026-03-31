@@ -2,7 +2,7 @@ import type { ResultField } from '../ast/nodes.js';
 import type { DialectTable } from '../dialect/types.js';
 import type { ValidationDiagnostic } from '../validator/validator.js';
 import { formatMessage } from '../validator/messages.js';
-import type { ListSchema, ResultSchema, ResultSchemaField } from './schema.js';
+import type { ListSchema, ObjectSchema, ResultSchema, ResultSchemaField } from './schema.js';
 
 /** Output of tolerant compilation (R-0026) */
 export interface CompileResultOutput {
@@ -26,6 +26,8 @@ function fieldToSchema(field: ResultField): ResultSchema {
       return { kind: 'choice', options: [...field.typeArgs] };
     case 'Typ.List':
       return { kind: 'list', itemFields: [] };
+    case 'Typ.Object':
+      return { kind: 'object', fields: [] };
     default:
       return { kind: 'text' };
   }
@@ -87,7 +89,7 @@ export function compileResult(fields: ResultField[], dialect?: DialectTable): Co
         });
         // Tolerant: attach at container level
         container.target.push(schemaField);
-      } else if (lastField.schema.kind !== 'list') {
+      } else if (lastField.schema.kind !== 'list' && lastField.schema.kind !== 'object') {
         // Scalar with children → diagnostic, attach at container level (tolerant)
         diagnostics.push({
           severity: 'error',
@@ -98,12 +100,17 @@ export function compileResult(fields: ResultField[], dialect?: DialectTable): Co
           span: field.span,
         });
         container.target.push(schemaField);
-      } else {
+      } else if (lastField.schema.kind === 'list') {
         // Valid nesting into LIST
         // NOTE: nested LIST is accepted here; result-nested-list validation is in rules.ts (R-0027)
         const listSchema = lastField.schema as ListSchema;
         listSchema.itemFields.push(schemaField);
         stack.push({ target: listSchema.itemFields, depth: field.depth });
+      } else {
+        // Valid nesting into OBJECT
+        const objectSchema = lastField.schema as ObjectSchema;
+        objectSchema.fields.push(schemaField);
+        stack.push({ target: objectSchema.fields, depth: field.depth });
       }
     }
   }

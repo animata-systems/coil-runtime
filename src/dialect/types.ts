@@ -61,7 +61,8 @@ export type TypId =
   | 'Typ.Number'
   | 'Typ.Flag'
   | 'Typ.Choice'
-  | 'Typ.List';
+  | 'Typ.List'
+  | 'Typ.Object';
 
 // § 4.11 Duration suffixes
 export type DurId =
@@ -119,7 +120,7 @@ export const ALL_MOD_IDS: readonly ModId[] = [
 export const ALL_POL_IDS: readonly PolId[] = ['Pol.None', 'Pol.Any', 'Pol.All'] as const;
 
 export const ALL_TYP_IDS: readonly TypId[] = [
-  'Typ.Text', 'Typ.Number', 'Typ.Flag', 'Typ.Choice', 'Typ.List',
+  'Typ.Text', 'Typ.Number', 'Typ.Flag', 'Typ.Choice', 'Typ.List', 'Typ.Object',
 ] as const;
 
 export const ALL_DUR_IDS: readonly DurId[] = ['Dur.Seconds', 'Dur.Minutes', 'Dur.Hours'] as const;
