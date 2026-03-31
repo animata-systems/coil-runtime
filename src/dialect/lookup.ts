@@ -5,6 +5,7 @@ export function lookupDialectWord(id: AbstractId, dialect: DialectTable): string
   const sections = [
     dialect.operators, dialect.terminators, dialect.modifiers,
     dialect.policies, dialect.resultTypes, dialect.durationSuffixes,
+    dialect.expressions,
   ];
   for (const section of sections) {
     if (id in section) {

@@ -15,6 +15,7 @@ import { setWithoutDefine } from './rules/set-without-define.js';
 import { undefinedPromise } from './rules/undefined-promise.js';
 import { createUseBeforeWait } from './rules/use-before-wait.js';
 import { resultSchemaRule } from '../result/rules.js';
+import { expressionRules } from './rules/expression-rules.js';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -94,6 +95,7 @@ function createDefaultRegistry(): RuleRegistry {
   registry.registerVisitor(undefinedPromise);
   registry.registerVisitor(createUseBeforeWait());
   registry.registerVisitor(resultSchemaRule);
+  registry.registerVisitor(expressionRules);
   return registry;
 }
 

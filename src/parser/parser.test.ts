@@ -694,7 +694,7 @@ describe('parseSignal', () => {
 
 describe('parseIf', () => {
   it('IF with equality condition', () => {
-    const src = `IF $verdict.type == "technical"
+    const src = `IF $verdict.type = "technical"
   SET $role
   <<
   Tech specialist.
@@ -705,7 +705,11 @@ EXIT`;
     const ast = parseEN(src);
     const node = ast.nodes[0] as IfNode;
     expect(node.kind).toBe('Op.If');
-    expect(node.condition).toBe('$verdict.type == "technical"');
+    expect(node.condition.kind).toBe('BinaryExpr');
+    const cond = node.condition as import('../ast/nodes.js').BinaryExpr;
+    expect(cond.op).toBe('=');
+    expect(cond.left.kind).toBe('VarRefExpr');
+    expect(cond.right.kind).toBe('LiteralExpr');
     expect(node.body).toHaveLength(1);
     expect(node.body[0].kind).toBe('Op.Set');
   });
@@ -719,7 +723,9 @@ END
 EXIT`;
     const ast = parseEN(src);
     const node = ast.nodes[0] as IfNode;
-    expect(node.condition).toBe('$evaluation.score >= 8');
+    expect(node.condition.kind).toBe('BinaryExpr');
+    const cond = node.condition as import('../ast/nodes.js').BinaryExpr;
+    expect(cond.op).toBe('>=');
     expect(node.body).toHaveLength(1);
   });
 
@@ -733,7 +739,7 @@ EXIT`;
     const ast = parseRU(src);
     const node = ast.nodes[0] as IfNode;
     expect(node.kind).toBe('Op.If');
-    expect(node.condition).toContain('$x');
+    expect(node.condition.kind).toBe('BinaryExpr');
     expect(node.body).toHaveLength(1);
   });
 });
@@ -768,10 +774,10 @@ EXIT`;
 
   it('REPEAT UNTIL + NO MORE THAN', () => {
     const src = `DEFINE done
-0
+FALSE
 END
 
-REPEAT UNTIL $done NO MORE THAN 3
+REPEAT UNTIL $done = TRUE NO MORE THAN 3
   THINK check
     GOAL << Check. >>
     RESULT
@@ -780,22 +786,23 @@ REPEAT UNTIL $done NO MORE THAN 3
   WAIT
     ON ?check
   END
-  IF $check.complete == 1
+  IF $check.complete = TRUE
     SET $done
-    1
+    TRUE
     END
   END
 END
 EXIT`;
     const ast = parseEN(src);
     const repeat = ast.nodes.find(n => n.kind === 'Op.Repeat') as RepeatNode;
-    expect(repeat.until).toBe('$done');
+    expect(repeat.until).not.toBeNull();
+    expect(repeat.until!.kind).toBe('BinaryExpr');
     expect(repeat.limit).toBe(3);
     expect(repeat.body.length).toBeGreaterThanOrEqual(3);
   });
 
   it('REPEAT UNTIL multiline (NO MORE THAN on next line)', () => {
-    const src = `REPEAT UNTIL $done
+    const src = `REPEAT UNTIL $done = TRUE
 NO MORE THAN 5
   THINK x
     GOAL << x >>
@@ -806,7 +813,8 @@ END
 EXIT`;
     const ast = parseEN(src);
     const node = ast.nodes[0] as RepeatNode;
-    expect(node.until).toBe('$done');
+    expect(node.until).not.toBeNull();
+    expect(node.until!.kind).toBe('BinaryExpr');
     expect(node.limit).toBe(5);
   });
 

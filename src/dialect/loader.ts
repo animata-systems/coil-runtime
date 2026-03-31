@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import type {
-  DialectTable, OpId, KwId, ModId, PolId, TypId, DurId,
+  DialectTable, OpId, KwId, ModId, PolId, TypId, DurId, ExprId,
 } from './types.js';
 import {
-  ALL_OP_IDS, ALL_KW_IDS, ALL_MOD_IDS, ALL_POL_IDS, ALL_TYP_IDS, ALL_DUR_IDS,
+  ALL_OP_IDS, ALL_KW_IDS, ALL_MOD_IDS, ALL_POL_IDS, ALL_TYP_IDS, ALL_DUR_IDS, ALL_EXPR_IDS,
 } from './types.js';
 
 export class DialectLoadError extends Error {
@@ -74,6 +74,7 @@ export async function loadDialect(path: string): Promise<DialectTable> {
   checkCategory<PolId>(obj.policies as Record<string, unknown>, 'policies', ALL_POL_IDS, missing);
   checkCategory<TypId>(obj.resultTypes as Record<string, unknown>, 'resultTypes', ALL_TYP_IDS, missing);
   checkCategory<DurId>(obj.durationSuffixes as Record<string, unknown>, 'durationSuffixes', ALL_DUR_IDS, missing);
+  checkCategory<ExprId>(obj.expressions as Record<string, unknown>, 'expressions', ALL_EXPR_IDS, missing);
 
   if (missing.length > 0) {
     throw new DialectLoadError(
@@ -90,5 +91,6 @@ export async function loadDialect(path: string): Promise<DialectTable> {
     policies: obj.policies as Record<PolId, string>,
     resultTypes: obj.resultTypes as Record<TypId, string>,
     durationSuffixes: obj.durationSuffixes as Record<DurId, string>,
+    expressions: obj.expressions as Record<ExprId, string>,
   };
 }

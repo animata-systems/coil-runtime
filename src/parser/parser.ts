@@ -13,9 +13,10 @@ import type {
   ChannelRef, ValueRef, ToolRef, PromiseRef,
   ActorsNode, ToolsNode, DefineNode, SetNode,
   ThinkNode, ExecuteNode, WaitNode, SignalNode,
-  IfNode, RepeatNode, EachNode,
+  IfNode, RepeatNode, EachNode, ExpressionNode,
   BodyValue, ArgEntry, ResultField, StreamRef,
 } from '../ast/nodes.js';
+import { parseExpression } from './expression.js';
 
 export class ParseError extends Error {
   readonly span: SourceSpan;
@@ -410,6 +411,11 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     if (t.type === 'StringLiteral') {
       const sl = advance() as StringLiteralToken;
       return { type: 'string', value: sl.value, span: sl.span };
+    }
+    // Boolean keywords (TRUE/FALSE) as body values — store as string literals
+    if (t.type === 'Identifier') {
+      const id = advance() as IdentifierToken;
+      return { type: 'string', value: id.name, span: id.span };
     }
     throw new ParseError(`expected body value (template, $reference, number, or "string"), got ${t.type}`, t.span, 'expected-body-value');
   }
@@ -830,16 +836,11 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
   // ─── IF ────────────────────────────────────────────────
 
   function parseIf(kwToken: KeywordToken): IfNode {
-    // Collect raw text of condition from source (R-0019, D-006-1)
-    const lineTokens = parseSignatureLine();
-    let condition = '';
-    if (lineTokens.length > 0) {
-      const first = lineTokens[0];
-      const last = lineTokens[lineTokens.length - 1];
-      const start = first.span.offset;
-      const end = last.span.offset + last.span.length;
-      condition = source.slice(start, end).trim();
-    }
+    // Parse condition as expression AST (R-0035)
+    skipTrivia();
+    const exprResult = parseExpression(tokens, pos, dialect);
+    pos = exprResult.nextIndex;
+    const condition = exprResult.expr;
 
     const body = parseBody();
     expectKeyword('Kw.End');
@@ -852,7 +853,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
   function parseRepeat(kwToken: KeywordToken): RepeatNode {
     skipTrivia();
 
-    let until: string | null = null;
+    let until: ExpressionNode | null = null;
     let limit: number;
 
     if (peek().type === 'NumberLiteral') {
@@ -863,22 +864,11 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       // Until + limit form: REPEAT UNTIL <cond> NO MORE THAN <count>
       advance(); // consume UNTIL
 
-      // Collect condition tokens until we hit Mod.Limit or end of line
-      // Filter out Comment tokens to avoid including inline comments in condition
-      const condTokens: Token[] = [];
-      while (peek().type !== 'Newline' && peek().type !== 'EOF') {
-        if (isAnyKeywordOf(['Mod.Limit'])) break;
-        if (peek().type === 'Comment') { advance(); continue; }
-        condTokens.push(advance());
-      }
-
-      if (condTokens.length > 0) {
-        const first = condTokens[0];
-        const last = condTokens[condTokens.length - 1];
-        until = source.slice(first.span.offset, last.span.offset + last.span.length).trim();
-      } else {
-        until = '';
-      }
+      // Parse condition as expression AST (R-0035)
+      skipTrivia();
+      const exprResult = parseExpression(tokens, pos, dialect);
+      pos = exprResult.nextIndex;
+      until = exprResult.expr;
 
       // Expect NO MORE THAN — may be on next line
       skipTrivia();

@@ -210,18 +210,65 @@ export interface WaitNode {
   span: SourceSpan;
 }
 
+// ─── Expression nodes (R-0035) ──────────────────────────
+
+export type ComparisonOp = '=' | '<' | '>' | '<=' | '>=';
+export type LogicOp = 'And' | 'Or';
+
+export type ExpressionNode =
+  | BinaryExpr
+  | UnaryExpr
+  | GroupExpr
+  | LiteralExpr
+  | VarRefExpr;
+
+export interface BinaryExpr {
+  kind: 'BinaryExpr';
+  op: ComparisonOp | LogicOp;
+  left: ExpressionNode;
+  right: ExpressionNode;
+  span: SourceSpan;
+}
+
+export interface UnaryExpr {
+  kind: 'UnaryExpr';
+  op: 'Not';
+  operand: ExpressionNode;
+  span: SourceSpan;
+}
+
+export interface GroupExpr {
+  kind: 'GroupExpr';
+  inner: ExpressionNode;
+  span: SourceSpan;
+}
+
+export interface LiteralExpr {
+  kind: 'LiteralExpr';
+  value: string | number | boolean;
+  literalType: 'string' | 'number' | 'boolean';
+  span: SourceSpan;
+}
+
+export interface VarRefExpr {
+  kind: 'VarRefExpr';
+  name: string;
+  path: string[];
+  span: SourceSpan;
+}
+
 // ─── Control-flow operators (Extended) ──────────────────
 
 export interface IfNode {
   kind: 'Op.If';
-  condition: string;
+  condition: ExpressionNode;
   body: (OperatorNode | CommentNode)[];
   span: SourceSpan;
 }
 
 export interface RepeatNode {
   kind: 'Op.Repeat';
-  until: string | null;       // null for count-only form
+  until: ExpressionNode | null;  // null for count-only form
   limit: number;
   body: (OperatorNode | CommentNode)[];
   span: SourceSpan;

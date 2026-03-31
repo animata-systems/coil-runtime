@@ -462,3 +462,172 @@ interface VisitorRule {
 **Rationale.** Single walk eliminates 8 redundant traversals. `VisitorRule` / `ValidationRule` split keeps top-level-only rules simple. `enter`-before-update contract is natural for positional rules and matches ESLint's visitor model. `finalize()` provides a clean migration path for global rules without changing their semantics.
 
 **Cost.** `ScopeWalker` duplicates the scope-building logic currently in `buildScope()` — `buildScope()` can delegate to `ScopeWalker` internally to avoid duplication. Rules that maintain internal state across nodes (`duplicate-define`'s `seen` map, `use-before-wait`'s `reported` set) must manage state lifecycle: initialized once per `walk()` call. The `leave` hook has no consumers today but is included for forward compatibility.
+
+## R-0034 — ComparisonToken: symbolic tokens for comparison operators
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/lexer/tokens.ts`, `src/lexer/tokenizer.ts`, `src/parser/parser.ts` |
+
+**Context.** R-0022 recorded that `=`, `<`, `>`, `<=`, `>=` are tokenized as `Identifier` until an expression parser is implemented. STORY-012 phase 6 introduces the expression parser; the tokenizer must emit typed tokens for these operators.
+
+**Decision.** New token type `ComparisonToken { type: 'Comparison'; operator: string; span: SourceSpan }`. The lexer emits it for: `=`, `==`, `!=`, `<`, `>`, `<=`, `>=`. Seven symbols total.
+
+Key points:
+- Comparison operators are universal symbols, not dialect-dependent. They are NOT added to the dialect table — unlike `AND`/`OR`/`NOT`/`TRUE`/`FALSE` which are dialect keywords (category `expressions`).
+- `==` and `!=` are tokenized as `ComparisonToken` (not rejected in the lexer) so the expression parser can give a clear error with code `disallowed-operator` (D-0034, D-0035).
+- For `!=`: the lexer checks `!` followed by `=` **before** ToolRef sigil processing. `!` followed by a non-`=` character continues to ToolRef parsing as before.
+- The existing `Identifier` fallback for `=`/`<`/`>`/`<=`/`>=` is removed. `parseSignatureLine()` and `parseIf()` will no longer see these as `Identifier` tokens.
+
+**Alternatives.** (A) Add comparisons to dialect table as category `comparisons` — semantically wrong: `<` is not a word that changes per language. (B) Keep as `Identifier` and parse in expression parser — loses type safety, expression parser must string-match on `Identifier.name`.
+
+**Cost.** Existing parser code that collects condition tokens via `parseSignatureLine()` may rely on these being `Identifier`. After this change, `parseIf` and `parseRepeat` must handle `ComparisonToken` in their token streams. This is addressed by the expression parser integration (R-0035).
+
+## R-0035 — Expression parser: separate file, AST nodes in ast/nodes.ts
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/ast/nodes.ts`, `src/parser/expression.ts`, `src/parser/parser.ts` |
+
+**Context.** STORY-012 phase 6.1 requires an expression parser for IF conditions and REPEAT UNTIL. The existing `parser.ts` is 1043 lines. The expression grammar is self-contained. A decision on code placement and AST shape is needed.
+
+**Decision.**
+
+(1) **Expression AST nodes** in `src/ast/nodes.ts`:
+
+```
+ExpressionNode = BinaryExpr | UnaryExpr | GroupExpr | LiteralExpr | VarRefExpr
+
+BinaryExpr   { kind: 'BinaryExpr'; op: ComparisonOp | LogicOp; left: ExpressionNode; right: ExpressionNode; span }
+UnaryExpr    { kind: 'UnaryExpr'; op: 'Not'; operand: ExpressionNode; span }
+GroupExpr    { kind: 'GroupExpr'; inner: ExpressionNode; span }
+LiteralExpr  { kind: 'LiteralExpr'; value: string | number | boolean; literalType: 'string' | 'number' | 'boolean'; span }
+VarRefExpr   { kind: 'VarRefExpr'; name: string; path: string[]; span }
+
+ComparisonOp = '=' | '<' | '>' | '<=' | '>='
+LogicOp      = 'And' | 'Or'
+```
+
+No separate `FieldAccessExpr` — the lexer already tokenizes `$name.a.b` as a single `ValueRefToken { path: ['a', 'b'] }`. `VarRefExpr` carries the path.
+
+(2) **Expression parser** in `src/parser/expression.ts`. Recursive descent. Accepts a token slice (array + start index), returns `{ expr: ExpressionNode; nextIndex: number }`. Called from `parseIf` and `parseRepeat` in `parser.ts`.
+
+(3) **AST change**: `IfNode.condition` changes from `string` to `ExpressionNode`. `RepeatNode.until` changes from `string | null` to `ExpressionNode | null`. This is a breaking change to the AST interface. All consumers (validator scope-walker, tests, IDE) must be updated.
+
+(4) **R-0019 is superseded** in part: `parse()` still accepts `source` (needed for other raw-text uses), but IF/REPEAT conditions no longer use `source.slice()` for raw-text reconstruction.
+
+(5) **Error handling split: parse vs validate.** The expression parser is tolerant for structural issues (to match the conformance test annotations and provide partial AST for IDE). Errors are split between two phases:
+
+**Expression parser rejects (ParseError):** token-level errors where the form itself is invalid.
+- `==` → code `disallowed-operator` (matches test `if-double-equals.coil`)
+- `!=` → code `disallowed-operator` (matches test `if-not-equals-operator.coil`)
+- Arithmetic tokens (`+`, `-`, etc.) → code `arithmetic-deferred` (matches test `if-arithmetic.coil`)
+- Empty condition → code `expr-empty-condition`
+- Unexpected token → code `expr-unexpected-token`
+
+**Validator catches (new VisitorRules):** structural issues where tokens are valid but the combination is forbidden.
+- Chained comparisons (`1 < $x < 10`) → ruleId `chained-comparison` (matches test `if-chained-comparison.coil`)
+- Mixed `AND`/`OR` without parentheses → ruleId `mixed-and-or-without-parens` (matches test `if-mixed-and-or.coil`)
+- Bare variable reference as condition (truthiness) → ruleId `truthiness-deferred` (matches test `if-truthiness.coil`)
+
+Error codes are dictated by the conformance test annotations in `coil/tests/invalid/` and must match exactly.
+
+(6) **Precedence** (D-0033): `NOT` (highest) > comparisons (`=`, `<`, `>`, `<=`, `>=`) > `AND`/`OR` (lowest, same priority). Since `AND` and `OR` share a priority level, the expression parser parses them left-to-right without distinguishing. A validation rule (`mixed-and-or-without-parens`) then rejects trees where both operators appear without grouping.
+
+(7) **Tolerant parsing for structural errors.** The expression parser builds AST even for structurally invalid expressions:
+- Chained `1 < $x < 10` → builds `BinaryExpr(<, BinaryExpr(<, Lit(1), Var($x)), Lit(10))`.
+- Mixed `$a > 0 AND $b > 0 OR $c > 0` → builds tree with mixed ops.
+- Truthiness `$done` → builds lone `VarRefExpr`.
+This preserves partial AST for IDE diagnostics and matches the `validate`-phase test annotations.
+
+**Alternatives.** (A) Expression parser inside `parser.ts` — inflates an already large file. (B) Separate module `src/expression/` — over-engineering for one file. (C) Pratt parser — equivalent power for this grammar, but recursive descent is more readable for the simple precedence structure. (D) Parser rejects all expression errors — violates conformance test annotations which require `validate`-phase detection for structural issues.
+
+**Cost.** Breaking AST change: `IfNode.condition: string → ExpressionNode`, `RepeatNode.until: string | null → ExpressionNode | null`. Every test that asserts on these fields must be updated. Three new validation rules required: `chained-comparison`, `mixed-and-or-without-parens`, `truthiness-deferred`. Scope: parser tests, validator tests, suite tests, IDE code (if any).
+
+## R-0036 — Executor scope: chain with parent for nested blocks
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/executor.ts` |
+
+**Context.** The executor uses a flat `Map<string, unknown>` for scope. D-0045 requires EACH iterations to have isolated scopes. IF and REPEAT also nest body statements.
+
+**Decision.**
+
+(1) Introduce `Scope` abstraction in the executor:
+```
+Scope {
+  parent: Scope | null
+  bindings: Map<string, unknown>
+  get(name): unknown     — walks up the chain
+  set(name, value): void — writes to current bindings
+  has(name): boolean     — walks up the chain
+  child(): Scope         — creates child with parent = this
+}
+```
+
+(2) **IF / REPEAT** — body executes in the **current** scope (no child). DEFINE/SET inside are visible after the block. This matches the validator model where variables inside IF are `conditional: true` but still in the same scope level.
+
+(3) **EACH** — each iteration creates `scope.child()`. `$element` is set in the child. DEFINE/SET inside the iteration are in the child. After iteration, the child is discarded. Variables from one iteration don't leak to the next or to the parent.
+
+(4) **BodyValue resolution** for DEFINE/SET. New utility `resolveBodyValue(body: BodyValue, scope: Scope): unknown`:
+- `TemplateNode` → `interpolate(template, scope)` → string
+- `ValueRef` → `scope.get(name)` + `resolveFieldPath()` → unknown
+- `NumberLiteral` → `lit.value` (number)
+- `StringLiteral` → `lit.value` (string)
+
+**Alternatives.** (A) `new Map(parentMap)` per iteration — O(n) copy per iteration, wasteful for large scopes. (B) Copy-on-write — complexity not justified for v0.4 scope sizes.
+
+**Cost.** `interpolate()` must accept `Scope` instead of `Map<string, unknown>`. Existing tests pass `Map` — need adapter or conversion. Minimal: `Scope` can wrap a `Map` as root.
+
+## R-0037 — Field access traversal: strict, error on missing property
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/executor.ts` |
+
+**Context.** `$name.a.b.c` requires property traversal on `unknown` values. Both the expression evaluator (`VarRefExpr`) and template interpolation (`RefPart`) need this. The existing `interpolate()` throws `NotImplementedError` for any path.
+
+**Decision.**
+
+(1) New utility `resolveFieldPath(root: unknown, path: string[], span: SourceSpan): unknown`. Shared by expression evaluator and `interpolate()`.
+
+(2) **Strict traversal rules:**
+- Intermediate `null` or `undefined` → execution error: `"cannot access .<field> on null/undefined"`.
+- Intermediate is not an object (`typeof !== 'object'`) → execution error: `"cannot access .<field> on <typeof>"`.
+- Property does not exist on object (`!(key in obj)`) → execution error: `"property .<field> does not exist on $name"`.
+- Last step returns the value as-is (may be `null`, `undefined`, any type).
+
+(3) **Rationale for strict:** COIL is for users, not programmers. Silent `undefined` on a typo (`$result.typo`) would produce confusing downstream errors (e.g. `undefined = "bug"` evaluates to `false` with no indication of why). Strict access catches mistakes at the point of origin.
+
+(4) `interpolate()` is updated: replace `NotImplementedError` with `resolveFieldPath()` call.
+
+**Alternatives.** (A) JavaScript semantics (silent undefined for missing property) — user-hostile, masks typos. (B) Optional chaining with `?` syntax — not in COIL v0.4 spec.
+
+**Cost.** Every object value in scope must have all accessed properties. Authors can't defensively access "maybe" fields. This is deliberate — COIL favors explicit structure over defensive flexibility.
+
+## R-0038 — EACH iterable contract: Array only in v0.4
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/executor.ts` |
+
+**Context.** `EACH $element FROM $source` requires `$source` to be iterable. The spec does not fix the type. A runtime contract is needed.
+
+**Decision.** For v0.4: `$source` must be a JavaScript `Array`. Any other type → execution error: `"$source is not iterable (expected array, got <typeof>)"`. Empty array → zero iterations, no error.
+
+Deferred: objects (entry iteration), strings (character iteration), `Symbol.iterator` protocol. When added, this will be a new R-decision, not a change to R-0038.
+
+**Alternatives.** (A) Any iterable via `Symbol.iterator` — opens the door to generators, custom iterables, but no COIL construct currently produces non-array iterables. Premature. (B) Array + object — ambiguous iteration order for objects across engines.
+
+**Cost.** If a provider returns a non-array collection, the author must first convert it. This is acceptable — COIL is not a general-purpose language.

@@ -2045,8 +2045,8 @@ exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
     },
     {
       "body": {
-        "type": "number",
-        "value": 0,
+        "type": "string",
+        "value": "FALSE",
       },
       "kind": "Op.Define",
       "name": "done",
@@ -2055,8 +2055,8 @@ exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "number",
-            "value": 1,
+            "type": "string",
+            "value": "TRUE",
           },
           "kind": "Op.Set",
           "target": {
@@ -2066,7 +2066,22 @@ exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
           },
         },
       ],
-      "condition": "$evaluation.score >= 8",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "evaluation",
+          "path": [
+            "score",
+          ],
+        },
+        "op": ">=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "number",
+          "value": 8,
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -2185,7 +2200,493 @@ General support agent.
           },
         },
       ],
-      "condition": "$verdict.type == "technical"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "verdict",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "technical",
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/if-logical-and.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If, Op.Think",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with AND logical connective",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Evaluate the candidate.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "evaluation",
+      "result": [
+        {
+          "depth": 0,
+          "description": "overall score",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 0,
+          "description": "years of experience",
+          "name": "experience",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "evaluation",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Draft an offer letter.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "offer",
+          "result": [],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "offer",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "evaluation",
+            "path": [
+              "score",
+            ],
+          },
+          "op": ">=",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 8,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "evaluation",
+            "path": [
+              "experience",
+            ],
+          },
+          "op": ">",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 3,
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/if-not-equals.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with NOT for inequality — D-0035",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "input",
+      "prompt": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "input",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "classification",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "type",
+          "typeArgs": [
+            "general",
+            "technical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "classification",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Handle non-general request.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "special",
+          "result": [],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "special",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "condition": {
+        "kind": "UnaryExpr",
+        "op": "Not",
+        "operand": {
+          "inner": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "classification",
+              "path": [
+                "type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "general",
+            },
+          },
+          "kind": "GroupExpr",
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/extended/if-or-with-parens.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description IF with mixed AND/OR requires parentheses",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "low",
+      },
+      "kind": "Op.Define",
+      "name": "priority",
+    },
+    {
+      "body": {
+        "type": "number",
+        "value": 5,
+      },
+      "kind": "Op.Define",
+      "name": "score",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSE",
+      },
+      "kind": "Op.Define",
+      "name": "override",
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Escalate to manager.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": null,
+          "kind": "Op.Think",
+          "name": "escalate",
+          "result": [],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "escalate",
+            },
+          ],
+          "timeout": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "inner": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "score",
+                "path": [],
+              },
+              "op": ">",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 8,
+              },
+            },
+            "op": "And",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "priority",
+                "path": [],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "string",
+                "value": "high",
+              },
+            },
+          },
+          "kind": "GroupExpr",
+        },
+        "op": "Or",
+        "right": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "override",
+            "path": [],
+          },
+          "op": "=",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "boolean",
+            "value": true,
+          },
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -2308,8 +2809,8 @@ exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
     },
     {
       "body": {
-        "type": "number",
-        "value": 0,
+        "type": "string",
+        "value": "FALSE",
       },
       "kind": "Op.Define",
       "name": "done",
@@ -2361,8 +2862,8 @@ exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
           "body": [
             {
               "body": {
-                "type": "number",
-                "value": 1,
+                "type": "string",
+                "value": "TRUE",
               },
               "kind": "Op.Set",
               "target": {
@@ -2372,13 +2873,41 @@ exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
               },
             },
           ],
-          "condition": "$check.complete == 1",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "check",
+              "path": [
+                "complete",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "boolean",
+              "value": true,
+            },
+          },
           "kind": "Op.If",
         },
       ],
       "kind": "Op.Repeat",
       "limit": 3,
-      "until": "$done",
+      "until": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "done",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
     },
     {
       "kind": "Op.Exit",
@@ -2520,6 +3049,580 @@ exports[`conformance tests > valid/extended/signal-context.coil 1`] = `
         },
       ],
       "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/lexical/multiword-keywords.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Timeout, Mod.Limit, Mod.Await, Mod.Until, Mod.ReplyTo",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Stress test: all multi-word keywords in en-standard dialect",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "user",
+        "expert",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "input",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+User request.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Classify the request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "input",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "classification",
+      "result": [
+        {
+          "depth": 0,
+          "description": "request type",
+          "name": "type",
+          "typeArgs": [
+            "general",
+            "technical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "urgency score",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "classification",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "AWAIT ANY — multi-word modifier",
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Please review: ",
+          },
+          {
+            "name": "input",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "expert",
+      ],
+      "kind": "Op.Send",
+      "name": "question",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 5,
+      },
+      "to": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "question",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "REPLY TO — multi-word modifier",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Response: ",
+          },
+          {
+            "name": "question",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "user",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "support",
+          },
+          {
+            "kind": "literal",
+            "value": "123",
+          },
+        ],
+      },
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "NO MORE THAN — multi-word modifier in REPEAT",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSE",
+      },
+      "kind": "Op.Define",
+      "name": "done",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "body": {
+                "type": "string",
+                "value": "TRUE",
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "done",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "classification",
+              "path": [
+                "score",
+              ],
+            },
+            "op": ">=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "number",
+              "value": 8,
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 3,
+      "until": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "done",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Timeout, Mod.Limit, Mod.Await, Mod.Until, Mod.ReplyTo",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Stress test: все мультисловные ключевые фразы в ru-standard",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "пользователь",
+        "эксперт",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "запрос",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Запрос пользователя.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Классифицируй запрос.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "классификация",
+      "result": [
+        {
+          "depth": 0,
+          "description": "тип запроса",
+          "name": "тип",
+          "typeArgs": [
+            "общий",
+            "технический",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "оценка срочности",
+          "name": "оценка",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "классификация",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "ЖДАТЬ ЛЮБОЙ — мультисловный модификатор",
+    },
+    {
+      "await": "any",
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проверь запрос: ",
+          },
+          {
+            "name": "запрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "эксперт",
+      ],
+      "kind": "Op.Send",
+      "name": "вопрос",
+      "replyTo": null,
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 5,
+      },
+      "to": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "вопрос",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "ОТВЕТ НА — мультисловный модификатор",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Ответ: ",
+          },
+          {
+            "name": "вопрос",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "пользователь",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": {
+        "segments": [
+          {
+            "kind": "literal",
+            "value": "поддержка",
+          },
+          {
+            "kind": "literal",
+            "value": "123",
+          },
+        ],
+      },
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "НЕ БОЛЕЕ — мультисловный модификатор в ПОВТОРЯЙ",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "ЛОЖЬ",
+      },
+      "kind": "Op.Define",
+      "name": "готово",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "body": {
+                "type": "string",
+                "value": "ИСТИНА",
+              },
+              "kind": "Op.Set",
+              "target": {
+                "name": "готово",
+                "path": [],
+                "type": "ref",
+              },
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "классификация",
+              "path": [
+                "оценка",
+              ],
+            },
+            "op": ">=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "number",
+              "value": 8,
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "kind": "Op.Repeat",
+      "limit": 3,
+      "until": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "готово",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
     },
     {
       "kind": "Op.Exit",
@@ -2689,7 +3792,22 @@ Customer request text.
           },
         },
       ],
-      "condition": "$classification.type == "technical"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "technical",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -2916,7 +4034,22 @@ exports[`conformance tests > valid/patterns/conditional-define.coil 1`] = `
           "name": "role",
         },
       ],
-      "condition": "$classification.type == "a"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "a",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -2937,7 +4070,22 @@ exports[`conformance tests > valid/patterns/conditional-define.coil 1`] = `
           "name": "role",
         },
       ],
-      "condition": "$classification.type == "b"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "b",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -3089,8 +4237,8 @@ You are a strict editor who evaluates text quality.
     },
     {
       "body": {
-        "type": "number",
-        "value": 0,
+        "type": "string",
+        "value": "FALSE",
       },
       "kind": "Op.Define",
       "name": "done",
@@ -3174,8 +4322,8 @@ You are a strict editor who evaluates text quality.
           "body": [
             {
               "body": {
-                "type": "number",
-                "value": 1,
+                "type": "string",
+                "value": "TRUE",
               },
               "kind": "Op.Set",
               "target": {
@@ -3185,7 +4333,22 @@ You are a strict editor who evaluates text quality.
               },
             },
           ],
-          "condition": "$evaluation.score >= 8",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "evaluation",
+              "path": [
+                "score",
+              ],
+            },
+            "op": ">=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "number",
+              "value": 8,
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -3293,13 +4456,39 @@ You are a strict editor who evaluates text quality.
               },
             },
           ],
-          "condition": "$done == 0",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "done",
+              "path": [],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "boolean",
+              "value": false,
+            },
+          },
           "kind": "Op.If",
         },
       ],
       "kind": "Op.Repeat",
       "limit": 3,
-      "until": "$done",
+      "until": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "done",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
     },
     {
       "kind": "Op.Exit",
@@ -9021,8 +10210,8 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
     },
     {
       "body": {
-        "type": "number",
-        "value": 0,
+        "type": "string",
+        "value": "ЛОЖЬ",
       },
       "kind": "Op.Define",
       "name": "done",
@@ -9156,8 +10345,8 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
           "body": [
             {
               "body": {
-                "type": "number",
-                "value": 1,
+                "type": "string",
+                "value": "ИСТИНА",
               },
               "kind": "Op.Set",
               "target": {
@@ -9167,7 +10356,22 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
               },
             },
           ],
-          "condition": "$evaluation.quality_score >= 8",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "evaluation",
+              "path": [
+                "quality_score",
+              ],
+            },
+            "op": ">=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "number",
+              "value": 8,
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -9297,13 +10501,39 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
               },
             },
           ],
-          "condition": "$done == 0",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "done",
+              "path": [],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "boolean",
+              "value": false,
+            },
+          },
           "kind": "Op.If",
         },
       ],
       "kind": "Op.Repeat",
       "limit": 3,
-      "until": "$done",
+      "until": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "done",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
     },
     {
       "kind": "Comment",
@@ -9640,7 +10870,22 @@ exports[`executable examples > patterns/internal-delegation.coil 1`] = `
               "name": "current_role",
             },
           ],
-          "condition": "$task.change_type == "create"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "create",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -9655,7 +10900,22 @@ exports[`executable examples > patterns/internal-delegation.coil 1`] = `
               "name": "current_role",
             },
           ],
-          "condition": "$task.change_type == "modify"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "modify",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -9670,7 +10930,22 @@ exports[`executable examples > patterns/internal-delegation.coil 1`] = `
               "name": "current_role",
             },
           ],
-          "condition": "$task.change_type == "delete"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "delete",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -10199,7 +11474,22 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
               },
             },
           ],
-          "condition": "$task.change_type == "create"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "create",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -10271,7 +11561,22 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
               },
             },
           ],
-          "condition": "$task.change_type == "modify"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "modify",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -10343,7 +11648,22 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
               },
             },
           ],
-          "condition": "$task.change_type == "delete"",
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "VarRefExpr",
+              "name": "task",
+              "path": [
+                "change_type",
+              ],
+            },
+            "op": "=",
+            "right": {
+              "kind": "LiteralExpr",
+              "literalType": "string",
+              "value": "delete",
+            },
+          },
           "kind": "Op.If",
         },
         {
@@ -11267,8 +12587,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
     },
     {
       "body": {
-        "type": "number",
-        "value": 0,
+        "type": "string",
+        "value": "ЛОЖЬ",
       },
       "kind": "Op.Define",
       "name": "needs_improvement",
@@ -11277,8 +12597,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "number",
-            "value": 1,
+            "type": "string",
+            "value": "ИСТИНА",
           },
           "kind": "Op.Set",
           "target": {
@@ -11288,15 +12608,30 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
           },
         },
       ],
-      "condition": "$quality_metrics.has_call_to_action == 0",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "quality_metrics",
+          "path": [
+            "has_call_to_action",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": false,
+        },
+      },
       "kind": "Op.If",
     },
     {
       "body": [
         {
           "body": {
-            "type": "number",
-            "value": 1,
+            "type": "string",
+            "value": "ИСТИНА",
           },
           "kind": "Op.Set",
           "target": {
@@ -11306,15 +12641,30 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
           },
         },
       ],
-      "condition": "$quality_metrics.emotional_appeal < 7",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "quality_metrics",
+          "path": [
+            "emotional_appeal",
+          ],
+        },
+        "op": "<",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "number",
+          "value": 7,
+        },
+      },
       "kind": "Op.If",
     },
     {
       "body": [
         {
           "body": {
-            "type": "number",
-            "value": 1,
+            "type": "string",
+            "value": "ИСТИНА",
           },
           "kind": "Op.Set",
           "target": {
@@ -11324,7 +12674,22 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
           },
         },
       ],
-      "condition": "$quality_metrics.clarity < 7",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "quality_metrics",
+          "path": [
+            "clarity",
+          ],
+        },
+        "op": "<",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "number",
+          "value": 7,
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -11518,7 +12883,20 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
           "kind": "Op.Exit",
         },
       ],
-      "condition": "$needs_improvement == 1",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_improvement",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -11850,7 +13228,22 @@ exports[`executable examples > patterns/routing.coil 1`] = `
           "name": "current_role",
         },
       ],
-      "condition": "$classification.type == "general"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "general",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -11865,7 +13258,22 @@ exports[`executable examples > patterns/routing.coil 1`] = `
           "name": "current_role",
         },
       ],
-      "condition": "$classification.type == "refund"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "refund",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -11880,7 +13288,22 @@ exports[`executable examples > patterns/routing.coil 1`] = `
           "name": "current_role",
         },
       ],
-      "condition": "$classification.type == "technical"",
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "classification",
+          "path": [
+            "type",
+          ],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "string",
+          "value": "technical",
+        },
+      },
       "kind": "Op.If",
     },
     {
@@ -11994,6 +13417,647 @@ exports[`executable examples > patterns/routing.coil 1`] = `
           {
             "type": "text",
             "value": ")
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "for": [
+        "инициатор",
+      ],
+      "kind": "Op.Send",
+      "name": null,
+      "replyTo": null,
+      "timeout": null,
+      "to": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`executable examples > patterns/stream-feedback.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status mixed",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Think, Op.Execute, Op.Signal, Op.Each, Mod.From, Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Исследование с потоковой обратной связью и обработкой по элементам",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: потоковая обратная связь",
+    },
+    {
+      "kind": "Comment",
+      "text": "ДУМАЙ создаёт поток ~analysis.",
+    },
+    {
+      "kind": "Comment",
+      "text": "ВЫПОЛНИ ищет дополнительные данные.",
+    },
+    {
+      "kind": "Comment",
+      "text": "СИГНАЛ инжектирует данные в поток.",
+    },
+    {
+      "kind": "Comment",
+      "text": "КАЖДЫЙ обрабатывает результаты",
+    },
+    {
+      "kind": "Comment",
+      "text": "с изолированным вложенным scope.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "инициатор",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+        "database",
+      ],
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "topic",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Укажите тему для исследования.
+",
+          },
+        ],
+        "type": "template",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Запускаем анализ — создаётся поток ~analysis",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проведи глубокий анализ темы, используя
+  все доступные данные.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "topic",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "ключевые находки",
+          "name": "findings",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "заголовок",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "важность",
+          "name": "severity",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+            "critical",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 1,
+          "description": "описание",
+          "name": "detail",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "итоговое резюме",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Параллельно ищем дополнительные данные",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "topic",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "references",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "args": [
+        {
+          "key": "action",
+          "value": {
+            "type": "string",
+            "value": "query",
+          },
+        },
+        {
+          "key": "topic",
+          "value": {
+            "name": "topic",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "history",
+      "tool": {
+        "name": "database",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "references",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Инжектируем данные в активный поток",
+    },
+    {
+      "kind": "Comment",
+      "text": "СИГНАЛ отправляет в ~analysis, не создаёт",
+    },
+    {
+      "kind": "Comment",
+      "text": "новый поток",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Дополнительные источники: ",
+          },
+          {
+            "name": "references",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "analysis",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "history",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Исторические данные: ",
+          },
+          {
+            "name": "history",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "analysis",
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Дожидаемся завершения анализа",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Обрабатываем находки по одной.",
+    },
+    {
+      "kind": "Comment",
+      "text": "Переменные внутри КАЖДЫЙ изолированы:",
+    },
+    {
+      "kind": "Comment",
+      "text": "$finding, ?report, $report — не видны",
+    },
+    {
+      "kind": "Comment",
+      "text": "за пределами цикла.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Подготовь детальный отчёт по находке.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Находка: ",
+                  },
+                  {
+                    "name": "finding",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Описание: ",
+                  },
+                  {
+                    "name": "finding",
+                    "path": [
+                      "detail",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "report",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "отчёт",
+                  "name": "text",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+                {
+                  "depth": 0,
+                  "description": "требуется ли действие",
+                  "name": "action_required",
+                  "typeArgs": [],
+                  "typeId": "Typ.Flag",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "report",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "body": [
+                {
+                  "await": null,
+                  "body": {
+                    "parts": [
+                      {
+                        "type": "text",
+                        "value": "
+        Требуется внимание: ",
+                      },
+                      {
+                        "name": "finding",
+                        "path": [
+                          "title",
+                        ],
+                        "type": "ref",
+                      },
+                      {
+                        "type": "text",
+                        "value": "
+
+        ",
+                      },
+                      {
+                        "name": "report",
+                        "path": [
+                          "text",
+                        ],
+                        "type": "ref",
+                      },
+                      {
+                        "type": "text",
+                        "value": "
+        ",
+                      },
+                    ],
+                    "type": "template",
+                  },
+                  "for": [
+                    "инициатор",
+                  ],
+                  "kind": "Op.Send",
+                  "name": null,
+                  "replyTo": null,
+                  "timeout": null,
+                  "to": null,
+                },
+              ],
+              "condition": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "VarRefExpr",
+                  "name": "report",
+                  "path": [
+                    "action_required",
+                  ],
+                },
+                "op": "=",
+                "right": {
+                  "kind": "LiteralExpr",
+                  "literalType": "boolean",
+                  "value": true,
+                },
+              },
+              "kind": "Op.If",
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "finding",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "string",
+                "value": "critical",
+              },
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "finding",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "string",
+                "value": "high",
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "finding",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "analysis",
+        "path": [
+          "findings",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Итоговое сообщение",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "await": null,
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Исследование завершено.
+
+  ",
+          },
+          {
+            "name": "analysis",
+            "path": [
+              "summary",
+            ],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
   ",
           },
         ],

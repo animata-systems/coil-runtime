@@ -168,6 +168,7 @@ describe('KeywordIndex', () => {
   });
 
   it('RU: НЕ does not match as standalone phrase', () => {
+    // Expression keywords are NOT in the keyword index (recognized by expression parser only)
     const match = ruIndex.longestMatch('НЕ что-то', 0);
     expect(match).toBeNull();
   });

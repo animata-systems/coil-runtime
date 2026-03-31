@@ -69,11 +69,19 @@ export type DurId =
   | 'Dur.Minutes'
   | 'Dur.Hours';
 
+// Expression keywords (R-0034, R-0035)
+export type ExprId =
+  | 'Expr.And'
+  | 'Expr.Or'
+  | 'Expr.Not'
+  | 'Expr.True'
+  | 'Expr.False';
+
 /** Union of all abstract identifiers */
-export type AbstractId = OpId | KwId | ModId | PolId | TypId | DurId;
+export type AbstractId = OpId | KwId | ModId | PolId | TypId | DurId | ExprId;
 
 /** Category of an abstract identifier */
-export type Category = 'operator' | 'terminator' | 'modifier' | 'policy' | 'resultType' | 'durationSuffix';
+export type Category = 'operator' | 'terminator' | 'modifier' | 'policy' | 'resultType' | 'durationSuffix' | 'expression';
 
 /**
  * Dialect table: machine-readable mapping from abstract IDs to keyword phrases.
@@ -88,6 +96,7 @@ export interface DialectTable {
   policies: Record<PolId, string>;
   resultTypes: Record<TypId, string>;
   durationSuffixes: Record<DurId, string>;
+  expressions: Record<ExprId, string>;
 }
 
 /** All operator IDs that must be present in every dialect */
@@ -114,3 +123,7 @@ export const ALL_TYP_IDS: readonly TypId[] = [
 ] as const;
 
 export const ALL_DUR_IDS: readonly DurId[] = ['Dur.Seconds', 'Dur.Minutes', 'Dur.Hours'] as const;
+
+export const ALL_EXPR_IDS: readonly ExprId[] = [
+  'Expr.And', 'Expr.Or', 'Expr.Not', 'Expr.True', 'Expr.False',
+] as const;

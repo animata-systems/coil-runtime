@@ -313,6 +313,17 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
     }
 
     if (ch === '!') {
+      // != is a comparison operator, not a ToolRef (R-0034)
+      if (pos + 1 < source.length && source[pos + 1] === '=') {
+        advance(); // skip !
+        advance(); // skip =
+        tokens.push({
+          type: 'Comparison',
+          operator: '!=',
+          span: makeSpan(startLine, startCol, startOffset, 2),
+        });
+        continue;
+      }
       tokens.push(readSimpleRef('!', 'ToolRef', startLine, startCol, startOffset));
       continue;
     }
@@ -423,8 +434,7 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
       continue;
     }
 
-    // Comparison operators (IF microsyntax: > >= < <= = !=)
-    // TODO: tokenized as Identifier until expression parser is implemented
+    // Comparison operators: =, ==, <, <=, >, >= (R-0034)
     if (ch === '>' || ch === '<' || ch === '=') {
       let op = ch;
       advance();
@@ -433,11 +443,20 @@ export function tokenize(source: string, keywords: KeywordIndex): Token[] {
         advance();
       }
       tokens.push({
-        type: 'Identifier',
-        name: op,
+        type: 'Comparison',
+        operator: op,
         span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
       });
       continue;
+    }
+
+    // Arithmetic operators → specific error for better diagnostics (R-0035)
+    if (ch === '+' || ch === '/') {
+      throw new LexerError(
+        `arithmetic operator '${ch}' is not supported in v0.4`,
+        makeSpan(startLine, startCol, startOffset, 1),
+        'arithmetic-deferred',
+      );
     }
 
     // Unknown character

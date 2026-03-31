@@ -301,7 +301,7 @@ WAIT
   ON ?verdict
 END
 
-IF $verdict.type == "a"
+IF $verdict.type = "a"
   DEFINE role
   <<
   Role A.
@@ -309,7 +309,7 @@ IF $verdict.type == "a"
   END
 END
 
-IF $verdict.type == "b"
+IF $verdict.type = "b"
   DEFINE role
   <<
   Role B.
@@ -345,7 +345,7 @@ Default.
 >>
 END
 
-IF $verdict.type == "a"
+IF $verdict.type = "a"
   DEFINE role
   <<
   Override.
@@ -599,7 +599,7 @@ true
 >>
 END
 
-IF $flag == "true"
+IF $flag = "true"
   EXIT
 END
 

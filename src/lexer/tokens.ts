@@ -19,6 +19,7 @@ export type Token =
   | TextFragmentToken
   | DurationLiteralToken
   | NumberLiteralToken
+  | ComparisonToken
   | StarToken
   | DashToken
   | ColonToken
@@ -115,6 +116,13 @@ export interface DurationLiteralToken {
 export interface NumberLiteralToken {
   type: 'NumberLiteral';
   value: number;
+  span: SourceSpan;
+}
+
+/** Comparison operator: =, ==, !=, <, >, <=, >= (R-0034) */
+export interface ComparisonToken {
+  type: 'Comparison';
+  operator: string;
   span: SourceSpan;
 }
 

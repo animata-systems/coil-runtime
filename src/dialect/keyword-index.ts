@@ -67,6 +67,11 @@ export class KeywordIndex {
     addEntries(table.modifiers, 'modifier');
     addEntries(table.policies, 'policy');
     addEntries(table.resultTypes, 'resultType');
+    // Expression keywords (AND, OR, NOT, TRUE, FALSE) are NOT added to the
+    // global keyword index. They are recognized only in expression context
+    // by the expression parser, which checks Identifier tokens against the
+    // dialect table. This prevents them from being matched as keywords in
+    // non-expression contexts (e.g., DEFINE body, template text).
 
     // Sort by phrase length descending for longest match
     const entries = Array.from(map.entries())
