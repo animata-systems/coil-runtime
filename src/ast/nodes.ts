@@ -120,6 +120,7 @@ export interface ReceiveNode {
   kind: 'Op.Receive';
   name: string;
   prompt: TemplateNode | null;
+  timeout: DurationValue | null;
   span: SourceSpan;
 }
 

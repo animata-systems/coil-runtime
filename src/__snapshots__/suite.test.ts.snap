@@ -254,6 +254,7 @@ exports[`conformance tests > valid/core/execute-oneshot.coil 1`] = `
       "kind": "Op.Receive",
       "name": "url",
       "prompt": null,
+      "timeout": null,
     },
     {
       "kind": "Op.Tools",
@@ -380,6 +381,7 @@ Enter the contract number.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Exit",
@@ -779,11 +781,13 @@ exports[`conformance tests > valid/core/think-full.coil 1`] = `
       "kind": "Op.Receive",
       "name": "query",
       "prompt": null,
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
       "name": "history",
       "prompt": null,
+      "timeout": null,
     },
     {
       "kind": "Op.Actors",
@@ -1064,6 +1068,7 @@ exports[`conformance tests > valid/core/think-result-with-body.coil 1`] = `
       "kind": "Op.Receive",
       "name": "request",
       "prompt": null,
+      "timeout": null,
     },
     {
       "as": [],
@@ -2414,6 +2419,7 @@ exports[`conformance tests > valid/extended/if-not-equals.coil 1`] = `
       "kind": "Op.Receive",
       "name": "input",
       "prompt": null,
+      "timeout": null,
     },
     {
       "as": [],
@@ -2948,6 +2954,7 @@ exports[`conformance tests > valid/extended/signal-context.coil 1`] = `
       "kind": "Op.Receive",
       "name": "query",
       "prompt": null,
+      "timeout": null,
     },
     {
       "kind": "Op.Tools",
@@ -3106,6 +3113,7 @@ User request.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "as": [],
@@ -3393,6 +3401,7 @@ exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "as": [],
@@ -3703,6 +3712,7 @@ Customer request text.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "as": [],
@@ -3944,6 +3954,7 @@ exports[`conformance tests > valid/patterns/conditional-define.coil 1`] = `
       "kind": "Op.Receive",
       "name": "input",
       "prompt": null,
+      "timeout": null,
     },
     {
       "body": {
@@ -4127,6 +4138,7 @@ exports[`conformance tests > valid/patterns/iterative-improve.coil 1`] = `
       "kind": "Op.Receive",
       "name": "brief",
       "prompt": null,
+      "timeout": null,
     },
     {
       "body": {
@@ -4529,6 +4541,7 @@ exports[`conformance tests > valid/patterns/parallel-think-wait-all.coil 1`] = `
       "kind": "Op.Receive",
       "name": "code",
       "prompt": null,
+      "timeout": null,
     },
     {
       "body": {
@@ -5316,6 +5329,7 @@ Nutzeranfrage zur Recherche.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -5331,6 +5345,7 @@ Verlauf früherer Anfragen zu diesem Thema.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -5346,6 +5361,7 @@ Kennung des aktuellen Falls.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -5768,6 +5784,550 @@ Kennung des aktuellen Falls.
 }
 `;
 
+exports[`dialect showcases > de-standard 2`] = `
+{
+  "dialect": "de-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase: Dokumentenprüfung",
+    },
+    {
+      "kind": "Comment",
+      "text": "Demonstriert Expression Grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "Stream MVP (SIGNAL), EMPFANGE mit Timeout,",
+    },
+    {
+      "kind": "Comment",
+      "text": "JEDES mit verschachteltem Scope.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EMPFANGE mit HÖCHSTENS (Timeout) ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Fügen Sie den Dokumenttext zur Überprüfung ein.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- DENKE erstellt Stream ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Überprüfe das Dokument.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "gefundene Probleme",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "Beschreibung",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "Schweregrad von 1 bis 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "automatisch behebbar",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "Gesamtbewertung von 1 bis 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- FÜHRE AUS + SIGNAL in aktiven Stream ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Zusätzliche Quellen: ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression Grammar: Vergleiche, UND, NICHT ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSCH",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "WAHR",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- JEDES mit verschachteltem Scope ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — außerhalb der Schleife unsichtbar",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Schlage eine Korrektur vor.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problem: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "Vorschlag",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problem: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Korrektur: ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "autor",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Zusammenfassung ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Dokument erfordert Aufmerksamkeit. Bewertung: ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "autor",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > en-standard 1`] = `
 {
   "dialect": "en-standard",
@@ -5885,6 +6445,7 @@ User query for research.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -5900,6 +6461,7 @@ History of previous requests on this topic.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -5915,6 +6477,7 @@ Current case identifier.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -6332,6 +6895,550 @@ Current case identifier.
 }
 `;
 
+exports[`dialect showcases > en-standard 2`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase: document review",
+    },
+    {
+      "kind": "Comment",
+      "text": "Demonstrates expression grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "stream MVP (SIGNAL), RECEIVE with timeout,",
+    },
+    {
+      "kind": "Comment",
+      "text": "EACH with nested scope.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "author",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- RECEIVE with TIMEOUT ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Paste the document text for review.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- THINK creates stream ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Review the document.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "issues found",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "description",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "severity from 1 to 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "can be auto-fixed",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "overall score from 1 to 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EXECUTE + SIGNAL into active stream ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Additional sources: ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression grammar: comparisons, AND, NOT ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSE",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "TRUE",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EACH with nested scope ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — invisible outside the loop",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Suggest a fix.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Issue: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "suggestion",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Issue: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Fix: ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "author",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Summary ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Document needs attention. Score: ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "author",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > es-standard 1`] = `
 {
   "dialect": "es-standard",
@@ -6450,6 +7557,7 @@ Consulta del usuario para la investigación.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -6465,6 +7573,7 @@ Historial de consultas anteriores sobre este tema.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -6480,6 +7589,7 @@ Identificador del caso actual.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -6914,6 +8024,550 @@ Identificador del caso actual.
 }
 `;
 
+exports[`dialect showcases > es-standard 2`] = `
+{
+  "dialect": "es-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase: revisión de documento",
+    },
+    {
+      "kind": "Comment",
+      "text": "Demuestra expression grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "stream MVP (SEÑAL), RECIBE con timeout,",
+    },
+    {
+      "kind": "Comment",
+      "text": "CADA con scope anidado.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- RECIBE con MÁXIMO (timeout) ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Pegue el texto del documento para revisión.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- PIENSA crea stream ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Revisa el documento.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "problemas encontrados",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "descripción",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "gravedad de 1 a 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "se puede corregir automáticamente",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "puntuación general de 1 a 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EJECUTA + SEÑAL en stream activo ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Fuentes adicionales: ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression grammar: comparaciones, Y, NO ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSO",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "VERDADERO",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- CADA con scope anidado ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — invisibles fuera del ciclo",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Sugiere una corrección.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problema: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "sugerencia",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problema: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Corrección: ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "autor",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Resumen ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    El documento necesita atención. Puntuación: ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "autor",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > fr-standard 1`] = `
 {
   "dialect": "fr-standard",
@@ -7032,6 +8686,7 @@ Requête utilisateur pour la recherche.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -7047,6 +8702,7 @@ Historique des requêtes précédentes sur ce sujet.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -7062,6 +8718,7 @@ Identifiant du dossier en cours.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -7484,6 +9141,550 @@ Identifiant du dossier en cours.
 }
 `;
 
+exports[`dialect showcases > fr-standard 2`] = `
+{
+  "dialect": "fr-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase : revue de document",
+    },
+    {
+      "kind": "Comment",
+      "text": "Démontre expression grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "stream MVP (SIGNAL), REÇOIS avec timeout,",
+    },
+    {
+      "kind": "Comment",
+      "text": "CHAQUE avec scope imbriqué.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "auteur",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- REÇOIS avec AU PLUS (timeout) ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Collez le texte du document à examiner.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- PENSE crée le stream ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Examine le document.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "problèmes trouvés",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "description",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "gravité de 1 à 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "corrigible automatiquement",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "note globale de 1 à 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EXÉCUTE + SIGNAL dans le stream actif ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Sources supplémentaires : ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression grammar : comparaisons, ET, NON ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FAUX",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "VRAI",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- CHAQUE avec scope imbriqué ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — invisibles hors de la boucle",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Propose une correction.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problème : ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "suggestion",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problème : ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Correction : ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "auteur",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Résumé ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Le document nécessite une attention. Note : ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "auteur",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > ja-standard 1`] = `
 {
   "dialect": "ja-standard",
@@ -7600,6 +9801,7 @@ exports[`dialect showcases > ja-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -7615,6 +9817,7 @@ exports[`dialect showcases > ja-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -7630,6 +9833,7 @@ exports[`dialect showcases > ja-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -8161,6 +10365,7 @@ Consulta do usuário para pesquisa.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -8176,6 +10381,7 @@ Histórico de consultas anteriores sobre o tema.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -8191,6 +10397,7 @@ Identificador do caso atual.
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -8625,6 +10832,550 @@ Identificador do caso atual.
 }
 `;
 
+exports[`dialect showcases > pt-br-standard 2`] = `
+{
+  "dialect": "pt-br-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase: revisão de documento",
+    },
+    {
+      "kind": "Comment",
+      "text": "Demonstra expression grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "stream MVP (SINAL), RECEBA com timeout,",
+    },
+    {
+      "kind": "Comment",
+      "text": "CADA com escopo aninhado.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "autor",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- RECEBA com MÁXIMO (timeout) ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Cole o texto do documento para revisão.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- PENSE cria stream ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Revise o documento.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "problemas encontrados",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "descrição",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "gravidade de 1 a 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "corrigível automaticamente",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "nota geral de 1 a 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- EXECUTE + SINAL no stream ativo ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Fontes adicionais: ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression grammar: comparações, E, NÃO ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "FALSO",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "VERDADEIRO",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- CADA com escopo aninhado ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — invisíveis fora do loop",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Sugira uma correção.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problema: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "sugestão",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Problema: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Correção: ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "autor",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Resumo ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    O documento precisa de atenção. Nota: ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "autor",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > ru-standard 1`] = `
 {
   "dialect": "ru-standard",
@@ -8742,6 +11493,7 @@ exports[`dialect showcases > ru-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -8757,6 +11509,7 @@ exports[`dialect showcases > ru-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -8772,6 +11525,7 @@ exports[`dialect showcases > ru-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -9189,6 +11943,550 @@ exports[`dialect showcases > ru-standard 1`] = `
 }
 `;
 
+exports[`dialect showcases > ru-standard 2`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase: обзор документа",
+    },
+    {
+      "kind": "Comment",
+      "text": "Демонстрирует expression grammar,",
+    },
+    {
+      "kind": "Comment",
+      "text": "stream MVP (СИГНАЛ), ПОЛУЧИ с таймаутом,",
+    },
+    {
+      "kind": "Comment",
+      "text": "КАЖДЫЙ с вложенным scope.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "автор",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- ПОЛУЧИ с НЕ БОЛЕЕ (таймаут) ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Вставьте текст документа для обзора.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- ДУМАЙ создаёт поток ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Проведи обзор документа.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "найденные проблемы",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "описание",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "серьёзность от 1 до 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "можно ли исправить автоматически",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "общая оценка от 1 до 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- ВЫПОЛНИ + СИГНАЛ в активный поток ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Дополнительные источники: ",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Expression grammar: сравнения, И, НЕ ---",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "ЛОЖЬ",
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "ИСТИНА",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- КАЖДЫЙ с вложенным scope ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — не видны за пределами цикла",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Предложи исправление.
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Проблема: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "предложение",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      Проблема: ",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      Исправление: ",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "автор",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- Итог ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Документ требует внимания. Оценка: ",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "автор",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > zh-standard 1`] = `
 {
   "dialect": "zh-standard",
@@ -9306,6 +12604,7 @@ exports[`dialect showcases > zh-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -9321,6 +12620,7 @@ exports[`dialect showcases > zh-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -9336,6 +12636,7 @@ exports[`dialect showcases > zh-standard 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -9954,6 +13255,7 @@ exports[`executable examples > hello-world.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "await": null,
@@ -10063,6 +13365,7 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -10078,6 +13381,7 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "body": {
@@ -10585,6 +13889,733 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
 }
 `;
 
+exports[`executable examples > patterns/expression-conditions.coil 1`] = `
+{
+  "dialect": "ru-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role pattern",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect ru-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.If, Op.Receive, Op.Think, Op.Define, Op.Set, Mod.Timeout",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Модерация контента с выражениями и условиями",
+    },
+    {
+      "kind": "Comment",
+      "text": "",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Паттерн: выражения и условия",
+    },
+    {
+      "kind": "Comment",
+      "text": "ПОЛУЧИ с таймаутом, ЕСЛИ с логическими",
+    },
+    {
+      "kind": "Comment",
+      "text": "связками (И, ИЛИ, НЕ), скобками,",
+    },
+    {
+      "kind": "Comment",
+      "text": "булевыми литералами и доступом к полям.",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "модератор",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Получаем контент с ограничением по времени",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "content",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+Введите текст для модерации.
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 2,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Анализ контента",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Оцени текст по нескольким критериям.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "content",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "уровень серьёзности от 1 до 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 0,
+          "description": "категория",
+          "name": "category",
+          "typeArgs": [
+            "spam",
+            "offensive",
+            "misinformation",
+            "clean",
+          ],
+          "typeId": "Typ.Choice",
+        },
+        {
+          "depth": 0,
+          "description": "уверенность от 0 до 100",
+          "name": "confidence",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 0,
+          "description": "содержит ли персональные данные",
+          "name": "contains_pii",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Решение: автоматическое одобрение",
+    },
+    {
+      "kind": "Comment",
+      "text": "Простое сравнение + AND",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "ЛОЖЬ",
+      },
+      "kind": "Op.Define",
+      "name": "approved",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "ИСТИНА",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "approved",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "analysis",
+            "path": [
+              "category",
+            ],
+          },
+          "op": "=",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "string",
+            "value": "clean",
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "analysis",
+            "path": [
+              "severity",
+            ],
+          },
+          "op": "<=",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 2,
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Решение: немедленная блокировка",
+    },
+    {
+      "kind": "Comment",
+      "text": "Сравнение >=, OR с группировкой",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": {
+        "type": "string",
+        "value": "ЛОЖЬ",
+      },
+      "kind": "Op.Define",
+      "name": "blocked",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "string",
+            "value": "ИСТИНА",
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "blocked",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "inner": {
+            "kind": "BinaryExpr",
+            "left": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "analysis",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+            "op": "And",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "analysis",
+                "path": [
+                  "confidence",
+                ],
+              },
+              "op": ">",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 80,
+              },
+            },
+          },
+          "kind": "GroupExpr",
+        },
+        "op": "Or",
+        "right": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "analysis",
+            "path": [
+              "contains_pii",
+            ],
+          },
+          "op": "=",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "boolean",
+            "value": true,
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Решение: ручная проверка",
+    },
+    {
+      "kind": "Comment",
+      "text": "NOT + сравнение с булевыми переменными",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "as": [],
+          "body": null,
+          "context": null,
+          "goal": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Подготовь материалы для ручной проверки.
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "input": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Контент: ",
+              },
+              {
+                "name": "content",
+                "path": [],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Категория: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "category",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Серьёзность: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "severity",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Уверенность: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "confidence",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "kind": "Op.Think",
+          "name": "manual_review",
+          "result": [
+            {
+              "depth": 0,
+              "description": "резюме для модератора",
+              "name": "summary",
+              "typeArgs": [],
+              "typeId": "Typ.Text",
+            },
+            {
+              "depth": 0,
+              "description": "рекомендация",
+              "name": "recommendation",
+              "typeArgs": [
+                "approve",
+                "reject",
+                "escalate",
+              ],
+              "typeId": "Typ.Choice",
+            },
+          ],
+          "using": [],
+          "via": null,
+        },
+        {
+          "kind": "Op.Wait",
+          "mode": null,
+          "name": null,
+          "on": [
+            {
+              "name": "manual_review",
+            },
+          ],
+          "timeout": null,
+        },
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Требуется ручная проверка.
+
+    ",
+              },
+              {
+                "name": "manual_review",
+                "path": [
+                  "summary",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+
+    Рекомендация: ",
+              },
+              {
+                "name": "manual_review",
+                "path": [
+                  "recommendation",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "модератор",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "approved",
+                "path": [],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "boolean",
+                "value": true,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "blocked",
+                "path": [],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "boolean",
+                "value": true,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Уведомление о результате",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Контент одобрен автоматически.
+    Категория: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "category",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "модератор",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "approved",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    Контент заблокирован автоматически.
+    Категория: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "category",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    Серьёзность: ",
+              },
+              {
+                "name": "analysis",
+                "path": [
+                  "severity",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "модератор",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "blocked",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`executable examples > patterns/internal-delegation.coil 1`] = `
 {
   "dialect": "ru-standard",
@@ -10665,6 +14696,7 @@ exports[`executable examples > patterns/internal-delegation.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "body": {
@@ -11226,6 +15258,7 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -11815,6 +15848,7 @@ exports[`executable examples > patterns/parallelization.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "body": {
@@ -12366,6 +16400,7 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "body": {
@@ -13061,6 +17096,7 @@ exports[`executable examples > patterns/routing.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "body": {
@@ -13529,6 +17565,7 @@ exports[`executable examples > patterns/stream-feedback.coil 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",
@@ -14196,6 +18233,7 @@ exports[`narrative examples > research-agent.md 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -14211,6 +18249,7 @@ exports[`narrative examples > research-agent.md 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Op.Receive",
@@ -14226,6 +18265,7 @@ exports[`narrative examples > research-agent.md 1`] = `
         ],
         "type": "template",
       },
+      "timeout": null,
     },
     {
       "kind": "Comment",

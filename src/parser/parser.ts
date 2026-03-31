@@ -427,9 +427,22 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
     const nameToken = expect('Identifier') as IdentifierToken;
 
     skipTrivia();
+    let timeout: DurationValue | null = null;
     let prompt: TemplateNode | null = null;
-    if (peek().type === 'TemplateOpen') {
-      prompt = parseTemplate();
+
+    // RECEIVE modifiers: TIMEOUT / NO MORE THAN (optional), then prompt (optional)
+    // Order: timeout before prompt, or prompt before timeout, or just one
+    for (;;) {
+      skipTrivia();
+      if (isAnyKeywordOf(['Mod.Timeout', 'Mod.Limit'])) {
+        advance(); // consume TIMEOUT / NO MORE THAN
+        skipTrivia();
+        timeout = parseDuration();
+      } else if (peek().type === 'TemplateOpen') {
+        prompt = parseTemplate();
+      } else {
+        break;
+      }
     }
 
     skipTrivia();
@@ -439,6 +452,7 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       kind: 'Op.Receive',
       name: nameToken.name,
       prompt,
+      timeout,
       span: makeSpanFrom(kwToken.span),
     };
   }

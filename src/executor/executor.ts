@@ -1,12 +1,21 @@
 import type { SourceSpan } from '../common/types.js';
 import type {
   ScriptNode, OperatorNode, ReceiveNode, SendNode, TemplateNode,
-  DefineNode, SetNode, IfNode, RepeatNode, EachNode,
+  DefineNode, SetNode, IfNode, RepeatNode, EachNode, DurationValue,
 } from '../ast/nodes.js';
 import type { Environment } from './environment.js';
 import { Scope } from './scope.js';
 import { interpolate, resolveBodyValue, resolveVar } from './resolve.js';
 import { evaluate } from './evaluate.js';
+
+function durationToMs(dur: DurationValue): number {
+  switch (dur.unitId) {
+    case 'Dur.Seconds': return dur.value * 1000;
+    case 'Dur.Minutes': return dur.value * 60_000;
+    case 'Dur.Hours': return dur.value * 3_600_000;
+    default: return dur.value * 1000;
+  }
+}
 
 export class ExecutionError extends Error {
   readonly span: SourceSpan;
@@ -61,7 +70,10 @@ async function executeNode(
       const promptText = recv.prompt
         ? interpolate(recv.prompt, scope)
         : `${recv.name}: `;
-      const value = await env.receive(promptText);
+      const options = recv.timeout
+        ? { timeout: durationToMs(recv.timeout) }
+        : undefined;
+      const value = await env.receive(promptText, options);
       scope.set(recv.name, value);
       return false;
     }
