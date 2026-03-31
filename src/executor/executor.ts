@@ -5,7 +5,7 @@ import type {
 } from '../ast/nodes.js';
 import type { Environment } from './environment.js';
 import { Scope } from './scope.js';
-import { interpolate, resolveBodyValue } from './resolve.js';
+import { interpolate, resolveBodyValue, resolveVar } from './resolve.js';
 import { evaluate } from './evaluate.js';
 
 export class ExecutionError extends Error {
@@ -132,13 +132,7 @@ async function executeNode(
 
     case 'Op.Each': {
       const each = node as EachNode;
-      const sourceVal = scope.get(each.from.name);
-      if (sourceVal === undefined && !scope.has(each.from.name)) {
-        throw new ExecutionError(
-          `undefined variable: $${each.from.name}`,
-          each.from.span,
-        );
-      }
+      const sourceVal = resolveVar(each.from.name, each.from.path, scope, each.from.span);
       // R-0038: only Array is iterable in v0.4
       if (!Array.isArray(sourceVal)) {
         throw new ExecutionError(
