@@ -2050,8 +2050,8 @@ exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "done",
@@ -2060,8 +2060,8 @@ exports[`conformance tests > valid/extended/if-comparison.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "TRUE",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -2598,8 +2598,8 @@ exports[`conformance tests > valid/extended/if-or-with-parens.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "override",
@@ -2815,8 +2815,8 @@ exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "done",
@@ -2868,8 +2868,8 @@ exports[`conformance tests > valid/extended/repeat-until.coil 1`] = `
           "body": [
             {
               "body": {
-                "type": "string",
-                "value": "TRUE",
+                "type": "boolean",
+                "value": true,
               },
               "kind": "Op.Set",
               "target": {
@@ -3286,8 +3286,8 @@ User request.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "done",
@@ -3298,8 +3298,8 @@ User request.
           "body": [
             {
               "body": {
-                "type": "string",
-                "value": "TRUE",
+                "type": "boolean",
+                "value": true,
               },
               "kind": "Op.Set",
               "target": {
@@ -3574,8 +3574,8 @@ exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "готово",
@@ -3586,8 +3586,8 @@ exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
           "body": [
             {
               "body": {
-                "type": "string",
-                "value": "ИСТИНА",
+                "type": "boolean",
+                "value": true,
               },
               "kind": "Op.Set",
               "target": {
@@ -4249,8 +4249,8 @@ You are a strict editor who evaluates text quality.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "done",
@@ -4334,8 +4334,8 @@ You are a strict editor who evaluates text quality.
           "body": [
             {
               "body": {
-                "type": "string",
-                "value": "TRUE",
+                "type": "boolean",
+                "value": true,
               },
               "kind": "Op.Set",
               "target": {
@@ -6003,8 +6003,8 @@ Fügen Sie den Dokumenttext zur Überprüfung ein.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSCH",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -6013,8 +6013,8 @@ Fügen Sie den Dokumenttext zur Überprüfung ein.
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "WAHR",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -7114,8 +7114,8 @@ Paste the document text for review.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSE",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -7124,8 +7124,8 @@ Paste the document text for review.
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "TRUE",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -8243,8 +8243,8 @@ Pegue el texto del documento para revisión.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSO",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -8253,8 +8253,8 @@ Pegue el texto del documento para revisión.
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "VERDADERO",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -9360,8 +9360,8 @@ Collez le texte du document à examiner.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FAUX",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -9370,8 +9370,8 @@ Collez le texte du document à examiner.
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "VRAI",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -10247,6 +10247,550 @@ exports[`dialect showcases > ja-standard 1`] = `
 }
 `;
 
+exports[`dialect showcases > ja-standard 2`] = `
+{
+  "dialect": "ja-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase：ドキュメントレビュー",
+    },
+    {
+      "kind": "Comment",
+      "text": "式文法、ストリーム MVP（信号）、",
+    },
+    {
+      "kind": "Comment",
+      "text": "タイムアウト付き受信、",
+    },
+    {
+      "kind": "Comment",
+      "text": "ネストスコープ付き各を実演。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "著者",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 受信 最大（タイムアウト）付き ---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+レビュー対象のドキュメントテキストを貼り付けてください。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 思考 はストリーム ~review を作成 ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ドキュメントをレビューする。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "発見された問題",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "説明",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "重大度 1 から 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "自動修正可能か",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "総合スコア 1 から 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 実行 + 信号 をアクティブストリームに ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  追加ソース：",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 式文法：比較、かつ、否定 ---",
+    },
+    {
+      "body": {
+        "type": "boolean",
+        "value": false,
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "boolean",
+            "value": true,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 各 ネストスコープ付き ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — ループ外では不可視",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      修正を提案する。
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      問題：",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "提案",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      問題：",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      修正：",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "著者",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- まとめ ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    ドキュメントは注意が必要です。スコア：",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "著者",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`dialect showcases > pt-br-standard 1`] = `
 {
   "dialect": "pt-br-standard",
@@ -11051,8 +11595,8 @@ Cole o texto do documento para revisão.
     },
     {
       "body": {
-        "type": "string",
-        "value": "FALSO",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -11061,8 +11605,8 @@ Cole o texto do documento para revisão.
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "VERDADEIRO",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -12162,8 +12706,8 @@ exports[`dialect showcases > ru-standard 2`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_attention",
@@ -12172,8 +12716,8 @@ exports[`dialect showcases > ru-standard 2`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -13050,6 +13594,546 @@ exports[`dialect showcases > zh-standard 1`] = `
 }
 `;
 
+exports[`dialect showcases > zh-standard 2`] = `
+{
+  "dialect": "zh-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Comment",
+      "text": "Showcase：文档审查",
+    },
+    {
+      "kind": "Comment",
+      "text": "演示表达式语法、流式 MVP（信号）、",
+    },
+    {
+      "kind": "Comment",
+      "text": "带超时的接收、带嵌套作用域的每个。",
+    },
+    {
+      "kind": "Comment",
+      "text": "═══════════════════════════════════════",
+    },
+    {
+      "kind": "Op.Actors",
+      "names": [
+        "作者",
+      ],
+    },
+    {
+      "kind": "Op.Tools",
+      "names": [
+        "search",
+      ],
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 接收 带 最多（超时）---",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "document",
+      "prompt": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+请粘贴需要审查的文档文本。
+",
+          },
+        ],
+        "type": "template",
+      },
+      "timeout": {
+        "unitId": "Dur.Minutes",
+        "value": 3,
+      },
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 思考 创建流 ~review ---",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  审查文档。
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+          {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Think",
+      "name": "review",
+      "result": [
+        {
+          "depth": 0,
+          "description": "发现的问题",
+          "name": "issues",
+          "typeArgs": [],
+          "typeId": "Typ.List",
+        },
+        {
+          "depth": 1,
+          "description": "描述",
+          "name": "title",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 1,
+          "description": "严重程度 1 到 10",
+          "name": "severity",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+        {
+          "depth": 1,
+          "description": "是否可自动修复",
+          "name": "fixable",
+          "typeArgs": [],
+          "typeId": "Typ.Flag",
+        },
+        {
+          "depth": 0,
+          "description": "总体评分 1 到 10",
+          "name": "score",
+          "typeArgs": [],
+          "typeId": "Typ.Number",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 执行 + 信号 进入活跃流 ---",
+    },
+    {
+      "args": [
+        {
+          "key": "query",
+          "value": {
+            "name": "document",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "kind": "Op.Execute",
+      "name": "refs",
+      "tool": {
+        "name": "search",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "refs",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "body": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  补充来源：",
+          },
+          {
+            "name": "refs",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": "
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "kind": "Op.Signal",
+      "target": {
+        "name": "review",
+      },
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "review",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 表达式语法：比较、且、非 ---",
+    },
+    {
+      "body": {
+        "type": "boolean",
+        "value": false,
+      },
+      "kind": "Op.Define",
+      "name": "needs_attention",
+    },
+    {
+      "body": [
+        {
+          "body": {
+            "type": "boolean",
+            "value": true,
+          },
+          "kind": "Op.Set",
+          "target": {
+            "name": "needs_attention",
+            "path": [],
+            "type": "ref",
+          },
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "BinaryExpr",
+          "left": {
+            "kind": "VarRefExpr",
+            "name": "review",
+            "path": [
+              "score",
+            ],
+          },
+          "op": "<",
+          "right": {
+            "kind": "LiteralExpr",
+            "literalType": "number",
+            "value": 5,
+          },
+        },
+        "op": "And",
+        "right": {
+          "kind": "UnaryExpr",
+          "op": "Not",
+          "operand": {
+            "inner": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+              },
+              "op": "=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 1,
+              },
+            },
+            "kind": "GroupExpr",
+          },
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 每个 带嵌套作用域 ---",
+    },
+    {
+      "kind": "Comment",
+      "text": "$issue, ?fix, $fix — 在循环外不可见",
+    },
+    {
+      "body": [
+        {
+          "body": [
+            {
+              "as": [],
+              "body": null,
+              "context": null,
+              "goal": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      提出修复建议。
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "input": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      问题：",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "kind": "Op.Think",
+              "name": "fix",
+              "result": [
+                {
+                  "depth": 0,
+                  "description": "建议",
+                  "name": "suggestion",
+                  "typeArgs": [],
+                  "typeId": "Typ.Text",
+                },
+              ],
+              "using": [],
+              "via": null,
+            },
+            {
+              "kind": "Op.Wait",
+              "mode": null,
+              "name": null,
+              "on": [
+                {
+                  "name": "fix",
+                },
+              ],
+              "timeout": null,
+            },
+            {
+              "await": null,
+              "body": {
+                "parts": [
+                  {
+                    "type": "text",
+                    "value": "
+      问题：",
+                  },
+                  {
+                    "name": "issue",
+                    "path": [
+                      "title",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      修复：",
+                  },
+                  {
+                    "name": "fix",
+                    "path": [
+                      "suggestion",
+                    ],
+                    "type": "ref",
+                  },
+                  {
+                    "type": "text",
+                    "value": "
+      ",
+                  },
+                ],
+                "type": "template",
+              },
+              "for": [
+                "作者",
+              ],
+              "kind": "Op.Send",
+              "name": null,
+              "replyTo": null,
+              "timeout": null,
+              "to": null,
+            },
+          ],
+          "condition": {
+            "kind": "BinaryExpr",
+            "left": {
+              "inner": {
+                "kind": "BinaryExpr",
+                "left": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "severity",
+                    ],
+                  },
+                  "op": ">=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "number",
+                    "value": 7,
+                  },
+                },
+                "op": "And",
+                "right": {
+                  "kind": "BinaryExpr",
+                  "left": {
+                    "kind": "VarRefExpr",
+                    "name": "issue",
+                    "path": [
+                      "fixable",
+                    ],
+                  },
+                  "op": "=",
+                  "right": {
+                    "kind": "LiteralExpr",
+                    "literalType": "boolean",
+                    "value": true,
+                  },
+                },
+              },
+              "kind": "GroupExpr",
+            },
+            "op": "Or",
+            "right": {
+              "kind": "BinaryExpr",
+              "left": {
+                "kind": "VarRefExpr",
+                "name": "issue",
+                "path": [
+                  "severity",
+                ],
+              },
+              "op": ">=",
+              "right": {
+                "kind": "LiteralExpr",
+                "literalType": "number",
+                "value": 9,
+              },
+            },
+          },
+          "kind": "Op.If",
+        },
+      ],
+      "element": {
+        "name": "issue",
+        "path": [],
+        "type": "ref",
+      },
+      "from": {
+        "name": "review",
+        "path": [
+          "issues",
+        ],
+        "type": "ref",
+      },
+      "kind": "Op.Each",
+    },
+    {
+      "kind": "Comment",
+      "text": "--- 总结 ---",
+    },
+    {
+      "body": [
+        {
+          "await": null,
+          "body": {
+            "parts": [
+              {
+                "type": "text",
+                "value": "
+    文档需要关注。评分：",
+              },
+              {
+                "name": "review",
+                "path": [
+                  "score",
+                ],
+                "type": "ref",
+              },
+              {
+                "type": "text",
+                "value": "
+    ",
+              },
+            ],
+            "type": "template",
+          },
+          "for": [
+            "作者",
+          ],
+          "kind": "Op.Send",
+          "name": null,
+          "replyTo": null,
+          "timeout": null,
+          "to": null,
+        },
+      ],
+      "condition": {
+        "kind": "BinaryExpr",
+        "left": {
+          "kind": "VarRefExpr",
+          "name": "needs_attention",
+          "path": [],
+        },
+        "op": "=",
+        "right": {
+          "kind": "LiteralExpr",
+          "literalType": "boolean",
+          "value": true,
+        },
+      },
+      "kind": "Op.If",
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`executable examples > anti-patterns/missing-wait.coil 1`] = `
 {
   "dialect": "ru-standard",
@@ -13514,8 +14598,8 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "done",
@@ -13649,8 +14733,8 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
           "body": [
             {
               "body": {
-                "type": "string",
-                "value": "ИСТИНА",
+                "type": "boolean",
+                "value": true,
               },
               "kind": "Op.Set",
               "target": {
@@ -14098,8 +15182,8 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "approved",
@@ -14108,8 +15192,8 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -14175,8 +15259,8 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "blocked",
@@ -14185,8 +15269,8 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -16622,8 +17706,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
     },
     {
       "body": {
-        "type": "string",
-        "value": "ЛОЖЬ",
+        "type": "boolean",
+        "value": false,
       },
       "kind": "Op.Define",
       "name": "needs_improvement",
@@ -16632,8 +17716,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -16665,8 +17749,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {
@@ -16698,8 +17782,8 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
       "body": [
         {
           "body": {
-            "type": "string",
-            "value": "ИСТИНА",
+            "type": "boolean",
+            "value": true,
           },
           "kind": "Op.Set",
           "target": {

@@ -412,9 +412,21 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       const sl = advance() as StringLiteralToken;
       return { type: 'string', value: sl.value, span: sl.span };
     }
-    // Boolean keywords (TRUE/FALSE) as body values — store as string literals
+    // Boolean keywords (TRUE/FALSE) as body values — dialect-aware
     if (t.type === 'Identifier') {
-      const id = advance() as IdentifierToken;
+      const id = t as IdentifierToken;
+      const trueWord = dialect.expressions?.['Expr.True'];
+      const falseWord = dialect.expressions?.['Expr.False'];
+      if (trueWord && id.name === trueWord) {
+        advance();
+        return { type: 'boolean', value: true, span: id.span };
+      }
+      if (falseWord && id.name === falseWord) {
+        advance();
+        return { type: 'boolean', value: false, span: id.span };
+      }
+      // Other identifiers as string literals
+      advance();
       return { type: 'string', value: id.name, span: id.span };
     }
     throw new ParseError(`expected body value (template, $reference, number, or "string"), got ${t.type}`, t.span, 'expected-body-value');

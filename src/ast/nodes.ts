@@ -77,8 +77,14 @@ export interface NumberLiteral {
   span: SourceSpan;
 }
 
+export interface BooleanLiteral {
+  type: 'boolean';
+  value: boolean;
+  span: SourceSpan;
+}
+
 /** Body of DEFINE/SET: template, reference, or literal */
-export type BodyValue = TemplateNode | ValueRef | NumberLiteral | StringLiteral;
+export type BodyValue = TemplateNode | ValueRef | NumberLiteral | StringLiteral | BooleanLiteral;
 
 /** Argument entry for EXECUTE: - key: value */
 export interface ArgEntry {

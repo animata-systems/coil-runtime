@@ -82,5 +82,7 @@ export function resolveBodyValue(body: BodyValue, scope: Scope): unknown {
       return body.value;
     case 'string':
       return body.value;
+    case 'boolean':
+      return body.value;
   }
 }

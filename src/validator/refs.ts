@@ -1,7 +1,7 @@
 import type {
   OperatorNode, SendNode, ReceiveNode, DefineNode, SetNode,
-  ThinkNode, ExecuteNode, EachNode, SignalNode,
-  TemplateNode, ValueRef, BodyValue,
+  ThinkNode, ExecuteNode, EachNode, SignalNode, IfNode, RepeatNode,
+  TemplateNode, ValueRef, BodyValue, ExpressionNode,
 } from '../ast/nodes.js';
 
 /** Extract $name refs from a TemplateNode (RefPart entries only). */
@@ -20,7 +20,32 @@ export function collectRefsFromTemplate(tmpl: TemplateNode | null): ValueRef[] {
 export function collectRefsFromBody(body: BodyValue): ValueRef[] {
   if (body.type === 'ref') return [body];
   if (body.type === 'template') return collectRefsFromTemplate(body);
-  return []; // string or number literal
+  return []; // string, number, or boolean literal
+}
+
+/** Extract $name refs from an ExpressionNode (VarRefExpr entries). */
+export function collectRefsFromExpression(expr: ExpressionNode): ValueRef[] {
+  const refs: ValueRef[] = [];
+  function walk(node: ExpressionNode): void {
+    switch (node.kind) {
+      case 'VarRefExpr':
+        refs.push({ type: 'ref', name: node.name, path: node.path, span: node.span });
+        break;
+      case 'BinaryExpr':
+        walk(node.left);
+        walk(node.right);
+        break;
+      case 'UnaryExpr':
+        walk(node.operand);
+        break;
+      case 'GroupExpr':
+        walk(node.inner);
+        break;
+      // LiteralExpr — no refs
+    }
+  }
+  walk(expr);
+  return refs;
 }
 
 /**
@@ -77,6 +102,16 @@ export function collectVariableRefs(node: OperatorNode): ValueRef[] {
     case 'Op.Signal': {
       const n = node as SignalNode;
       refs.push(...collectRefsFromTemplate(n.body));
+      break;
+    }
+    case 'Op.If': {
+      const n = node as IfNode;
+      refs.push(...collectRefsFromExpression(n.condition));
+      break;
+    }
+    case 'Op.Repeat': {
+      const n = node as RepeatNode;
+      if (n.until) refs.push(...collectRefsFromExpression(n.until));
       break;
     }
   }
