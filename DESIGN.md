@@ -657,3 +657,240 @@ Deferred: objects (entry iteration), strings (character iteration), `Symbol.iter
 **Rationale.** COIL agents interact with tools and models that return nested objects. Field access `$result.metadata.author` already works in the executor (R-0037). Without OBJECT in RESULT, authors cannot describe the structure the LLM should produce for nested non-list data. This creates an artificial asymmetry: field access works, but the schema can't express the shape.
 
 **Cost.** One more variant in the discriminated union. Minimal — OBJECT behaves identically to LIST in the compiler, just semantically different (single record vs array of records).
+
+## R-0040 — Executor pause-resume: explicit state machine, not generators
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/executor.ts`, `src/executor/snapshot.ts` |
+
+**Context.** The SDK must support two hosting modes: stateful (CLI, long-running server) and stateless (serverless, snapshot restore). The executor must be able to yield at any wait point (RECEIVE, WAIT, SEND AWAIT) inside arbitrarily nested blocks (IF, REPEAT, EACH), serialize its state as a JSON snapshot, and resume from that snapshot in a potentially different process.
+
+Three approaches were considered: (A) async generators (`async function*`) — natural yield in TS, but generators are not serializable; stateless restore requires either replay (expensive for long scripts) or a hybrid with two execution paths; (B) explicit state machine with program counter — one execution path for both modes, snapshot is the single source of truth, instant restore without replay; (C) hybrid generator + state machine — two engines that must produce identical behavior, hard to test.
+
+**Decision.** Explicit state machine (option B). The executor is a regular function, not a generator. Execution state (scope chain, program counter, pending promises, stream handles) is an explicit `ExecutionSnapshot` object. At each yield point the executor saves the snapshot via `StateProvider.save()` and returns a `YieldRequest` to the host. On resume the executor loads the snapshot, restores the program counter, and continues from the exact position.
+
+Program counter format: see R-0041.
+
+**Rationale.** One execution path eliminates the class of bugs where stateful and stateless modes diverge. Program counter as `number[]` directly maps to the AST nesting structure (ScriptNode → body of IF/REPEAT/EACH → nested body). Instant restore without replay is critical for serverless hosting where a RECEIVE may block for hours/days.
+
+**Cost.** More boilerplate than generators: every nested block dispatcher must read/advance the program counter explicitly. New operators with nesting must integrate with the program counter. Code is less idiomatic TypeScript than `yield*`. However, the code is easier to test step-by-step, and the snapshot format is self-documenting.
+
+## R-0041 — Program counter: typed path segments
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/snapshot.ts` |
+
+**Context.** R-0040 defines the executor as an explicit state machine with a program counter. The program counter must encode the position inside arbitrarily nested blocks. EACH has iterations (indexed by element), IF/REPEAT have a body but no iteration index. A flat `number[]` is compact but the meaning of each element depends on the node type — the reader must consult the AST to interpret the counter. A typed format is self-describing.
+
+Three approaches were considered: (A) flat `number[]` with interleaved semantics — compact, but each element's meaning is context-dependent; (B) typed path segments — `Array<{ node: number; iteration?: number }>` — self-describing, readable without AST; (C) flat `number[]` with a convention (EACH always adds two elements) — essentially (A) with a rule.
+
+**Decision.** Typed path segments (option B). Program counter is `ProgramCounter = PathSegment[]`.
+
+```
+PathSegment = { node: number; iteration?: number }
+```
+
+Examples:
+- `[{ node: 5 }]` — top-level node 5.
+- `[{ node: 3, iteration: 3 }, { node: 0 }]` — node 3 (EACH), iteration 3, body node 0 (RECEIVE).
+- `[{ node: 2 }, { node: 1, iteration: 7 }, { node: 0 }]` — node 2 (IF), body node 1 (EACH), iteration 7, body node 0.
+
+`iteration` is present only for EACH (and future iterable constructs). IF and REPEAT omit it. REPEAT could add it later if needed (e.g., for debugging "which iteration are we on") without breaking the format.
+
+**Rationale.** Snapshot is not a hot path — the extra bytes from typed objects don't matter. Debugging and logging benefit enormously: a program counter like `[{ node: 3, iteration: 3 }, { node: 0 }]` is immediately readable. New node types with custom state (e.g., a future PARALLEL construct) can add fields to `PathSegment` without changing existing code.
+
+**Cost.** JSON is ~3x larger than flat `number[]`. Irrelevant for typical COIL scripts (depth 2–4). Every nested block dispatcher constructs a `PathSegment` object instead of pushing a number. Minimal overhead.
+
+## R-0042 — ModelProvider receives compiled ResultSchemaField[], not raw fields
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/sdk/providers.ts`, `src/executor/executor.ts` |
+
+**Context.** `ThinkNode.result` in the AST is `ResultField[]` — a flat array with `depth`, a parser-level representation (R-0026). `ModelProvider.call(config)` needs a result schema to instruct the LLM what structure to produce. Two representations exist in the runtime: raw `ResultField[]` and compiled `ResultSchemaField[]` (tree, from `compileResult()`). The question: which one enters the SDK contract?
+
+Three options: (A) compiled `ResultSchemaField[]` — executor compiles before calling provider; (B) raw `ResultField[]` — provider compiles itself; (C) compiled tree + ready-made JSON Schema — executor also generates a standard schema.
+
+**Decision.** Option A. The executor calls `compileResult()` and passes `ResultSchemaField[]` to `ModelProvider.call()`. The provider receives a clean tree structure: `{ name, description, schema: ResultSchema }` where `ResultSchema` is the discriminated union (`text | number | flag | choice | list | object`).
+
+JSON Schema generation (or any other LLM-specific format) is the responsibility of the provider implementation, not the executor. Different LLM APIs require different schema formats (OpenAI function calling, Anthropic tool use, XML instructions, etc.). The SDK defines the semantic model; the provider translates it.
+
+**Rationale.** `ResultSchemaField[]` is already a stable type in the runtime (R-0026), JSON-serializable, and intuitive. Raw `ResultField[]` leaks parser details (`depth`) into the public SDK contract. JSON Schema generation in the executor would couple it to a specific LLM API standard.
+
+**Cost.** `compileResult()` runs in the executor before each THINK with a non-empty RESULT block. Compilation is O(n) and cheap. Provider authors work with a tree, not a flat depth-indexed array — this is easier to consume.
+
+## R-0043 — Promise registry in ExecutionSnapshot: status + name, no invocation descriptor
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/snapshot.ts`, `src/executor/executor.ts` |
+
+**Context.** THINK/EXECUTE/SEND create promises (`?name`). The executor may yield (at WAIT or RECEIVE) while some promises are still pending. The snapshot must represent pending and resolved promises in a JSON-serializable form. JavaScript `Promise` objects cannot be serialized. The question: what does the snapshot store, and how does the host know which promises to fulfill on resume?
+
+Three options: (A) promise registry `Map<string, PendingPromise>` with status and origin operator type — the host sees which promises are pending by name; (B) only a list of awaited names — minimal, but no provenance info; (C) registry with full invocation descriptor (provider type + call params) — the host can re-invoke lost calls, but params can be large and re-invocation is not always idempotent.
+
+**Decision.** Option A — promise registry without invocation descriptor.
+
+```
+PromiseEntry = {
+  status: 'pending' | 'resolved';
+  origin: 'think' | 'execute' | 'send';
+  result?: unknown;  // present when status === 'resolved'
+}
+```
+
+`ExecutionSnapshot.promises: Record<string, PromiseEntry>`.
+
+When a launching operator (THINK, EXECUTE, SEND with AWAIT) executes, the executor adds an entry `{ status: 'pending', origin }` to the registry. When a promise resolves (via ResumeEvent), the executor sets `status: 'resolved'` and stores the result. Resolved values are also written into the scope chain as `$name`.
+
+For WAIT ALL on `?a, ?b, ?c`: if two of three are already resolved before yield, their entries have `status: 'resolved'` in the snapshot. The host only needs to supply ResumeEvent for the remaining pending entries. The executor on resume checks which promises are still pending and waits accordingly.
+
+**Rationale.** Promise names are unique within a scope (enforced by the validator: `duplicate-define`). The registry is self-describing: the host reads `snapshot.promises`, filters by `status: 'pending'`, and knows exactly what to fulfill. Invocation descriptors (option C) are tempting but dangerous: re-invoking SEND or EXECUTE is not idempotent, and storing full prompts/contexts bloats the snapshot. If the host loses a pending result, that's a host-level failure, not an executor concern.
+
+**Cost.** The registry duplicates resolved values (present in both `promises[name].result` and `scope.$name`). This is acceptable — resolved entries can be pruned from the registry after WAIT consumes them. The `origin` field is informational (useful for debugging and host logic) and costs one string per entry.
+
+## R-0044 — AWAIT correlation: host aggregates, executor receives one ResumeEvent
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/sdk/providers.ts`, `src/executor/executor.ts`, `src/executor/snapshot.ts` |
+
+**Context.** `SEND ... AWAIT ALL` sends a message to multiple participants and waits for replies from all of them. D-0036 says "correlation of replies with promises is host-defined". But the executor must know when all replies are collected to resolve the promise and continue. The question: who counts replies, and how does the executor learn that "all" have arrived?
+
+Three options: (A) `ChannelProvider.deliver()` returns a `correlationId`, executor counts replies one by one — executor takes on business logic of "what counts as all"; (B) `deliver()` returns a JS `Promise<Reply[]>` — not serializable, breaks stateless mode; (C) `deliver()` returns a `correlationId`, the host aggregates replies according to the await policy and delivers one `ResumeEvent` with the complete result.
+
+**Decision.** Option C — hybrid with host-side aggregation.
+
+Flow:
+1. Executor calls `ChannelProvider.deliver(channel, participantIds, message)` → receives `correlationId: string`.
+2. Executor stores `correlationId` in the promise registry (R-0043): `{ status: 'pending', origin: 'send', correlationId }`.
+3. Executor yields: `YieldRequest { type: 'await-replies', promiseName, correlationId, awaitPolicy: 'any' | 'all' }`.
+4. The host collects replies externally (transport-specific). For `'all'` — waits until all expected replies arrive. For `'any'` — takes the first.
+5. The host resumes: `ResumeEvent { type: 'MessageReply', correlationId, replies: Reply[] }` — one event, one array (`replies.length === 1` for ANY, `>= 1` for ALL, chronological order per D-0036).
+6. Executor resolves the promise, writes `$name` to scope, continues.
+
+No intermediate states in the snapshot. Between `deliver` and resume, the snapshot contains a pending promise with `correlationId`. The host is responsible for aggregation, timeout enforcement, and deciding what "all participants replied" means.
+
+**Rationale.** The executor should not count replies — that's business logic (D-0038: structure consistency is a business concern). `correlationId` is the minimal coupling between executor and host: executor says "I sent this, wake me when done", host says "here are the results". One ResumeEvent per promise maps cleanly to the state machine model (R-0040): deliver → yield → one resume = done. No partial states, no intermediate yields between replies.
+
+**Cost.** The host must implement aggregation logic. For `AWAIT ALL`, the host must track which participants have replied and when all are accounted for. This is inherently transport-specific (Slack has different reply semantics than email) and belongs in the host, not the executor. `ChannelProvider.deliver()` gains a return type `Promise<{ correlationId: string }>`.
+
+## R-0045 — SendNode.await: null preserved in AST, helper resolves default
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/ast/nodes.ts`, `src/sdk/helpers.ts`, `src/executor/executor.ts`, `src/validator/rules/*` |
+
+**Context.** The parser currently sets `SendNode.await = null` when the AWAIT modifier is absent. D-0036 defines: "if AWAIT is omitted, AWAIT NONE is implied". STORY-014 phase 3 asks: should the parser start setting `'none'` instead of `null`, or should consumers handle the default?
+
+This matters for COIL-H round-trip (D-0046): the table view must distinguish "author explicitly wrote AWAIT NONE" from "author wrote nothing" — they render differently (explicit cell value vs empty cell).
+
+Three options: (A) parser sets `'none'` — consumers are simpler, but AST loses information; (B) parser preserves `null`, every consumer writes `?? 'none'` — lossless but DRY violation; (C) parser preserves `null`, a shared helper `resolveAwaitPolicy()` is the single point of truth for the default.
+
+**Decision.** Option C. AST remains lossless: `SendNode.await: 'none' | 'any' | 'all' | null`. A helper function `resolveAwaitPolicy(node: SendNode): 'none' | 'any' | 'all'` returns the effective policy, treating `null` as `'none'`. The executor and validator call the helper. IDE/COIL-H reads `node.await` directly to distinguish explicit from implicit.
+
+**Rationale.** Lossless AST is a principle already established by R-0014 (CommentNode preserved for COIL-H) and R-0005 (typed nodes). The helper is a one-liner but prevents the class of bugs where a consumer forgets `?? 'none'` and treats `null` as a distinct fourth state. The validation rule `send-name-with-await-none` (D-0036) calls the helper and checks: `resolveAwaitPolicy(node) === 'none' && node.name !== null` → preparation error.
+
+**Cost.** One extra function call per SendNode processing. Consumers must know to use the helper instead of reading `.await` directly for execution logic. This is documented in JSDoc on the `await` field itself: "null means omitted; use `resolveAwaitPolicy()` for effective value".
+
+## R-0046 — Snapshot boundary: executor state only, providers manage their own persistence
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/snapshot.ts`, `src/sdk/providers.ts` |
+
+**Context.** `ExecutionSnapshot` stores executor-controlled state: scope chain, program counter (R-0041), promise registry (R-0043). But there is also provider-side state: stream buffers in StreamProvider, reply aggregation in ChannelProvider, pending model calls in ModelProvider. In stateless hosting (serverless), the executor restores from snapshot, but providers are fresh objects created by the host. The question: does the snapshot include provider state, or does each provider manage its own persistence separately?
+
+Three options: (A) snapshot = executor state only, providers manage their own persistence — clean separation, but two sources of truth; (B) snapshot includes provider state via `getState()/setState()` callbacks on each provider — atomic save/restore, but opaque blobs in snapshot; (C) snapshot stores handles and correlationIds, providers are stateless by contract — simple providers, but stream buffers need restoration somehow.
+
+**Decision.** Option A — snapshot contains only executor state. Provider state is the host's responsibility.
+
+Snapshot contains:
+- Scope chain (nested, D-014-03)
+- Program counter (typed path segments, R-0041)
+- Promise registry (R-0043)
+- Stream handles (passive data, D-014-04) — names and ownerIds only
+- Budget consumed (counters)
+
+Snapshot does NOT contain:
+- Stream buffer contents (StreamProvider internal state)
+- Reply aggregation state (ChannelProvider internal state)
+- Pending LLM call state (ModelProvider internal state)
+- Any opaque provider blobs
+
+The host is responsible for ensuring that provider state is consistent with the executor snapshot on restore. For stateful mode (CLI, long-running server) — everything is in memory, no issue. For stateless mode — the host uses its own storage (Redis, DB, etc.) for provider state, keyed by execution ID or correlation IDs from the snapshot.
+
+**Rationale.** Providers are pluggable (D-014-01). The executor does not know their internal structure. Adding `getState()/setState()` to every provider interface would:
+(1) couple the snapshot format to provider implementations,
+(2) make snapshots unpredictable in size (a stream buffer could be megabytes),
+(3) create opaque blobs that are impossible to debug or inspect.
+
+Clean separation means the snapshot is self-contained, predictable, and transparent. The cost is that the host must coordinate two persistence paths — but the host already owns the providers and knows how to persist their state.
+
+**Cost.** Two sources of truth: executor snapshot and provider state. If they desynchronize (e.g., snapshot says promise is pending but the provider lost the pending call), the execution may fail on resume. This is a host-level failure, analogous to a database crash — not something the executor can prevent. The host contract includes: "if you save a snapshot, ensure your providers can resume from the same point".
+
+## R-0047 — Stream buffer limit: provider-level config, not per-stream
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/sdk/providers.ts` |
+
+**Context.** D-0039 defines: "buffer limit is host-defined, overflow is an execution error". But the API for configuring the limit is not specified. The executor calls `StreamProvider.createStream(name, ownerId)` — should it pass buffer configuration, or is the limit set when the provider is constructed?
+
+Three options: (A) limit as a parameter of `createStream()` — granular per-stream, but executor doesn't know business logic of limits; (B) limit as provider-level configuration at construction time — simple, one limit for all streams; (C) both default in constructor and per-stream override — maximum flexibility, premature for v0.4.
+
+**Decision.** Option B. The buffer limit is a provider-level configuration, set by the host when constructing the StreamProvider. All streams created by that provider share the same limit.
+
+`StreamProvider` constructor (host-side): accepts `{ bufferLimit: number }` (or equivalent config). The executor does not pass buffer options — it calls `createStream(name, ownerId)` with no configuration parameters.
+
+Per-stream override can be added later as an optional parameter to `createStream()` without breaking the existing interface.
+
+**Rationale.** The executor should not make decisions about buffer sizes — that's infrastructure configuration, not protocol logic. A single provider-level limit covers all v0.4 use cases: typical COIL scripts have 1–3 streams with similar buffering needs. Per-stream tuning is a production concern that can be deferred to post-v0.4 when real usage patterns emerge.
+
+**Cost.** No per-stream tuning in v0.4. If a host needs different limits for different streams, it must create multiple StreamProvider instances or wait for the per-stream override extension.
+
+## R-0048 — SIGNAL-close ordering: no race in v0.4, executor checks isOpen
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-03-31 |
+| **Scope** | `src/executor/executor.ts`, `src/sdk/providers.ts` |
+
+**Context.** D-0041 says SIGNAL after close is an execution error. D-0040 says SIGNAL is asynchronous. In a concurrent system, a race between SIGNAL and stream close could produce ambiguous behavior. The question: does v0.4 need ordering guarantees or conflict resolution for SIGNAL vs close?
+
+**Analysis.** Race condition is impossible in v0.4 due to three constraints working together:
+
+1. The executor is a sequential state machine (R-0040). It does not execute SIGNAL and WAIT simultaneously.
+2. Streams are single-instance ownership (D-0039). Only the owning instance sends SIGNALs and waits on the stream.
+3. Close is tied to promise resolution (D-0041). A promise resolves via ResumeEvent, which the executor processes during WAIT — a deliberate executor step, not a spontaneous external event.
+
+Therefore: SIGNAL always occurs before close in the executor's step sequence, because close can only happen when the executor processes a WAIT resume. The only scenario where SIGNAL follows close is when the author writes SIGNAL after the WAIT that resolved the promise — this is a legitimate authoring error, caught by the `isOpen` check.
+
+**Decision.** No special ordering mechanism for v0.4. The executor checks `StreamProvider.isOpen(handle)` before each SIGNAL. If the stream is closed, the executor throws an execution error with a diagnostic pointing to the SIGNAL source span.
+
+`StreamProvider` interface gains: `isOpen(handle: StreamHandle): boolean`.
+
+Cross-instance and multi-consumer scenarios (deferred per D-0039) will introduce real concurrency and will need a separate ordering mechanism (timestamps, happens-before, or explicit close protocol). This is explicitly out of scope for v0.4.
+
+**Rationale.** Adding concurrency control for a sequential executor is premature complexity. The three constraints (sequential executor, single-instance ownership, close-on-resolve) form a complete safety net. Documenting this analysis prevents future developers from adding unnecessary locking.
+
+**Cost.** One `isOpen()` call per SIGNAL execution. Negligible.
