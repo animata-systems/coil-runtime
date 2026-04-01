@@ -1,6 +1,6 @@
 import { createInterface } from 'node:readline';
-import type { RuntimeProviders } from '../src/sdk/types.js';
-import type { ChannelProvider } from '../src/sdk/providers.js';
+import type { RuntimeProviders, ToolResult } from '../src/sdk/types.js';
+import type { ChannelProvider, ToolProvider } from '../src/sdk/providers.js';
 import { InMemoryStateProvider } from '../src/sdk/in-memory-state.js';
 
 /**
@@ -19,12 +19,39 @@ class CliChannelProvider implements ChannelProvider {
 }
 
 /**
+ * CLI ToolProvider: built-in tools for smoke-testing.
+ *
+ *   !время  — returns current date and time (no args)
+ *   !эхо    — returns its `текст` argument back (one arg)
+ */
+class CliToolProvider implements ToolProvider {
+  async invoke(tool: string, args: Record<string, unknown>): Promise<ToolResult> {
+    switch (tool) {
+      case 'time':
+      case 'время': {
+        const now = new Date();
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        return { output: stamp };
+      }
+      case 'echo':
+      case 'эхо': {
+        return { output: args['text'] ?? args['текст'] ?? null };
+      }
+      default:
+        throw new Error(`Unknown tool: !${tool}`);
+    }
+  }
+}
+
+/**
  * Factory that replaces CliEnvironment (D-014-01).
  * Returns a RuntimeProviders bag for CLI usage with in-memory state.
  */
 export function createCLIProviders(): RuntimeProviders {
   return {
     channel: new CliChannelProvider(),
+    tool: new CliToolProvider(),
     state: new InMemoryStateProvider(),
   };
 }
@@ -46,7 +73,7 @@ export async function cliReceive(prompt: string, timeout?: number): Promise<stri
         reject(new Error(`RECEIVE timed out after ${timeout}ms`));
       }, timeout);
     }
-    rl.question(prompt, (answer) => {
+    rl.question(prompt + ' ', (answer) => {
       if (timer) clearTimeout(timer);
       rl.close();
       resolve(answer);

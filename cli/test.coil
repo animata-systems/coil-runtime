@@ -1,0 +1,97 @@
+' @test smoke
+' @dialect en-standard
+' @description Smoke-test: manual check of core COIL constructs
+'
+' Run from coil-runtime/:
+'   npx coil run cli/test.coil --dialect node_modules/coil/dialects/en-standard/en-standard.json
+
+ACTORS
+  operator
+END
+
+TOOLS time, echo
+
+' --- RECEIVE: user input ---
+RECEIVE name
+<<
+What is your name?
+>>
+END
+
+' --- DEFINE: template with interpolation ---
+DEFINE greeting
+<<
+Hello, $name!
+>>
+END
+
+SEND
+<<
+$greeting
+>>
+END
+
+' --- EXECUTE without args + WAIT ---
+EXECUTE current_time
+  USING !time
+END
+
+WAIT
+  ON ?current_time
+END
+
+SEND
+<<
+Now: $current_time
+>>
+END
+
+' --- EXECUTE with args ---
+EXECUTE echo_result
+  USING !echo
+  - text: $name
+END
+
+WAIT
+  ON ?echo_result
+END
+
+SEND
+<<
+Echo returned: $echo_result
+>>
+END
+
+' --- SET ---
+SET $greeting
+<<
+Goodbye, $name!
+>>
+END
+
+' --- IF ---
+IF $name = "COIL"
+  SEND
+  <<
+  Wow, you are named after the language!
+  >>
+  END
+END
+
+' --- REPEAT ---
+REPEAT 3
+  SEND
+  <<
+  Tick...
+  >>
+  END
+END
+
+' --- Final ---
+SEND
+<<
+$greeting
+>>
+END
+
+EXIT
