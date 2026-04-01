@@ -894,3 +894,191 @@ Cross-instance and multi-consumer scenarios (deferred per D-0039) will introduce
 **Rationale.** Adding concurrency control for a sequential executor is premature complexity. The three constraints (sequential executor, single-instance ownership, close-on-resolve) form a complete safety net. Documenting this analysis prevents future developers from adding unnecessary locking.
 
 **Cost.** One `isOpen()` call per SIGNAL execution. Negligible.
+
+## R-0049 — BudgetPolicy: pull model, executor asks before cognitive steps
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/sdk/providers.ts`, `src/executor/executor.ts` |
+
+**Context.** STORY-014 phase 1 defines BudgetPolicy interface. Two approaches: (A) pull model — executor asks `check(kind)` before each cognitive step, host tracks accounting internally; (B) stateful model — executor calls `consume(amount)` / `remaining()`, managing budget counters. The question: which model fits the executor boundary (R-0046: snapshot = executor state only)?
+
+**Decision.** Pull model. `BudgetPolicy { check(kind: 'think' | 'execute' | 'send'): BudgetVerdict }`. `BudgetVerdict = { allowed: true } | { allowed: false; reason: string }`. The executor calls `check()` before each THINK, EXECUTE, and SEND-with-AWAIT. If `allowed: false`, executor throws `ExecutionError` with the reason and the operator's source span.
+
+Budget accounting (token counting, cost tracking, step counting) is the host's responsibility. The executor does not know how many tokens an LLM call consumed — that information is available only to ModelProvider after the call. The host updates its counters externally and BudgetPolicy.check() reflects the current state.
+
+**Rationale.** Consistent with R-0046 (snapshot boundary). The executor remains a pure state machine that asks permission, not one that manages financial/resource state. Pull model also allows the host to implement arbitrary budget strategies (per-step, per-token, per-time, composite) without changing the executor interface.
+
+**Cost.** One function call per cognitive step. The host must implement accounting separately from the executor — two systems that must be synchronized. If the host's accounting lags, a step might be permitted that exceeds the real budget. This is a host-level consistency concern, not an executor concern.
+
+## R-0050 — Error taxonomy: class hierarchy with SourceSpan
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/errors.ts`, `src/sdk/providers.ts` |
+
+**Context.** STORY-014 phase 1 defines three error types: PreparationError, ExecutionError, HostError. The codebase already has `ExecutionError` and `NotImplementedError` as classes extending `Error`. Two approaches: (A) class hierarchy (throw/catch); (B) discriminated union data objects (return values). Errors are not serialized in snapshots (R-0046).
+
+**Decision.** Class hierarchy extending Error.
+
+```
+CoilError (abstract, extends Error)
+├── PreparationError   — before execution (validation, compilation)
+├── ExecutionError     — during a step (timeout, missing property, budget, signal-after-close)
+└── HostError          — from a provider (model failure, tool rejection, channel unavailable)
+```
+
+All carry `span: SourceSpan | null`. HostError may have null span when the error originates outside AST context (e.g., network failure in ModelProvider). Existing `ExecutionError` is refactored to include `span`. `NotImplementedError` becomes a subclass of `ExecutionError`.
+
+**Rationale.** throw/catch is the established error handling pattern in the executor. Data objects would require every provider call to return `Result<T, CoilError>`, adding unwrap boilerplate to every step. Errors are terminal — they stop execution, not checkpoint it. Snapshot stores state before the error, not the error itself.
+
+**Cost.** Class hierarchy is less composable than unions. If a future need arises for error recovery (try/catch in COIL), the class model still works — catch by type. The main risk is HostError wrapping provider-specific errors: the `cause` chain (ES2022 Error.cause) preserves the original error.
+
+## R-0051 — Yield points: explicit list for v0.4
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/executor.ts`, `src/executor/snapshot.ts` |
+
+**Context.** STORY-014 needs a definitive list of yield points. Async provider calls (THINK → ModelProvider.call, EXECUTE → ToolProvider.invoke) are async but not yield points — the executor awaits them inline. Yield points are where the executor saves a snapshot and returns control to the host for external resolution.
+
+**Decision.** Yield points in v0.4:
+
+| Operator | Condition | YieldRequest type |
+|---|---|---|
+| RECEIVE | Always | `'receive'` |
+| WAIT | Always | `'wait-promises'` |
+| SEND AWAIT ANY | Explicit AWAIT ANY | `'await-replies'` |
+| SEND AWAIT ALL | Explicit AWAIT ALL | `'await-replies'` |
+
+NOT yield points: THINK, EXECUTE, SEND without AWAIT (or with AWAIT NONE), SIGNAL, IF, REPEAT, EACH, DEFINE, SET, EXIT.
+
+THINK and EXECUTE are async provider calls that the executor `await`s inline. For stateful hosting, the process stays alive. For stateless hosting, the host must ensure the serverless function timeout accommodates LLM call durations. Making THINK a yield point would require two-phase execution (yield → external call → resume), fundamentally changing the state machine. Deferred to post-v0.4 if hosting constraints demand it.
+
+**Rationale.** Yield = "executor cannot proceed without external input that may take unbounded time (human response, multi-party replies)." Provider calls have bounded time (LLM timeout, tool timeout). The distinction is: yield for human-time operations, await for machine-time operations.
+
+**Cost.** Stateless hosting of scripts with THINK/EXECUTE requires serverless functions with sufficient timeout (5–15 min). If a provider call exceeds the timeout, the function fails — not an executor concern, but a host configuration issue.
+
+## R-0052 — RuntimeProviders: all optional, executor checks on demand
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/sdk/providers.ts`, `src/executor/executor.ts` |
+
+**Context.** D-014-01 removes Environment. The new `execute(ast, providers)` takes a `RuntimeProviders` object. Not all scripts use all operators — a CLI hello-world needs no ChannelProvider or StreamProvider. Making all providers required forces consumers to supply no-op stubs for unused capabilities.
+
+**Decision.** All providers in `RuntimeProviders` are optional (`?`). The executor checks for the required provider when it reaches an operator that needs it. Missing provider → `HostError` with span pointing to the operator.
+
+```
+RuntimeProviders {
+  model?: ModelProvider;
+  tool?: ToolProvider;
+  participant?: ParticipantProvider;
+  channel?: ChannelProvider;
+  stream?: StreamProvider;
+  state?: StateProvider;
+  budget?: BudgetPolicy;
+}
+```
+
+Without `state`, pause/resume is disabled — execute runs to completion or throws. Without `budget`, no budget checks — unlimited execution. This enables incremental adoption: CLI starts with `{ state: inMemoryState }`, sandbox adds mock providers one by one.
+
+**Rationale.** Follows the principle of "pay for what you use." Scripts that don't use THINK don't need ModelProvider. The executor is the right place to check — it knows which operator is being executed and can produce a precise diagnostic: "THINK at line 12 requires a ModelProvider, but none was supplied."
+
+**Cost.** Every operator handler must include a provider check. Pattern: `const model = requireProvider(providers.model, 'ModelProvider', node.span)`. One-liner helper, consistent across all handlers. The risk is a confusing runtime error for users who forget a provider — mitigated by the precise diagnostic message.
+
+## R-0053 — execute() and resume() return types
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/executor.ts`, `src/sdk/types.ts` |
+
+**Context.** Current `execute()` returns `Promise<void>`. With pause/resume (R-0040), the executor must communicate two outcomes: completion and yield. Resume also needs the same return type.
+
+**Decision.**
+
+```
+execute(ast: ScriptNode, providers: RuntimeProviders): Promise<ExecutionResult | YieldRequest>
+resume(snapshot: ExecutionSnapshot, event: ResumeEvent, providers: RuntimeProviders): Promise<ExecutionResult | YieldRequest>
+```
+
+`ExecutionResult = { type: 'completed' }` — script reached EXIT. No payload (exit code not in spec, final scope is internal state).
+
+`YieldRequest = { type: 'receive' | 'wait-promises' | 'await-replies'; snapshot: ExecutionSnapshot; detail: YieldDetail }` where `YieldDetail` carries yield-point-specific info (e.g., prompt text for receive, promise names for wait, correlationId + awaitPolicy for await-replies).
+
+Discriminated union on `type` for both. Host checks `result.type === 'completed'` or handles yield.
+
+**Rationale.** Discriminated union is idiomatic TypeScript (R-0005). `ExecutionResult` is intentionally minimal — the executor is a processor, not a data source. If future needs require returning final state, it can be added to `ExecutionResult` without breaking existing code.
+
+**Cost.** Every call site must handle two cases. For CLI (run-to-completion scripts), a helper `executeToCompletion(ast, providers)` can wrap execute/resume in a loop, handling yields internally.
+
+## R-0054 — Message flow: executor produces payload, host wraps envelope
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/executor.ts`, `src/sdk/providers.ts` |
+
+**Context.** D-0037 defines messages as envelope + payload. The executor interpolates the SEND body into payload. The envelope is host-defined (timestamp, sender, routing metadata). The question: who constructs what?
+
+**Decision.** Executor → payload only. `ChannelProvider.deliver(channel, participantIds, payload)` receives the raw payload (string or structured object). The ChannelProvider wraps it in an envelope. On resume, `ResumeEvent { type: 'MessageReply' }` carries the full `Message { envelope, payload }` — the executor stores it as `$name`.
+
+The `Message` type is part of the SDK contract (used in ResumeEvent). The executor does not construct Message objects — it only reads them from ResumeEvent.
+
+**Rationale.** Executor doesn't know host-level metadata (sender identity, timestamp format, routing info). Envelope construction in the executor would couple it to host infrastructure. Conversely, the host always has this context when calling deliver().
+
+**Cost.** The `$name` variable after SEND AWAIT contains a full Message (envelope + payload), not just payload. Authors who want just the payload use `$name.payload` (field access, R-0037). This is slightly more verbose but consistent — all provider results have structured shape.
+
+## R-0055 — EXECUTE args: executor resolves before ToolProvider call
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/executor.ts` |
+
+**Context.** `ExecuteNode.args: ArgEntry[]` where `ArgEntry { key: string, value: BodyValue }`. BodyValue can be a ValueRef, template, number, or string literal. ToolProvider.invoke() needs concrete values, not AST nodes.
+
+**Decision.** The executor resolves all args before calling ToolProvider:
+
+1. For each `ArgEntry`: call `resolveBodyValue(arg.value, scope)` (R-0036).
+2. Collect into `Record<string, unknown>`.
+3. Call `ToolProvider.invoke(toolName, resolvedArgs)`.
+
+ToolProvider receives fully resolved values. It does not see AST types.
+
+**Rationale.** Scope resolution is the executor's responsibility (it owns the scope chain). ToolProvider is a leaf — it receives data and produces results. Passing AST nodes to providers would leak parser types into the SDK contract.
+
+**Cost.** None significant. `resolveBodyValue` already exists and handles all BodyValue variants.
+
+## R-0056 — Stream close: executor initiates on promise resolution
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-01 |
+| **Scope** | `src/executor/executor.ts`, `src/sdk/providers.ts` |
+
+**Context.** D-0041: stream closes when the promise resolves. The question: does the executor call `StreamProvider.close(handle)`, or does the provider auto-close when it detects promise resolution?
+
+**Decision.** Executor calls `StreamProvider.close(handle)` when processing the ResumeEvent that resolves `?name`. Sequence:
+
+1. THINK/EXECUTE creates `?name` and optionally `~name` (via StreamProvider.createStream).
+2. During execution: SIGNAL → StreamProvider.signal(handle, payload).
+3. WAIT resolves `?name` (via ResumeEvent) → executor: `StreamProvider.close(handle)` → set `$name` in scope.
+4. Subsequent SIGNAL to closed `~name` → `isOpen()` returns false → ExecutionError.
+
+**Rationale.** D-0041 ties stream lifecycle to promise lifecycle. The executor is the only component that knows when a promise resolves (it processes ResumeEvent). StreamProvider doesn't know about promises — it only manages buffers and state. The executor is the natural coordinator.
+
+**Cost.** The executor must track which stream handles correspond to which promises. This is stored in the snapshot (R-0046: stream handles as passive data). Pattern: `promiseStreamMap: Record<string, StreamHandle>` — maps promise name to its stream handle (if any).
