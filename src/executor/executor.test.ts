@@ -94,15 +94,19 @@ describe('executor', () => {
     expect(sent).toEqual(['Hello, World!']);
   });
 
-  it('SEND с TO → NotImplementedError', async () => {
+  it('SEND с TO delivers to channel', async () => {
     const ast = parseEN('SEND\nTO #channel\n<< msg >>\nEND\nEXIT');
-    await expect(execute(ast)).rejects.toThrow(NotImplementedError);
+    const channel = new MockChannelProvider();
+    const result = await execute(ast, { channel });
+    expect(result.type).toBe('completed');
+    expect(channel.deliveries[0].channel).toBe('channel');
   });
 
   it('ненайденная $-ссылка → ExecutionError', async () => {
     const ast = parseEN('SEND\n<< Hello, $unknown! >>\nEND\nEXIT');
-    await expect(execute(ast)).rejects.toThrow(ExecutionError);
-    await expect(execute(ast)).rejects.toThrow('undefined variable');
+    const channel = new MockChannelProvider();
+    await expect(execute(ast, { channel })).rejects.toThrow(ExecutionError);
+    await expect(execute(ast, { channel })).rejects.toThrow('undefined variable');
   });
 
   it('несколько RECEIVE подряд', async () => {
@@ -402,6 +406,127 @@ describe('pause/resume', () => {
     expect(parsed.scope.variables.x).toBe(42);
     // PC should point to the RECEIVE node
     expect(parsed.pc).toEqual([{ node: 1 }]);
+  });
+});
+
+// ─── SEND full contract (D-0036) ────────────────────────
+
+describe('SEND full contract', () => {
+  it('SEND TO #channel delivers to channel', async () => {
+    const ast = parseEN('SEND\nTO #support\n<< help >>\nEND\nEXIT');
+    const channel = new MockChannelProvider();
+    const result = await execute(ast, { channel });
+    expect(result.type).toBe('completed');
+    expect(channel.deliveries).toHaveLength(1);
+    expect(channel.deliveries[0].channel).toBe('support');
+    expect(channel.deliveries[0].payload).toBe('help');
+  });
+
+  it('SEND FOR @name resolves participant', async () => {
+    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+    const channel = new MockChannelProvider();
+    const participant = new MockParticipantProvider();
+    const ast = parseEN('ACTORS alice\nSEND\nFOR @alice\n<< hello >>\nEND\nEXIT');
+    const result = await execute(ast, { channel, participant });
+    expect(result.type).toBe('completed');
+    expect(channel.deliveries[0].participantIds).toEqual(['mock-alice']);
+  });
+
+  it('SEND without ChannelProvider → HostError', async () => {
+    const ast = parseEN('SEND\n<< hi >>\nEND\nEXIT');
+    await expect(execute(ast)).rejects.toThrow('SEND requires a ChannelProvider');
+  });
+
+  it('SEND FOR without ParticipantProvider → HostError', async () => {
+    const channel = new MockChannelProvider();
+    const ast = parseEN('ACTORS bob\nSEND\nFOR @bob\n<< hi >>\nEND\nEXIT');
+    await expect(execute(ast, { channel })).rejects.toThrow('ParticipantProvider');
+  });
+
+  it('SEND AWAIT ANY yields and resumes with single reply', async () => {
+    const ast = parseEN('ACTORS client\nSEND reply\nFOR @client\nAWAIT ANY\n<< question >>\nEND\nSEND\n<< got: $reply >>\nEND\nEXIT');
+    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+    const channel = new MockChannelProvider();
+    const providers: RuntimeProviders = {
+      channel,
+      participant: new MockParticipantProvider(),
+    };
+
+    let result = await execute(ast, providers);
+    expect(result.type).toBe('yield');
+    const yr = result as YieldRequest;
+    expect(yr.detail.type).toBe('await-replies');
+
+    // Resume with reply
+    result = await resume(
+      yr.snapshot,
+      {
+        type: 'MessageReply',
+        correlationId: 'corr-1',
+        replies: [{ envelope: { from: 'client' }, payload: 'answer' }],
+      },
+      ast,
+      providers,
+    );
+    expect(result.type).toBe('completed');
+    // $reply should be the single message (AWAIT ANY → one reply)
+    expect(channel.deliveries).toHaveLength(2);
+    // $reply is a Message object (AWAIT ANY → single message)
+    // When interpolated in a template, it becomes [object Object]
+    // Real usage would access $reply.payload via field access (R-0037)
+    expect(typeof channel.deliveries[1].payload).toBe('string');
+  });
+
+  it('SEND AWAIT ALL yields and resumes with collection', async () => {
+    const ast = parseEN('ACTORS team\nSEND replies\nFOR @team\nAWAIT ALL\n<< vote >>\nEND\nEXIT');
+    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+    const channel = new MockChannelProvider();
+    const providers: RuntimeProviders = {
+      channel,
+      participant: new MockParticipantProvider(),
+    };
+
+    let result = await execute(ast, providers);
+    expect(result.type).toBe('yield');
+    const yr = result as YieldRequest;
+    if (yr.detail.type === 'await-replies') {
+      expect(yr.detail.awaitPolicy).toBe('all');
+    }
+
+    // Resume with multiple replies
+    result = await resume(
+      yr.snapshot,
+      {
+        type: 'MessageReply',
+        correlationId: 'corr-1',
+        replies: [
+          { envelope: { from: 'a' }, payload: 'yes' },
+          { envelope: { from: 'b' }, payload: 'no' },
+        ],
+      },
+      ast,
+      providers,
+    );
+    expect(result.type).toBe('completed');
+  });
+
+  it('SEND AWAIT with Timeout event → ExecutionError', async () => {
+    const ast = parseEN('ACTORS x\nSEND r\nFOR @x\nAWAIT ANY\nTIMEOUT 5s\n<< q >>\nEND\nEXIT');
+    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+    const channel = new MockChannelProvider();
+    const providers: RuntimeProviders = {
+      channel,
+      participant: new MockParticipantProvider(),
+    };
+
+    let result = await execute(ast, providers);
+    expect(result.type).toBe('yield');
+    const yr = result as YieldRequest;
+
+    // Resume with timeout
+    await expect(
+      resume(yr.snapshot, { type: 'Timeout' }, ast, providers),
+    ).rejects.toThrow('timed out');
   });
 });
 

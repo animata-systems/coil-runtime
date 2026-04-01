@@ -16,6 +16,7 @@ import { undefinedPromise } from './rules/undefined-promise.js';
 import { createUseBeforeWait } from './rules/use-before-wait.js';
 import { resultSchemaRule } from '../result/rules.js';
 import { expressionRules } from './rules/expression-rules.js';
+import { sendNameAwaitNone } from './rules/send-name-await-none.js';
 
 export type Severity = 'error' | 'warning' | 'info';
 
@@ -96,6 +97,7 @@ function createDefaultRegistry(): RuleRegistry {
   registry.registerVisitor(createUseBeforeWait());
   registry.registerVisitor(resultSchemaRule);
   registry.registerVisitor(expressionRules);
+  registry.registerVisitor(sendNameAwaitNone);
   return registry;
 }
 

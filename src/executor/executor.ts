@@ -1,13 +1,16 @@
 import type {
   ScriptNode, OperatorNode, ReceiveNode, SendNode,
   DefineNode, SetNode, IfNode, RepeatNode, EachNode, DurationValue,
+  ChannelRef,
 } from '../ast/nodes.js';
+import type { ChannelSegment } from '../common/types.js';
 import type {
   RuntimeProviders, ExecutionResult, YieldRequest,
   ExecutionSnapshot, ResumeEvent, ProgramCounter,
   PromiseEntry, StreamHandle,
 } from '../sdk/types.js';
 import { ExecutionError, NotImplementedError, HostError } from '../sdk/errors.js';
+import { resolveAwaitPolicy } from '../sdk/helpers.js';
 import { Scope } from './scope.js';
 import { interpolate, resolveBodyValue, resolveVar } from './resolve.js';
 import { evaluate } from './evaluate.js';
@@ -30,6 +33,17 @@ function operatorNodes(
   return nodes.filter(
     (n): n is OperatorNode => n.kind !== 'Comment',
   );
+}
+
+/**
+ * Resolve a ChannelRef to a string address by evaluating dynamic segments.
+ * Segments joined by '/' per R-0054 JSDoc convention.
+ */
+function resolveChannel(ref: ChannelRef, scope: Scope): string {
+  return ref.segments.map((seg: ChannelSegment) => {
+    if (seg.kind === 'literal') return seg.value;
+    return String(resolveVar(seg.name, seg.path, scope, ref.span));
+  }).join('/');
 }
 
 // ─── Main API (R-0053) ─────────────────────────────────
@@ -66,15 +80,30 @@ export async function resume(
   const scope = Scope.fromSnapshot(snapshot.scope);
 
   // Apply the resume event to scope
+  const ops = operatorNodes(resolveNodesAtPc(ast, snapshot.pc));
+  const pcTip = snapshot.pc[snapshot.pc.length - 1];
+  const node = ops[pcTip.node];
+
   if (event.type === 'ReceiveValue') {
-    // The program counter points to the RECEIVE node that yielded.
-    // We need to bind the value and advance past it.
-    const ops = operatorNodes(resolveNodesAtPc(ast, snapshot.pc));
-    const pcTip = snapshot.pc[snapshot.pc.length - 1];
-    const node = ops[pcTip.node];
     if (node && node.kind === 'Op.Receive') {
       const recv = node as ReceiveNode;
       scope.set(recv.name, event.value);
+    }
+  } else if (event.type === 'MessageReply') {
+    if (node && node.kind === 'Op.Send') {
+      const send = node as SendNode;
+      if (send.name) {
+        const awaitPolicy = resolveAwaitPolicy(send);
+        // AWAIT ANY → single reply; AWAIT ALL → collection (D-0036)
+        const value = awaitPolicy === 'any'
+          ? event.replies[0] ?? null
+          : event.replies;
+        scope.set(send.name, value);
+      }
+    }
+  } else if (event.type === 'Timeout') {
+    if (node) {
+      throw new ExecutionError('operation timed out', node.span);
     }
   }
 
@@ -195,22 +224,56 @@ async function executeNode(
 
     case 'Op.Send': {
       const send = node as SendNode;
-      if (send.to) throw new NotImplementedError('SEND TO', send.to.span);
-      if (send.for.length > 0) throw new NotImplementedError('SEND FOR', send.span);
       if (send.replyTo) throw new NotImplementedError('SEND REPLY TO', send.replyTo.span);
-      if (send.await) throw new NotImplementedError(`SEND AWAIT ${send.await.toUpperCase()}`, send.span);
-      if (send.timeout) throw new NotImplementedError('SEND TIMEOUT', send.timeout.span);
-
-      let bodyText = '';
-      if (send.body) {
-        bodyText = interpolate(send.body, scope);
-      }
 
       if (!providers.channel) {
         throw new HostError('SEND requires a ChannelProvider', send.span);
       }
-      await providers.channel.deliver(null, [], bodyText);
-      return 'continue';
+
+      // Resolve payload
+      const payload: string | Record<string, unknown> = send.body
+        ? interpolate(send.body, scope)
+        : '';
+
+      // Resolve channel address (D-014-05)
+      const channel = send.to ? resolveChannel(send.to, scope) : null;
+
+      // Resolve participants (D-014-05)
+      const participantIds: string[] = [];
+      if (send.for.length > 0) {
+        if (!providers.participant) {
+          throw new HostError('SEND FOR requires a ParticipantProvider', send.span);
+        }
+        for (const name of send.for) {
+          const info = await providers.participant.resolve(name);
+          if (!info) {
+            throw new ExecutionError(`participant @${name} could not be resolved`, send.span);
+          }
+          participantIds.push(info.id);
+        }
+      }
+
+      // Deliver message
+      const { correlationId } = await providers.channel.deliver(channel, participantIds, payload);
+
+      // Determine await policy (R-0045)
+      const awaitPolicy = resolveAwaitPolicy(send);
+
+      if (awaitPolicy === 'none') {
+        // Fire-and-forget — no yield, no promise
+        return 'continue';
+      }
+
+      // AWAIT ANY or AWAIT ALL → yield to host for reply aggregation (R-0044)
+      return {
+        type: 'yield',
+        detail: {
+          type: 'await-replies',
+          correlationId,
+          awaitPolicy,
+          promiseName: send.name!,  // validator ensures name is present when await !== none
+        },
+      };
     }
 
     case 'Op.Exit':

@@ -79,6 +79,10 @@ const templates: Record<string, Record<Lang, MessageFn>> = {
     en: (p) => `field "${p.name}" has no parent field at the expected depth`,
     ru: (p) => `поле "${p.name}" не имеет родительского поля на ожидаемом уровне`,
   },
+  'send-name-await-none': {
+    en: (p) => `SEND "${p.name}" with AWAIT NONE cannot have a result name — fire-and-forget does not create a promise`,
+    ru: (p) => `${lookupDialectWord('Op.Send', p.dialect)} "${p.name}" с ${lookupDialectWord('Pol.None', p.dialect)} не может иметь имя результата — без ожидания обещание не создаётся`,
+  },
 };
 
 /** Format a diagnostic message using dialect-aware templates (D-007-4). */
