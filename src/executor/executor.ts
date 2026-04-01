@@ -1,7 +1,7 @@
 import type {
   ScriptNode, OperatorNode, ReceiveNode, SendNode,
   DefineNode, SetNode, IfNode, RepeatNode, EachNode, DurationValue,
-  ChannelRef,
+  ChannelRef, ThinkNode, ExecuteNode, WaitNode,
 } from '../ast/nodes.js';
 import type { ChannelSegment } from '../common/types.js';
 import type {
@@ -11,6 +11,8 @@ import type {
 } from '../sdk/types.js';
 import { ExecutionError, NotImplementedError, HostError } from '../sdk/errors.js';
 import { resolveAwaitPolicy } from '../sdk/helpers.js';
+import type { ModelCallConfig } from '../sdk/types.js';
+import { compileResult } from '../result/compile.js';
 import { Scope } from './scope.js';
 import { interpolate, resolveBodyValue, resolveVar } from './resolve.js';
 import { evaluate } from './evaluate.js';
@@ -101,6 +103,27 @@ export async function resume(
         scope.set(send.name, value);
       }
     }
+  } else if (event.type === 'PromiseResolved') {
+    // Update promise registry and scope
+    const entry = snapshot.promises[event.promiseName];
+    if (entry) {
+      entry.status = 'resolved';
+      entry.result = event.result;
+    }
+    snapshot.promises[event.promiseName] = {
+      status: 'resolved',
+      origin: entry?.origin ?? 'think',
+      result: event.result,
+    };
+    scope.set(event.promiseName, event.result);
+
+    // If this was a WAIT node, bind the wait name
+    if (node && node.kind === 'Op.Wait') {
+      const wait = node as WaitNode;
+      if (wait.name) {
+        scope.set(wait.name, event.result);
+      }
+    }
   } else if (event.type === 'Timeout') {
     if (node) {
       throw new ExecutionError('operation timed out', node.span);
@@ -168,12 +191,13 @@ async function executeFrom(
   // In v0.4 phase 2, only RECEIVE yields, and RECEIVE cannot appear
   // inside IF/REPEAT/EACH in practical scripts (it's top-level).
 
+  const ctx: ExecContext = { providers, promises, promiseStreamMap };
   const ops = operatorNodes(ast.nodes);
   const startIndex = pc.length === 1 ? pc[0].node : 0;
 
   for (let i = startIndex; i < ops.length; i++) {
     const node = ops[i];
-    const result = await executeNode(node, scope, providers);
+    const result = await executeNode(node, scope, ctx);
 
     if (result === 'exit') {
       return { type: 'completed' };
@@ -184,8 +208,8 @@ async function executeFrom(
       const snapshot: ExecutionSnapshot = {
         pc: [{ node: i }],
         scope: scope.toSnapshot(),
-        promises: { ...promises },
-        promiseStreamMap: { ...promiseStreamMap },
+        promises: { ...ctx.promises },
+        promiseStreamMap: { ...ctx.promiseStreamMap },
         budgetConsumed: { ...budgetConsumed },
       };
       return {
@@ -200,13 +224,20 @@ async function executeFrom(
   return { type: 'completed' };
 }
 
+/** Mutable execution context threaded through the execution loop. */
+interface ExecContext {
+  providers: RuntimeProviders;
+  promises: Record<string, PromiseEntry>;
+  promiseStreamMap: Record<string, StreamHandle>;
+}
+
 type NodeResult = 'exit' | 'continue' | { type: 'yield'; detail: YieldRequest['detail'] };
 
 /** Execute a single node. */
 async function executeNode(
   node: OperatorNode,
   scope: Scope,
-  providers: RuntimeProviders,
+  ctx: ExecContext,
 ): Promise<NodeResult> {
   switch (node.kind) {
     case 'Op.Receive': {
@@ -226,7 +257,7 @@ async function executeNode(
       const send = node as SendNode;
       if (send.replyTo) throw new NotImplementedError('SEND REPLY TO', send.replyTo.span);
 
-      if (!providers.channel) {
+      if (!ctx.providers.channel) {
         throw new HostError('SEND requires a ChannelProvider', send.span);
       }
 
@@ -241,11 +272,11 @@ async function executeNode(
       // Resolve participants (D-014-05)
       const participantIds: string[] = [];
       if (send.for.length > 0) {
-        if (!providers.participant) {
+        if (!ctx.providers.participant) {
           throw new HostError('SEND FOR requires a ParticipantProvider', send.span);
         }
         for (const name of send.for) {
-          const info = await providers.participant.resolve(name);
+          const info = await ctx.providers.participant.resolve(name);
           if (!info) {
             throw new ExecutionError(`participant @${name} could not be resolved`, send.span);
           }
@@ -254,15 +285,17 @@ async function executeNode(
       }
 
       // Deliver message
-      const { correlationId } = await providers.channel.deliver(channel, participantIds, payload);
+      const { correlationId } = await ctx.providers.channel.deliver(channel, participantIds, payload);
 
       // Determine await policy (R-0045)
       const awaitPolicy = resolveAwaitPolicy(send);
 
       if (awaitPolicy === 'none') {
-        // Fire-and-forget — no yield, no promise
         return 'continue';
       }
+
+      // Store pending promise in registry (R-0043)
+      ctx.promises[send.name!] = { status: 'pending', origin: 'send', correlationId };
 
       // AWAIT ANY or AWAIT ALL → yield to host for reply aggregation (R-0044)
       return {
@@ -271,7 +304,117 @@ async function executeNode(
           type: 'await-replies',
           correlationId,
           awaitPolicy,
-          promiseName: send.name!,  // validator ensures name is present when await !== none
+          promiseName: send.name!,
+        },
+      };
+    }
+
+    case 'Op.Think': {
+      const think = node as ThinkNode;
+      if (!ctx.providers.model) {
+        throw new HostError('THINK requires a ModelProvider', think.span);
+      }
+
+      // Build ModelCallConfig (R-0042)
+      const config: ModelCallConfig = {
+        via: think.via ? String(resolveVar(think.via.name, think.via.path, scope, think.via.span)) : null,
+        as: think.as.map(ref => String(resolveVar(ref.name, ref.path, scope, ref.span))),
+        using: think.using.map(ref => ref.name),
+        goal: think.goal ? interpolate(think.goal, scope) : null,
+        input: think.input ? interpolate(think.input, scope) : null,
+        context: think.context ? interpolate(think.context, scope) : null,
+        resultSchema: think.result.length > 0
+          ? compileResult(think.result).fields
+          : null,
+        body: think.body ? interpolate(think.body, scope) : null,
+      };
+
+      // Call model inline — NOT a yield point (R-0051)
+      const modelResult = await ctx.providers.model.call(config);
+
+      // Store promise as resolved (R-0043)
+      ctx.promises[think.name] = { status: 'resolved', origin: 'think', result: modelResult.output };
+
+      // Bind $name in scope immediately
+      scope.set(think.name, modelResult.output);
+
+      // Optional stream creation (D-0042: host-decided)
+      if (ctx.providers.stream) {
+        const handle = ctx.providers.stream.createStream(think.name, 'executor');
+        if (handle) {
+          ctx.promiseStreamMap[think.name] = handle;
+        }
+      }
+
+      return 'continue';
+    }
+
+    case 'Op.Execute': {
+      const exec = node as ExecuteNode;
+      if (!ctx.providers.tool) {
+        throw new HostError('EXECUTE requires a ToolProvider', exec.span);
+      }
+
+      // Resolve args (R-0055)
+      const resolvedArgs: Record<string, unknown> = {};
+      for (const arg of exec.args) {
+        resolvedArgs[arg.key] = resolveBodyValue(arg.value, scope);
+      }
+
+      // Call tool inline — NOT a yield point (R-0051)
+      const toolResult = await ctx.providers.tool.invoke(exec.tool.name, resolvedArgs);
+
+      // Store promise as resolved (R-0043)
+      ctx.promises[exec.name] = { status: 'resolved', origin: 'execute', result: toolResult.output };
+
+      // Bind $name in scope immediately
+      scope.set(exec.name, toolResult.output);
+
+      // Optional stream creation (D-0042: host-decided)
+      if (ctx.providers.stream) {
+        const handle = ctx.providers.stream.createStream(exec.name, 'executor');
+        if (handle) {
+          ctx.promiseStreamMap[exec.name] = handle;
+        }
+      }
+
+      return 'continue';
+    }
+
+    case 'Op.Wait': {
+      const wait = node as WaitNode;
+      const promiseNames = wait.on.map(ref => ref.name);
+
+      // Check which promises are already resolved
+      const pending = promiseNames.filter(name => {
+        const entry = ctx.promises[name];
+        return !entry || entry.status === 'pending';
+      });
+
+      if (pending.length === 0) {
+        // All promises already resolved — bind $name and continue
+        if (wait.name) {
+          const mode = wait.mode ?? 'all';
+          if (mode === 'any') {
+            // First resolved promise value
+            const firstName = promiseNames[0];
+            scope.set(wait.name, ctx.promises[firstName]?.result ?? null);
+          } else {
+            // All resolved — collect results in order
+            const results = promiseNames.map(n => ctx.promises[n]?.result ?? null);
+            scope.set(wait.name, results.length === 1 ? results[0] : results);
+          }
+        }
+        return 'continue';
+      }
+
+      // Some promises still pending — yield to host
+      return {
+        type: 'yield',
+        detail: {
+          type: 'wait-promises',
+          promiseNames: pending,
+          mode: wait.mode ?? 'all',
         },
       };
     }
@@ -303,7 +446,7 @@ async function executeNode(
       const ifNode = node as IfNode;
       const condition = evaluate(ifNode.condition, scope);
       if (condition) {
-        const result = await executeBlockNodes(ifNode.body, scope, providers);
+        const result = await executeBlockNodes(ifNode.body, scope, ctx);
         if (result === 'exit') return 'exit';
       }
       return 'continue';
@@ -316,7 +459,7 @@ async function executeNode(
           const untilVal = evaluate(repeat.until, scope);
           if (untilVal) break;
         }
-        const result = await executeBlockNodes(repeat.body, scope, providers);
+        const result = await executeBlockNodes(repeat.body, scope, ctx);
         if (result === 'exit') return 'exit';
       }
       return 'continue';
@@ -334,7 +477,7 @@ async function executeNode(
       for (const element of sourceVal) {
         const iterScope = scope.child();
         iterScope.set(each.element.name, element);
-        const result = await executeBlockNodes(each.body, iterScope, providers);
+        const result = await executeBlockNodes(each.body, iterScope, ctx);
         if (result === 'exit') return 'exit';
       }
       return 'continue';
@@ -344,8 +487,7 @@ async function executeNode(
       throw new NotImplementedError(`operator ${node.operatorId}`, node.span);
 
     default:
-      // Op.Actors, Op.Tools — no-op at execution time
-      // Op.Think, Op.Execute, Op.Wait, Op.Signal — not implemented yet (phases 3-5)
+      // Op.Actors, Op.Tools, Op.Signal — no-op or not implemented yet (phase 5)
       return 'continue';
   }
 }
@@ -354,16 +496,15 @@ async function executeNode(
 async function executeBlockNodes(
   nodes: ReadonlyArray<OperatorNode | import('../ast/nodes.js').CommentNode>,
   scope: Scope,
-  providers: RuntimeProviders,
+  ctx: ExecContext,
 ): Promise<'exit' | 'continue'> {
   const ops = operatorNodes(nodes);
   for (const node of ops) {
-    const result = await executeNode(node, scope, providers);
+    const result = await executeNode(node, scope, ctx);
     if (result === 'exit') return 'exit';
-    // Yield inside blocks not supported in phase 2 (no yield points in block context)
     if (result && typeof result === 'object' && result.type === 'yield') {
       throw new ExecutionError(
-        'RECEIVE inside control-flow blocks is not supported in this version',
+        'yield inside control-flow blocks is not supported in this version',
         node.span,
       );
     }
