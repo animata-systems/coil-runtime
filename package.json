@@ -13,6 +13,10 @@
     "./browser": {
       "types": "./dist/src/browser.d.ts",
       "default": "./dist/src/browser.js"
+    },
+    "./sdk": {
+      "types": "./dist/src/sdk/index.d.ts",
+      "default": "./dist/src/sdk/index.js"
     }
   },
   "bin": {

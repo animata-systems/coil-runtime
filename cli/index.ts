@@ -6,8 +6,10 @@ import {
   tokenize,
   parse,
   validate,
-  execute, CliEnvironment,
+  execute, resume,
 } from '../src/index.js';
+import { createCLIProviders, cliReceive } from './providers.js';
+import type { YieldRequest, ExecutionResult } from '../src/sdk/types.js';
 import type { ScriptNode, OperatorNode, CommentNode } from '../src/ast/nodes.js';
 
 const USAGE = `Usage: coil <command> <file> --dialect <path>
@@ -165,18 +167,18 @@ async function main(): Promise<void> {
     const keywords = KeywordIndex.build(dialectTable);
     const tokens = tokenize(source, keywords);
     const ast = parse(tokens, dialectTable, source);
-    const result = validate(ast, dialectTable);
+    const validationResult = validate(ast, dialectTable);
 
     // Output diagnostics
-    const errors = result.diagnostics.filter(d => d.severity === 'error');
-    const warnings = result.diagnostics.filter(d => d.severity === 'warning');
+    const errors = validationResult.diagnostics.filter(d => d.severity === 'error');
+    const warnings = validationResult.diagnostics.filter(d => d.severity === 'warning');
 
     for (const w of warnings) {
       console.error(`warning[${w.ruleId}]: ${w.message} (line ${w.span.line})`);
     }
 
     if (command === 'check') {
-      const infos = result.diagnostics.filter(d => d.severity === 'info');
+      const infos = validationResult.diagnostics.filter(d => d.severity === 'info');
       for (const d of infos) {
         console.error(`info[${d.ruleId}]: ${d.message} (line ${d.span.line})`);
       }
@@ -208,8 +210,21 @@ async function main(): Promise<void> {
       process.exit(1);
     }
 
-    const env = new CliEnvironment();
-    await execute(ast, env);
+    const providers = createCLIProviders();
+    let result: ExecutionResult | YieldRequest = await execute(ast, providers);
+
+    // Run loop: handle yield requests until completion
+    while (result.type === 'yield') {
+      const yr = result as YieldRequest;
+      if (yr.detail.type === 'receive') {
+        const value = await cliReceive(yr.detail.prompt);
+        result = await resume(yr.snapshot, { type: 'ReceiveValue', value }, ast, providers);
+      } else {
+        console.error(`error: unhandled yield type: ${yr.detail.type}`);
+        process.exit(1);
+      }
+    }
+
     process.exit(0);
   } catch (err: unknown) {
     if (err instanceof Error) {

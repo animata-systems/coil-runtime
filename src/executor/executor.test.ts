@@ -5,9 +5,12 @@ import { tokenize } from '../lexer/index.js';
 import { loadDialect } from '../dialect/loader.js';
 import { KeywordIndex } from '../dialect/index.js';
 import { parse } from '../parser/parser.js';
-import { execute, NotImplementedError, ExecutionError } from './executor.js';
-import type { Environment } from './environment.js';
+import { execute, resume, ExecutionError, NotImplementedError } from './executor.js';
 import type { DialectTable } from '../dialect/types.js';
+import type {
+  RuntimeProviders, ExecutionResult, YieldRequest, ResumeEvent,
+} from '../sdk/types.js';
+import { MockChannelProvider } from '../sdk/mock-runtime.js';
 
 const require = createRequire(import.meta.url);
 const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
@@ -26,14 +29,21 @@ beforeAll(async () => {
   ruIndex = KeywordIndex.build(ruTable);
 });
 
-/** Mock environment for testing */
-function mockEnv(receiveValue: string) {
-  const sent: string[] = [];
-  const env: Environment = {
-    receive: async () => receiveValue,
-    send: (body) => { sent.push(body); },
-  };
-  return { env, sent };
+/**
+ * Mock providers for testing. Uses MockChannelProvider to capture SEND output.
+ * receiveValues provides scripted responses for RECEIVE yield points.
+ */
+function mockProviders(receiveValues: string[] = []) {
+  const channel = new MockChannelProvider();
+  const providers: RuntimeProviders = { channel };
+  return { providers, channel, receiveValues };
+}
+
+/** Get sent text from channel deliveries. */
+function sentText(channel: MockChannelProvider): string[] {
+  return channel.deliveries.map(d =>
+    typeof d.payload === 'string' ? d.payload : JSON.stringify(d.payload),
+  );
 }
 
 function parseEN(src: string) {
@@ -44,71 +54,72 @@ function parseRU(src: string) {
   return parse(tokenize(src, ruIndex), ruTable, src);
 }
 
+/**
+ * Execute to completion, handling RECEIVE yields with scripted values.
+ */
+async function executeToCompletion(
+  src: string,
+  receiveValues: string[] = [],
+  dialect: 'en' | 'ru' = 'en',
+): Promise<{ sent: string[] }> {
+  const ast = dialect === 'en' ? parseEN(src) : parseRU(src);
+  const channel = new MockChannelProvider();
+  const providers: RuntimeProviders = { channel };
+
+  let receiveIndex = 0;
+  let result = await execute(ast, providers);
+
+  while (result.type === 'yield') {
+    const yr = result as YieldRequest;
+    if (yr.detail.type === 'receive') {
+      const value = receiveValues[receiveIndex++] ?? '';
+      const event: ResumeEvent = { type: 'ReceiveValue', value };
+      result = await resume(yr.snapshot, event, ast, providers);
+    } else {
+      throw new Error(`unexpected yield type: ${yr.detail.type}`);
+    }
+  }
+
+  return { sent: sentText(channel) };
+}
+
+// ─── Basic operations ──────────────────────────────────
+
 describe('executor', () => {
-  it('RECEIVE + SEND + EXIT с mock environment', async () => {
-    const ast = parseEN(`RECEIVE name
-<<
-What is your name?
->>
-END
-
-SEND
-<<
-Hello, $name!
->>
-END
-
-EXIT`);
-    const { env, sent } = mockEnv('World');
-    await execute(ast, env);
+  it('RECEIVE + SEND + EXIT с mock providers', async () => {
+    const { sent } = await executeToCompletion(
+      `RECEIVE name\n<<\nWhat is your name?\n>>\nEND\n\nSEND\n<<\nHello, $name!\n>>\nEND\n\nEXIT`,
+      ['World'],
+    );
     expect(sent).toEqual(['Hello, World!']);
   });
 
   it('SEND с TO → NotImplementedError', async () => {
     const ast = parseEN('SEND\nTO #channel\n<< msg >>\nEND\nEXIT');
-    const { env } = mockEnv('');
-    await expect(execute(ast, env)).rejects.toThrow(NotImplementedError);
+    await expect(execute(ast)).rejects.toThrow(NotImplementedError);
   });
 
   it('ненайденная $-ссылка → ExecutionError', async () => {
     const ast = parseEN('SEND\n<< Hello, $unknown! >>\nEND\nEXIT');
-    const { env } = mockEnv('');
-    await expect(execute(ast, env)).rejects.toThrow(ExecutionError);
-    await expect(execute(ast, env)).rejects.toThrow('undefined variable');
+    await expect(execute(ast)).rejects.toThrow(ExecutionError);
+    await expect(execute(ast)).rejects.toThrow('undefined variable');
   });
 
   it('несколько RECEIVE подряд', async () => {
-    const ast = parseEN(`RECEIVE first
-END
-RECEIVE second
-END
-SEND
-<< $first and $second >>
-END
-EXIT`);
-    let callCount = 0;
-    const values = ['Alice', 'Bob'];
-    const sent: string[] = [];
-    const env: Environment = {
-      receive: async () => values[callCount++],
-      send: (body) => { sent.push(body); },
-    };
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      `RECEIVE first\nEND\nRECEIVE second\nEND\nSEND\n<< $first and $second >>\nEND\nEXIT`,
+      ['Alice', 'Bob'],
+    );
     expect(sent).toEqual(['Alice and Bob']);
   });
 
   it('SEND без тела → пустая строка', async () => {
-    const ast = parseEN('SEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion('SEND\nEND\nEXIT');
     expect(sent).toEqual(['']);
   });
 
   it('EXIT прекращает исполнение', async () => {
-    // After EXIT, remaining operators should not execute
-    const ast = parseEN('SEND\n<< first >>\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion('SEND\n<< first >>\nEND\nEXIT');
     expect(sent).toEqual(['first']);
   });
 });
@@ -117,30 +128,29 @@ EXIT`);
 
 describe('DEFINE / SET', () => {
   it('DEFINE + SEND interpolates value', async () => {
-    const ast = parseEN('DEFINE greeting\n"hello"\nEND\nSEND\n<< $greeting >>\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE greeting\n"hello"\nEND\nSEND\n<< $greeting >>\nEND\nEXIT',
+    );
     expect(sent).toEqual(['hello']);
   });
 
   it('SET updates existing variable', async () => {
-    const ast = parseEN('DEFINE x\n1\nEND\nSET $x\n2\nEND\nSEND\n<< $x >>\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE x\n1\nEND\nSET $x\n2\nEND\nSEND\n<< $x >>\nEND\nEXIT',
+    );
     expect(sent).toEqual(['2']);
   });
 
   it('SET on undefined variable → ExecutionError', async () => {
     const ast = parseEN('SET $unknown\n1\nEND\nEXIT');
-    const { env } = mockEnv('');
-    await expect(execute(ast, env)).rejects.toThrow(ExecutionError);
-    await expect(execute(ast, env)).rejects.toThrow('not defined');
+    await expect(execute(ast)).rejects.toThrow(ExecutionError);
+    await expect(execute(ast)).rejects.toThrow('not defined');
   });
 
   it('DEFINE with template body', async () => {
-    const ast = parseEN('DEFINE name\n"World"\nEND\nDEFINE msg\n<< Hello, $name! >>\nEND\nSEND\n<< $msg >>\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE name\n"World"\nEND\nDEFINE msg\n<< Hello, $name! >>\nEND\nSEND\n<< $msg >>\nEND\nEXIT',
+    );
     expect(sent).toEqual(['Hello, World!']);
   });
 });
@@ -149,37 +159,37 @@ describe('DEFINE / SET', () => {
 
 describe('IF executor', () => {
   it('IF true → body executes', async () => {
-    const ast = parseEN('DEFINE x\n5\nEND\nIF $x = 5\nSEND\n<< yes >>\nEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE x\n5\nEND\nIF $x = 5\nSEND\n<< yes >>\nEND\nEND\nEXIT',
+    );
     expect(sent).toEqual(['yes']);
   });
 
   it('IF false → body skipped', async () => {
-    const ast = parseEN('DEFINE x\n5\nEND\nIF $x = 3\nSEND\n<< no >>\nEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE x\n5\nEND\nIF $x = 3\nSEND\n<< no >>\nEND\nEND\nEXIT',
+    );
     expect(sent).toEqual([]);
   });
 
   it('IF with AND condition', async () => {
-    const ast = parseEN('DEFINE a\n1\nEND\nDEFINE b\n2\nEND\nIF $a = 1 AND $b = 2\nSEND\n<< both >>\nEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE a\n1\nEND\nDEFINE b\n2\nEND\nIF $a = 1 AND $b = 2\nSEND\n<< both >>\nEND\nEND\nEXIT',
+    );
     expect(sent).toEqual(['both']);
   });
 
   it('IF with NOT condition', async () => {
-    const ast = parseEN('DEFINE x\n3\nEND\nIF NOT ($x = 5)\nSEND\n<< not five >>\nEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE x\n3\nEND\nIF NOT ($x = 5)\nSEND\n<< not five >>\nEND\nEND\nEXIT',
+    );
     expect(sent).toEqual(['not five']);
   });
 
   it('EXIT inside IF propagates', async () => {
-    const ast = parseEN('DEFINE x\n1\nEND\nIF $x = 1\nEXIT\nEND\nSEND\n<< unreachable >>\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'DEFINE x\n1\nEND\nIF $x = 1\nEXIT\nEND\nSEND\n<< unreachable >>\nEND\nEXIT',
+    );
     expect(sent).toEqual([]);
   });
 });
@@ -188,29 +198,16 @@ describe('IF executor', () => {
 
 describe('REPEAT executor', () => {
   it('REPEAT count-only', async () => {
-    const ast = parseEN('REPEAT 3\nSEND\n<< ping >>\nEND\nEND\nEXIT');
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      'REPEAT 3\nSEND\n<< ping >>\nEND\nEND\nEXIT',
+    );
     expect(sent).toEqual(['ping', 'ping', 'ping']);
   });
 
   it('REPEAT UNTIL breaks early', async () => {
-    const ast = parseEN(`DEFINE done
-FALSE
-END
-REPEAT UNTIL $done = TRUE NO MORE THAN 5
-  SEND
-  << tick >>
-  END
-  SET $done
-  TRUE
-  END
-END
-EXIT`);
-    const { env, sent } = mockEnv('');
-    await execute(ast, env);
-    // First iteration: done=FALSE, condition false → execute body → set done=TRUE
-    // Second iteration: done=TRUE, condition true → break
+    const { sent } = await executeToCompletion(
+      `DEFINE done\nFALSE\nEND\nREPEAT UNTIL $done = TRUE NO MORE THAN 5\n  SEND\n  << tick >>\n  END\n  SET $done\n  TRUE\n  END\nEND\nEXIT`,
+    );
     expect(sent).toEqual(['tick']);
   });
 });
@@ -218,47 +215,18 @@ EXIT`);
 // ─── EACH ───────────────────────────────────────────────
 
 describe('EACH executor', () => {
-  it('EACH iterates over array', async () => {
-    const ast = parseEN(`DEFINE items
-$items
-END
-EACH $item FROM $items
-  SEND
-  << $item >>
-  END
-END
-EXIT`);
-    // Need to set up items as an array — use a mock that provides it
-    const sent: string[] = [];
-    const env: Environment = {
-      receive: async () => '',
-      send: (body) => { sent.push(body); },
-    };
-    // Parse and inject array into scope manually via RECEIVE won't work.
-    // Instead, test with a simpler approach using the Scope directly.
-    // For executor integration, we need a script that produces an array.
-    // Since THINK is not implemented, we test EACH with a workaround:
-    // skip this test and test with mock scope below
-  });
-
   it('EACH with empty array → no iterations', async () => {
-    // We can't easily create an array in COIL without THINK.
-    // Test at the scope level instead.
     const { Scope } = await import('./scope.js');
-    const { evaluate } = await import('./evaluate.js');
-
     const scope = new Scope();
     scope.set('items', []);
-    // EACH would iterate 0 times — verified by executor logic
     expect(Array.isArray(scope.get('items'))).toBe(true);
     expect((scope.get('items') as unknown[]).length).toBe(0);
   });
 
   it('EACH non-array → ExecutionError', async () => {
     const ast = parseEN('DEFINE items\n"not an array"\nEND\nEACH $item FROM $items\nSEND\n<< $item >>\nEND\nEND\nEXIT');
-    const { env } = mockEnv('');
-    await expect(execute(ast, env)).rejects.toThrow(ExecutionError);
-    await expect(execute(ast, env)).rejects.toThrow('not iterable');
+    await expect(execute(ast)).rejects.toThrow(ExecutionError);
+    await expect(execute(ast)).rejects.toThrow('not iterable');
   });
 });
 
@@ -290,6 +258,23 @@ describe('Scope', () => {
     const child = parent.child();
     expect(child.has('x')).toBe(true);
     expect(child.has('y')).toBe(false);
+  });
+
+  it('toSnapshot / fromSnapshot round-trip', async () => {
+    const { Scope } = await import('./scope.js');
+    const parent = new Scope();
+    parent.set('a', 1);
+    const child = parent.child();
+    child.set('b', 'hello');
+
+    const snapshot = child.toSnapshot();
+    const json = JSON.stringify(snapshot);
+    const restored = Scope.fromSnapshot(JSON.parse(json));
+
+    expect(restored.get('b')).toBe('hello');
+    expect(restored.get('a')).toBe(1);
+    expect(restored.has('a')).toBe(true);
+    expect(restored.has('c')).toBe(false);
   });
 });
 
@@ -346,7 +331,6 @@ describe('expression evaluator', () => {
   it('numeric comparison on non-numbers → ExecutionError', async () => {
     const { Scope } = await import('./scope.js');
     const { evaluate } = await import('./evaluate.js');
-    const { ExecutionError } = await import('./executor.js');
     const scope = new Scope();
     scope.set('x', 'hello');
     const expr = { kind: 'BinaryExpr' as const, op: '>' as const, left: { kind: 'VarRefExpr' as const, name: 'x', path: [], span: { offset: 0, length: 1, line: 1, col: 1 } }, right: { kind: 'LiteralExpr' as const, value: 5, literalType: 'number' as const, span: { offset: 0, length: 1, line: 1, col: 1 } }, span: { offset: 0, length: 1, line: 1, col: 1 } };
@@ -354,45 +338,91 @@ describe('expression evaluator', () => {
   });
 });
 
+// ─── Pause / Resume (R-0040) ────────────────────────────
+
+describe('pause/resume', () => {
+  it('RECEIVE yields, resume restores scope', async () => {
+    const ast = parseEN(`RECEIVE name\n<<\nWhat is your name?\n>>\nEND\n\nSEND\n<< Hello, $name! >>\nEND\n\nEXIT`);
+    const channel = new MockChannelProvider();
+    const providers: RuntimeProviders = { channel };
+
+    // Step 1: execute → should yield at RECEIVE
+    const result1 = await execute(ast, providers);
+    expect(result1.type).toBe('yield');
+    const yr = result1 as YieldRequest;
+    expect(yr.detail.type).toBe('receive');
+
+    // Step 2: serialize and deserialize snapshot
+    const json = JSON.stringify(yr.snapshot);
+    const restoredSnapshot = JSON.parse(json);
+
+    // Step 3: resume with value
+    const result2 = await resume(
+      restoredSnapshot,
+      { type: 'ReceiveValue', value: 'World' },
+      ast,
+      providers,
+    );
+
+    expect(result2.type).toBe('completed');
+    expect(sentText(channel)).toEqual(['Hello, World!']);
+  });
+
+  it('multiple RECEIVE yields in sequence', async () => {
+    const ast = parseEN(`RECEIVE first\nEND\nRECEIVE second\nEND\nSEND\n<< $first and $second >>\nEND\nEXIT`);
+    const channel = new MockChannelProvider();
+    const providers: RuntimeProviders = { channel };
+
+    // First RECEIVE
+    let result = await execute(ast, providers);
+    expect(result.type).toBe('yield');
+    let yr = result as YieldRequest;
+
+    // Resume first
+    result = await resume(yr.snapshot, { type: 'ReceiveValue', value: 'Alice' }, ast, providers);
+    expect(result.type).toBe('yield');
+    yr = result as YieldRequest;
+
+    // Resume second
+    result = await resume(yr.snapshot, { type: 'ReceiveValue', value: 'Bob' }, ast, providers);
+    expect(result.type).toBe('completed');
+    expect(sentText(channel)).toEqual(['Alice and Bob']);
+  });
+
+  it('snapshot is JSON-serializable', async () => {
+    const ast = parseEN(`DEFINE x\n42\nEND\nRECEIVE y\nEND\nEXIT`);
+    const result = await execute(ast);
+    expect(result.type).toBe('yield');
+
+    const yr = result as YieldRequest;
+    const json = JSON.stringify(yr.snapshot);
+    const parsed = JSON.parse(json);
+
+    // Scope should contain x=42
+    expect(parsed.scope.variables.x).toBe(42);
+    // PC should point to the RECEIVE node
+    expect(parsed.pc).toEqual([{ node: 1 }]);
+  });
+});
+
 // ─── Integration: полный пайплайн ────────────────────────
 
 describe('integration', () => {
   it('EN: полный пайплайн — критерий готовности', async () => {
-    const ast = parseEN(`RECEIVE name
-<<
-What is your name?
->>
-END
-
-SEND
-<<
-Hello, $name!
->>
-END
-
-EXIT`);
-    const { env, sent } = mockEnv('World');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      `RECEIVE name\n<<\nWhat is your name?\n>>\nEND\n\nSEND\n<<\nHello, $name!\n>>\nEND\n\nEXIT`,
+      ['World'],
+    );
     expect(sent).toHaveLength(1);
     expect(sent[0]).toBe('Hello, World!');
   });
 
   it('RU: тот же скрипт на ru-standard', async () => {
-    const ast = parseRU(`ПОЛУЧИ имя
-<<
-Как тебя зовут?
->>
-КОНЕЦ
-
-НАПИШИ
-<<
-Привет, $имя!
->>
-КОНЕЦ
-
-ВЫХОД`);
-    const { env, sent } = mockEnv('Мир');
-    await execute(ast, env);
+    const { sent } = await executeToCompletion(
+      `ПОЛУЧИ имя\n<<\nКак тебя зовут?\n>>\nКОНЕЦ\n\nНАПИШИ\n<<\nПривет, $имя!\n>>\nКОНЕЦ\n\nВЫХОД`,
+      ['Мир'],
+      'ru',
+    );
     expect(sent).toHaveLength(1);
     expect(sent[0]).toBe('Привет, Мир!');
   });

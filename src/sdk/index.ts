@@ -24,3 +24,12 @@ export type {
 
 // Helpers
 export { resolveAwaitPolicy } from './helpers.js';
+
+// Implementations
+export { InMemoryStateProvider } from './in-memory-state.js';
+export {
+  MockModelProvider, MockToolProvider, MockParticipantProvider,
+  MockChannelProvider, MockStreamProvider, MockBudgetPolicy,
+  createMockProviders,
+} from './mock-runtime.js';
+export type { MockRuntimeOptions } from './mock-runtime.js';

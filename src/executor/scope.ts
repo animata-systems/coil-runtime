@@ -1,3 +1,5 @@
+import type { ScopeSnapshot } from '../sdk/types.js';
+
 /**
  * Executor scope with parent chain for nested blocks (R-0036).
  *
@@ -35,5 +37,27 @@ export class Scope {
   /** Create a child scope with this scope as parent. */
   child(): Scope {
     return new Scope(this);
+  }
+
+  /** Serialize the scope chain to a JSON-compatible snapshot (D-014-03). */
+  toSnapshot(): ScopeSnapshot {
+    const variables: Record<string, unknown> = {};
+    for (const [k, v] of this.bindings) {
+      variables[k] = v;
+    }
+    return {
+      variables,
+      parent: this.parent ? this.parent.toSnapshot() : null,
+    };
+  }
+
+  /** Restore a scope chain from a snapshot (D-014-03). */
+  static fromSnapshot(snapshot: ScopeSnapshot): Scope {
+    const parent = snapshot.parent ? Scope.fromSnapshot(snapshot.parent) : null;
+    const scope = new Scope(parent);
+    for (const [k, v] of Object.entries(snapshot.variables)) {
+      scope.set(k, v);
+    }
+    return scope;
   }
 }
