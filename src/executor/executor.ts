@@ -1,7 +1,7 @@
 import type {
   ScriptNode, OperatorNode, ReceiveNode, SendNode,
   DefineNode, SetNode, IfNode, RepeatNode, EachNode, DurationValue,
-  ChannelRef, ThinkNode, ExecuteNode, WaitNode,
+  ChannelRef, ThinkNode, ExecuteNode, WaitNode, SignalNode,
 } from '../ast/nodes.js';
 import type { ChannelSegment } from '../common/types.js';
 import type {
@@ -46,6 +46,18 @@ function resolveChannel(ref: ChannelRef, scope: Scope): string {
     if (seg.kind === 'literal') return seg.value;
     return String(resolveVar(seg.name, seg.path, scope, ref.span));
   }).join('/');
+}
+
+/** R-0056: close stream if a promise has an associated stream handle. */
+function closeStreamIfExists(
+  promiseName: string,
+  promiseStreamMap: Record<string, StreamHandle>,
+  providers: RuntimeProviders,
+): void {
+  const handle = promiseStreamMap[promiseName];
+  if (handle && providers.stream) {
+    providers.stream.close(handle);
+  }
 }
 
 // ─── Main API (R-0053) ─────────────────────────────────
@@ -96,15 +108,16 @@ export async function resume(
       const send = node as SendNode;
       if (send.name) {
         const awaitPolicy = resolveAwaitPolicy(send);
-        // AWAIT ANY → single reply; AWAIT ALL → collection (D-0036)
         const value = awaitPolicy === 'any'
           ? event.replies[0] ?? null
           : event.replies;
         scope.set(send.name, value);
+
+        // R-0056: close stream on promise resolve
+        closeStreamIfExists(send.name, snapshot.promiseStreamMap, providers);
       }
     }
   } else if (event.type === 'PromiseResolved') {
-    // Update promise registry and scope
     const entry = snapshot.promises[event.promiseName];
     if (entry) {
       entry.status = 'resolved';
@@ -117,7 +130,9 @@ export async function resume(
     };
     scope.set(event.promiseName, event.result);
 
-    // If this was a WAIT node, bind the wait name
+    // R-0056: close stream on promise resolve
+    closeStreamIfExists(event.promiseName, snapshot.promiseStreamMap, providers);
+
     if (node && node.kind === 'Op.Wait') {
       const wait = node as WaitNode;
       if (wait.name) {
@@ -343,6 +358,8 @@ async function executeNode(
         const handle = ctx.providers.stream.createStream(think.name, 'executor');
         if (handle) {
           ctx.promiseStreamMap[think.name] = handle;
+          // D-0041: stream closes when promise resolves — THINK resolves inline
+          ctx.providers.stream.close(handle);
         }
       }
 
@@ -375,6 +392,8 @@ async function executeNode(
         const handle = ctx.providers.stream.createStream(exec.name, 'executor');
         if (handle) {
           ctx.promiseStreamMap[exec.name] = handle;
+          // D-0041: stream closes when promise resolves — EXECUTE resolves inline
+          ctx.providers.stream.close(handle);
         }
       }
 
@@ -483,11 +502,41 @@ async function executeNode(
       return 'continue';
     }
 
+    case 'Op.Signal': {
+      const sig = node as SignalNode;
+
+      // Find stream handle by target name
+      const handle = ctx.promiseStreamMap[sig.target.name];
+      if (!handle) {
+        throw new ExecutionError(
+          `stream ~${sig.target.name} does not exist`,
+          sig.target.span,
+        );
+      }
+
+      if (!ctx.providers.stream) {
+        throw new HostError('SIGNAL requires a StreamProvider', sig.span);
+      }
+
+      // R-0048: check isOpen before each SIGNAL
+      if (!ctx.providers.stream.isOpen(handle)) {
+        throw new ExecutionError(
+          `stream ~${sig.target.name} is closed — cannot send SIGNAL after close`,
+          sig.target.span,
+        );
+      }
+
+      // D-0040: SIGNAL is async — places payload in buffer, executor continues
+      const payload = interpolate(sig.body, scope);
+      ctx.providers.stream.signal(handle, payload);
+      return 'continue';
+    }
+
     case 'Unsupported':
       throw new NotImplementedError(`operator ${node.operatorId}`, node.span);
 
     default:
-      // Op.Actors, Op.Tools, Op.Signal — no-op or not implemented yet (phase 5)
+      // Op.Actors, Op.Tools — no-op at execution time
       return 'continue';
   }
 }

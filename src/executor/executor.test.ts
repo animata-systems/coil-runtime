@@ -6,11 +6,18 @@ import { loadDialect } from '../dialect/loader.js';
 import { KeywordIndex } from '../dialect/index.js';
 import { parse } from '../parser/parser.js';
 import { execute, resume, ExecutionError, NotImplementedError } from './executor.js';
+import { Scope } from './scope.js';
+import { evaluate } from './evaluate.js';
+import { resolveFieldPath } from './resolve.js';
 import type { DialectTable } from '../dialect/types.js';
 import type {
   RuntimeProviders, ExecutionResult, YieldRequest, ResumeEvent,
 } from '../sdk/types.js';
-import { MockChannelProvider } from '../sdk/mock-runtime.js';
+import {
+  MockChannelProvider, MockModelProvider, MockToolProvider,
+  MockParticipantProvider, MockStreamProvider,
+} from '../sdk/mock-runtime.js';
+import type { ModelCallConfig } from '../sdk/types.js';
 
 const require = createRequire(import.meta.url);
 const DIALECTS_DIR = dirname(require.resolve('coil/dialects/README.md'));
@@ -220,7 +227,7 @@ describe('REPEAT executor', () => {
 
 describe('EACH executor', () => {
   it('EACH with empty array → no iterations', async () => {
-    const { Scope } = await import('./scope.js');
+
     const scope = new Scope();
     scope.set('items', []);
     expect(Array.isArray(scope.get('items'))).toBe(true);
@@ -238,7 +245,7 @@ describe('EACH executor', () => {
 
 describe('Scope', () => {
   it('child scope reads from parent', async () => {
-    const { Scope } = await import('./scope.js');
+
     const parent = new Scope();
     parent.set('x', 42);
     const child = parent.child();
@@ -246,7 +253,7 @@ describe('Scope', () => {
   });
 
   it('child scope writes do not affect parent', async () => {
-    const { Scope } = await import('./scope.js');
+
     const parent = new Scope();
     parent.set('x', 1);
     const child = parent.child();
@@ -256,7 +263,7 @@ describe('Scope', () => {
   });
 
   it('child scope has() walks up chain', async () => {
-    const { Scope } = await import('./scope.js');
+
     const parent = new Scope();
     parent.set('x', 1);
     const child = parent.child();
@@ -265,7 +272,7 @@ describe('Scope', () => {
   });
 
   it('toSnapshot / fromSnapshot round-trip', async () => {
-    const { Scope } = await import('./scope.js');
+
     const parent = new Scope();
     parent.set('a', 1);
     const child = parent.child();
@@ -286,26 +293,26 @@ describe('Scope', () => {
 
 describe('field access', () => {
   it('resolveFieldPath traverses object', async () => {
-    const { resolveFieldPath } = await import('./resolve.js');
+
     const span = { offset: 0, length: 1, line: 1, col: 1 };
     const obj = { a: { b: { c: 42 } } };
     expect(resolveFieldPath(obj, ['a', 'b', 'c'], span)).toBe(42);
   });
 
   it('resolveFieldPath on null → ExecutionError', async () => {
-    const { resolveFieldPath } = await import('./resolve.js');
+
     const span = { offset: 0, length: 1, line: 1, col: 1 };
     expect(() => resolveFieldPath(null, ['x'], span)).toThrow('cannot access');
   });
 
   it('resolveFieldPath on missing property → ExecutionError', async () => {
-    const { resolveFieldPath } = await import('./resolve.js');
+
     const span = { offset: 0, length: 1, line: 1, col: 1 };
     expect(() => resolveFieldPath({ a: 1 }, ['b'], span)).toThrow('does not exist');
   });
 
   it('resolveFieldPath on non-object → ExecutionError', async () => {
-    const { resolveFieldPath } = await import('./resolve.js');
+
     const span = { offset: 0, length: 1, line: 1, col: 1 };
     expect(() => resolveFieldPath('hello', ['length'], span)).toThrow('cannot access');
   });
@@ -315,8 +322,8 @@ describe('field access', () => {
 
 describe('expression evaluator', () => {
   it('equality comparison', async () => {
-    const { Scope } = await import('./scope.js');
-    const { evaluate } = await import('./evaluate.js');
+
+
     const scope = new Scope();
     scope.set('x', 'hello');
     const expr = { kind: 'BinaryExpr' as const, op: '=' as const, left: { kind: 'VarRefExpr' as const, name: 'x', path: [], span: { offset: 0, length: 1, line: 1, col: 1 } }, right: { kind: 'LiteralExpr' as const, value: 'hello', literalType: 'string' as const, span: { offset: 0, length: 1, line: 1, col: 1 } }, span: { offset: 0, length: 1, line: 1, col: 1 } };
@@ -324,8 +331,8 @@ describe('expression evaluator', () => {
   });
 
   it('numeric comparison', async () => {
-    const { Scope } = await import('./scope.js');
-    const { evaluate } = await import('./evaluate.js');
+
+
     const scope = new Scope();
     scope.set('score', 8);
     const expr = { kind: 'BinaryExpr' as const, op: '>=' as const, left: { kind: 'VarRefExpr' as const, name: 'score', path: [], span: { offset: 0, length: 1, line: 1, col: 1 } }, right: { kind: 'LiteralExpr' as const, value: 5, literalType: 'number' as const, span: { offset: 0, length: 1, line: 1, col: 1 } }, span: { offset: 0, length: 1, line: 1, col: 1 } };
@@ -333,8 +340,8 @@ describe('expression evaluator', () => {
   });
 
   it('numeric comparison on non-numbers → ExecutionError', async () => {
-    const { Scope } = await import('./scope.js');
-    const { evaluate } = await import('./evaluate.js');
+
+
     const scope = new Scope();
     scope.set('x', 'hello');
     const expr = { kind: 'BinaryExpr' as const, op: '>' as const, left: { kind: 'VarRefExpr' as const, name: 'x', path: [], span: { offset: 0, length: 1, line: 1, col: 1 } }, right: { kind: 'LiteralExpr' as const, value: 5, literalType: 'number' as const, span: { offset: 0, length: 1, line: 1, col: 1 } }, span: { offset: 0, length: 1, line: 1, col: 1 } };
@@ -423,7 +430,7 @@ describe('SEND full contract', () => {
   });
 
   it('SEND FOR @name resolves participant', async () => {
-    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+
     const channel = new MockChannelProvider();
     const participant = new MockParticipantProvider();
     const ast = parseEN('ACTORS alice\nSEND\nFOR @alice\n<< hello >>\nEND\nEXIT');
@@ -445,7 +452,7 @@ describe('SEND full contract', () => {
 
   it('SEND AWAIT ANY yields and resumes with single reply', async () => {
     const ast = parseEN('ACTORS client\nSEND reply\nFOR @client\nAWAIT ANY\n<< question >>\nEND\nSEND\n<< got: $reply >>\nEND\nEXIT');
-    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+
     const channel = new MockChannelProvider();
     const providers: RuntimeProviders = {
       channel,
@@ -479,7 +486,7 @@ describe('SEND full contract', () => {
 
   it('SEND AWAIT ALL yields and resumes with collection', async () => {
     const ast = parseEN('ACTORS team\nSEND replies\nFOR @team\nAWAIT ALL\n<< vote >>\nEND\nEXIT');
-    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+
     const channel = new MockChannelProvider();
     const providers: RuntimeProviders = {
       channel,
@@ -512,7 +519,7 @@ describe('SEND full contract', () => {
 
   it('SEND AWAIT with Timeout event → ExecutionError', async () => {
     const ast = parseEN('ACTORS x\nSEND r\nFOR @x\nAWAIT ANY\nTIMEOUT 5s\n<< q >>\nEND\nEXIT');
-    const { MockParticipantProvider } = await import('../sdk/mock-runtime.js');
+
     const channel = new MockChannelProvider();
     const providers: RuntimeProviders = {
       channel,
@@ -534,7 +541,7 @@ describe('SEND full contract', () => {
 
 describe('THINK executor', () => {
   it('THINK calls ModelProvider and binds $name', async () => {
-    const { MockModelProvider } = await import('../sdk/mock-runtime.js');
+
     const model = new MockModelProvider([{ output: { summary: 'done' } }]);
     const channel = new MockChannelProvider();
     const ast = parseEN(`THINK analysis
@@ -553,7 +560,7 @@ EXIT`);
   it('THINK with RESULT compiles schema for ModelProvider', async () => {
     let receivedConfig: unknown = null;
     const model = {
-      async call(config: import('../sdk/types.js').ModelCallConfig) {
+      async call(config: ModelCallConfig) {
         receivedConfig = config;
         return { output: { title: 'Test', score: 5 } };
       },
@@ -571,7 +578,7 @@ END
 EXIT`);
     const result = await execute(ast, { model, channel });
     expect(result.type).toBe('completed');
-    const cfg = receivedConfig as import('../sdk/types.js').ModelCallConfig;
+    const cfg = receivedConfig as ModelCallConfig;
     expect(cfg.resultSchema).not.toBeNull();
     expect(cfg.resultSchema!.length).toBe(2);
     expect(cfg.goal).toBe('review the code');
@@ -587,7 +594,7 @@ EXIT`);
 
 describe('EXECUTE executor', () => {
   it('EXECUTE calls ToolProvider and binds $name', async () => {
-    const { MockToolProvider } = await import('../sdk/mock-runtime.js');
+
     const tool = new MockToolProvider({ search: { output: { results: [1, 2, 3] } } });
     const channel = new MockChannelProvider();
     const ast = parseEN(`TOOLS search
@@ -613,7 +620,7 @@ EXIT`);
 
 describe('WAIT executor', () => {
   it('WAIT after THINK — promises already resolved, no yield', async () => {
-    const { MockModelProvider } = await import('../sdk/mock-runtime.js');
+
     const model = new MockModelProvider([{ output: 42 }]);
     const channel = new MockChannelProvider();
     const ast = parseEN(`THINK answer
@@ -635,7 +642,7 @@ EXIT`);
     // Force a pending promise by not providing model (so THINK can't run)
     // Actually, we need a scenario where WAIT yields. In v0.4 THINK resolves inline,
     // so WAIT after THINK never yields. We test timeout via resume.
-    const { MockModelProvider } = await import('../sdk/mock-runtime.js');
+
     const model = new MockModelProvider([{ output: 'ok' }]);
     const channel = new MockChannelProvider();
     // This script has THINK (resolves inline) + WAIT (already resolved) — no yield.
@@ -644,6 +651,55 @@ EXIT`);
     const ast = parseEN(`THINK x\nGOAL << q >>\nEND\nWAIT ON ?x\nEND\nEXIT`);
     const result = await execute(ast, { model, channel });
     expect(result.type).toBe('completed');
+  });
+});
+
+// ─── Stream runtime (phase 5) ───────────────────────────
+
+describe('stream runtime', () => {
+  it('THINK creates stream via StreamProvider (host-decided)', async () => {
+
+    const model = new MockModelProvider([{ output: 'ok' }]);
+    const stream = new MockStreamProvider();
+    const channel = new MockChannelProvider();
+    const ast = parseEN(`THINK x\nGOAL << q >>\nEND\nEXIT`);
+    await execute(ast, { model, stream, channel });
+    // Stream was created and then closed (inline resolve → D-0041)
+    expect(stream.isOpen({ name: 'x', ownerId: 'executor' })).toBe(false);
+  });
+
+  it('host refuses stream (createStream returns null) — no error', async () => {
+
+    const model = new MockModelProvider([{ output: 'ok' }]);
+    // StreamProvider that always refuses
+    const stream = {
+      createStream: () => null,
+      signal: () => {},
+      async *read() {},
+      close: () => {},
+      isOpen: () => false,
+    };
+    const channel = new MockChannelProvider();
+    const ast = parseEN(`THINK x\nGOAL << q >>\nEND\nEXIT`);
+    const result = await execute(ast, { model, stream: stream as any, channel });
+    expect(result.type).toBe('completed');
+  });
+
+  it('SIGNAL on closed stream → ExecutionError', async () => {
+    // THINK resolves inline → stream created and closed.
+    // Then SIGNAL ~x → error because stream is closed.
+
+    const model = new MockModelProvider([{ output: 'ok' }]);
+    const stream = new MockStreamProvider();
+    const channel = new MockChannelProvider();
+    const ast = parseEN(`THINK x\nGOAL << q >>\nEND\nSIGNAL ~x\n<< update >>\nEND\nEXIT`);
+    await expect(execute(ast, { model, stream, channel })).rejects.toThrow('closed');
+  });
+
+  it('SIGNAL on non-existent stream → ExecutionError', async () => {
+    const channel = new MockChannelProvider();
+    const ast = parseEN(`SIGNAL ~nonexistent\n<< data >>\nEND\nEXIT`);
+    await expect(execute(ast, { channel })).rejects.toThrow('does not exist');
   });
 });
 
