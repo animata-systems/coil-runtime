@@ -1,6 +1,6 @@
 import type { KeywordIndex } from '../dialect/index.js';
 import type {
-  Token, SourceSpan, ChannelSegment,
+  Token, SourceSpan, ChannelSegment, TypedRef,
 } from './tokens.js';
 
 export class LexerError extends Error {
@@ -162,10 +162,10 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     };
   }
 
-  /** Read a simple sigil reference: @name, ?name, !name, ~name */
+  /** Read a simple sigil reference: ?name, ~name (static only) */
   function readSimpleRef(
     sigil: string,
-    tokenType: 'ParticipantRef' | 'PromiseRef' | 'ToolRef' | 'StreamRef',
+    tokenType: 'PromiseRef' | 'StreamRef',
     startLine: number,
     startCol: number,
     startOffset: number,
@@ -178,6 +178,44 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     return {
       type: tokenType,
       name,
+      span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
+    } as Token;
+  }
+
+  /** Read a typed ref with optional $-substitution: @name, @$var, !name, !$var.field (R-0057) */
+  function readTypedRef(
+    sigil: string,
+    tokenType: 'ParticipantRef' | 'ToolRef',
+    startLine: number,
+    startCol: number,
+    startOffset: number,
+  ): Token {
+    advance(); // skip sigil
+    let ref: TypedRef;
+    if (!atEnd() && peek() === '$') {
+      advance(); // skip $
+      const name = readIdentifier();
+      if (name === '') {
+        throw new LexerError(`expected identifier after ${sigil}$`, makeSpan(startLine, startCol, startOffset, pos - startOffset), 'expected-identifier-after-sigil');
+      }
+      const path: string[] = [];
+      while (!atEnd() && peek() === '.') {
+        advance(); // skip .
+        const field = readIdentifier();
+        if (field === '') break;
+        path.push(field);
+      }
+      ref = { kind: 'dynamic', name, path };
+    } else {
+      const name = readIdentifier();
+      if (name === '') {
+        throw new LexerError(`expected identifier after ${sigil}`, makeSpan(startLine, startCol, startOffset, 1), 'expected-ref-name');
+      }
+      ref = { kind: 'literal', value: name };
+    }
+    return {
+      type: tokenType,
+      ref,
       span: makeSpan(startLine, startCol, startOffset, pos - startOffset),
     } as Token;
   }
@@ -311,7 +349,7 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     }
 
     if (ch === '@') {
-      tokens.push(readSimpleRef('@', 'ParticipantRef', startLine, startCol, startOffset));
+      tokens.push(readTypedRef('@', 'ParticipantRef', startLine, startCol, startOffset));
       continue;
     }
 
@@ -337,7 +375,7 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
         });
         continue;
       }
-      tokens.push(readSimpleRef('!', 'ToolRef', startLine, startCol, startOffset));
+      tokens.push(readTypedRef('!', 'ToolRef', startLine, startCol, startOffset));
       continue;
     }
 

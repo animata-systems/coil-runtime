@@ -1082,3 +1082,31 @@ ToolProvider receives fully resolved values. It does not see AST types.
 **Rationale.** D-0041 ties stream lifecycle to promise lifecycle. The executor is the only component that knows when a promise resolves (it processes ResumeEvent). StreamProvider doesn't know about promises — it only manages buffers and state. The executor is the natural coordinator.
 
 **Cost.** The executor must track which stream handles correspond to which promises. This is stored in the snapshot (R-0046: stream handles as passive data). Pattern: `promiseStreamMap: Record<string, StreamHandle>` — maps promise name to its stream handle (if any).
+
+---
+
+## R-0057 — Dynamic substitution for `@` and `!` refs (spec § 1.4)
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-10 |
+| **Scope** | `src/lexer/tokenizer.ts`, `src/ast/nodes.ts`, `src/parser/parser.ts`, `src/executor/executor.ts` |
+
+**Context.** Spec § 1.4 requires `$`-substitution after all sigil prefixes (`#`, `@`, `!`, `~`). The runtime implements this for `#` (ChannelRef) but not for others. `readSimpleRef()` reads only literal identifiers — `@$reply.target_handle` fails at lexer level. Practical need: dynamic participant addressing in SEND.FOR and dynamic tool selection in THINK.USING.
+
+**Decision.** Extend dynamic substitution to `@` (ParticipantRef) and `!` (ToolRef). `~` (StreamRef) and `?` (PromiseRef) are excluded — no practical use case.
+
+Implementation:
+
+1. **New AST type `TypedRef`**: `{ kind: 'literal', value: string } | { kind: 'dynamic', name: string, path: string[] }`. Reuses the same model as `ChannelSegment` but without `/`-segments (participants and tools have no hierarchy).
+2. **Lexer**: `readSimpleRef()` for `@` and `!` checks for `$` after sigil. If `$` — reads dynamic ref (name + dot-path). If letter/underscore — reads literal as before.
+3. **Token types**: `ParticipantRefToken` and `ToolRefToken` gain optional `path: string[]` for dynamic case, or carry a `TypedRef` structure.
+4. **AST nodes**: `SendNode.for` changes from `string[]` to `TypedRef[]`. `ThinkNode.using` (and `ExecuteNode.using` if applicable) changes similarly.
+5. **Parser**: `parseRefList` returns `TypedRef[]` instead of `string[]`.
+6. **Executor**: new utility `resolveTypedRef(ref: TypedRef, scope: Scope, span: SourceSpan): string` — for literal returns value, for dynamic calls `resolveVar()`. Called before `participant.resolve()` and tool resolution.
+7. **Validation**: if ref is dynamic, static name checks are deferred to runtime. Result of substitution must be a valid identifier (spec § 1.4 line 206).
+
+**Rationale.** `ChannelRef` already proves the pattern works. Extending to `@` and `!` uses the same lexer/executor model. Doing both in one pass avoids a second refactoring cycle. `~` and `?` excluded by founder decision — no observed use case.
+
+**Cost.** AST breaking change: `SendNode.for` and tool ref fields change type. All code that reads these fields (executor, validator, serializer, IDE) must be updated. Manageable — the change is mechanical.

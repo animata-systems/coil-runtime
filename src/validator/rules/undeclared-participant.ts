@@ -10,13 +10,13 @@ export const undeclaredParticipant: VisitorRule = {
     walkOperators(ast.nodes, (op) => {
       if (op.kind === 'Op.Send') {
         const send = op as SendNode;
-        for (const name of send.for) {
-          if (!scope.participants.has(name)) {
+        for (const pRef of send.for) {
+          if (pRef.ref.kind === 'literal' && !scope.participants.has(pRef.ref.value)) {
             ctx.report({
               severity: 'error',
               ruleId: 'undeclared-participant',
-              message: formatMessage('undeclared-participant', ctx.dialect, name),
-              span: send.span,
+              message: formatMessage('undeclared-participant', ctx.dialect, pRef.ref.value),
+              span: pRef.span,
             });
           }
         }

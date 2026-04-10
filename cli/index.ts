@@ -72,7 +72,7 @@ function printNode(node: OperatorNode | CommentNode, indent: string = ''): void 
     case 'Op.Send':
       if (node.name) fields.push(`name=${node.name}`);
       if (node.to) fields.push(`to=#...`);
-      if (node.for.length) fields.push(`for=[${node.for.join(', ')}]`);
+      if (node.for.length) fields.push(`for=[${node.for.map(p => p.ref.kind === 'literal' ? '@' + p.ref.value : '@$' + p.ref.name).join(', ')}]`);
       if (node.await) fields.push(`await=${node.await}`);
       if (node.timeout) fields.push(`timeout=${node.timeout.value}`);
       if (node.body) fields.push('body=<template>');
@@ -95,7 +95,7 @@ function printNode(node: OperatorNode | CommentNode, indent: string = ''): void 
       fields.push(`name=${node.name}`);
       if (node.via) fields.push(`via=$${node.via.name}`);
       if (node.as.length) fields.push(`as=[${node.as.map(r => '$' + r.name).join(', ')}]`);
-      if (node.using.length) fields.push(`using=[${node.using.map(r => '!' + r.name).join(', ')}]`);
+      if (node.using.length) fields.push(`using=[${node.using.map(r => r.ref.kind === 'literal' ? '!' + r.ref.value : '!$' + r.ref.name).join(', ')}]`);
       if (node.goal) fields.push('goal=<template>');
       if (node.input) fields.push('input=<template>');
       if (node.context) fields.push('context=<template>');
@@ -103,7 +103,7 @@ function printNode(node: OperatorNode | CommentNode, indent: string = ''): void 
       if (node.body) fields.push('body=<template>');
       break;
     case 'Op.Execute':
-      fields.push(`name=${node.name}`, `tool=!${node.tool.name}`);
+      fields.push(`name=${node.name}`, `tool=${node.tool.ref.kind === 'literal' ? '!' + node.tool.ref.value : '!$' + node.tool.ref.name}`);
       if (node.args.length) fields.push(`args=[${node.args.map(a => a.key).join(', ')}]`);
       break;
     case 'Op.Wait':

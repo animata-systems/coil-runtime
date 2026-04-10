@@ -2,7 +2,7 @@ import type {
   Token, KeywordToken, IdentifierToken, ChannelRefToken,
   ParticipantRefToken, DurationLiteralToken, TextFragmentToken, ValueRefToken,
   ToolRefToken, PromiseRefToken, StreamRefToken, NumberLiteralToken,
-  StringLiteralToken, CommentToken,
+  StringLiteralToken, CommentToken, TypedRef,
 } from '../lexer/tokens.js';
 import type { SourceSpan } from '../common/types.js';
 import type { DialectTable, AbstractId } from '../dialect/types.js';
@@ -10,7 +10,7 @@ import { lookupDialectWord } from '../dialect/lookup.js';
 import type {
   ScriptNode, OperatorNode, CommentNode, ReceiveNode, SendNode, ExitNode,
   UnsupportedOperatorNode, TemplateNode, TextPart, RefPart, DurationValue,
-  ChannelRef, ValueRef, ToolRef, PromiseRef,
+  ChannelRef, ValueRef, ToolRef, PromiseRef, ParticipantRef,
   ActorsNode, ToolsNode, DefineNode, SetNode,
   ThinkNode, ExecuteNode, WaitNode, SignalNode,
   IfNode, RepeatNode, EachNode, ExpressionNode,
@@ -509,7 +509,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
 
     let name: string | null = null;
     let to: ChannelRef | null = null;
-    let forList: string[] = [];
+    let forList: ParticipantRef[] = [];
     let replyTo: ChannelRef | null = null;
     let awaitPolicy: 'none' | 'any' | 'all' | null = null;
     let timeout: DurationValue | null = null;
@@ -562,7 +562,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
           }
           case 'Mod.For': {
             const refs = parseRefList('ParticipantRef');
-            forList = refs.map(r => r.name);
+            forList = refs.map(r => ({ ref: r.ref, span: r.span }) as ParticipantRef);
             break;
           }
           case 'Mod.ReplyTo': {
@@ -766,7 +766,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
         }
         case 'Mod.Using': {
           const refs = parseRefList('ToolRef');
-          usingRefs = refs.map(r => ({ name: r.name, span: r.span }));
+          usingRefs = refs.map(r => ({ ref: r.ref, span: r.span }) as ToolRef);
           break;
         }
         case 'Mod.Goal':
@@ -804,7 +804,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
     skipTrivia();
 
     const toolToken = expect('ToolRef') as ToolRefToken;
-    const tool: ToolRef = { name: toolToken.name, span: toolToken.span };
+    const tool: ToolRef = { ref: toolToken.ref, span: toolToken.span };
 
     const args = parseArgList();
 

@@ -2,7 +2,7 @@
  * Value resolution utilities for the executor (R-0037, R-0036).
  */
 
-import type { SourceSpan } from '../common/types.js';
+import type { SourceSpan, TypedRef } from '../common/types.js';
 import type { BodyValue, TemplateNode, RefPart } from '../ast/nodes.js';
 import type { Scope } from './scope.js';
 import { ExecutionError } from './executor.js';
@@ -68,6 +68,23 @@ export function interpolate(template: TemplateNode, scope: Scope): string {
     }
   }
   return result.trim();
+}
+
+/**
+ * Resolve a TypedRef to a string name at runtime (R-0057).
+ * Literal refs return value as-is; dynamic refs resolve via scope.
+ */
+export function resolveTypedRef(ref: TypedRef, scope: Scope, span: SourceSpan): string {
+  if (ref.kind === 'literal') return ref.value;
+  const value = resolveVar(ref.name, ref.path, scope, span);
+  const result = String(value);
+  if (result === '' || result === 'undefined' || result === 'null') {
+    throw new ExecutionError(
+      `dynamic ref $${ref.name}${ref.path.map(p => `.${p}`).join('')} resolved to invalid value: ${JSON.stringify(value)}`,
+      span,
+    );
+  }
+  return result;
 }
 
 /**

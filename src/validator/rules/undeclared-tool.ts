@@ -11,22 +11,22 @@ export const undeclaredTool: VisitorRule = {
       if (op.kind === 'Op.Think') {
         const think = op as ThinkNode;
         for (const toolRef of think.using) {
-          if (!scope.tools.has(toolRef.name)) {
+          if (toolRef.ref.kind === 'literal' && !scope.tools.has(toolRef.ref.value)) {
             ctx.report({
               severity: 'error',
               ruleId: 'undeclared-tool',
-              message: formatMessage('undeclared-tool', ctx.dialect, toolRef.name),
+              message: formatMessage('undeclared-tool', ctx.dialect, toolRef.ref.value),
               span: toolRef.span,
             });
           }
         }
       } else if (op.kind === 'Op.Execute') {
         const exec = op as ExecuteNode;
-        if (!scope.tools.has(exec.tool.name)) {
+        if (exec.tool.ref.kind === 'literal' && !scope.tools.has(exec.tool.ref.value)) {
           ctx.report({
             severity: 'error',
             ruleId: 'undeclared-tool',
-            message: formatMessage('undeclared-tool', ctx.dialect, exec.tool.name),
+            message: formatMessage('undeclared-tool', ctx.dialect, exec.tool.ref.value),
             span: exec.tool.span,
           });
         }

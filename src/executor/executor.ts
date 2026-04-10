@@ -14,7 +14,7 @@ import { resolveAwaitPolicy } from '../sdk/helpers.js';
 import type { ModelCallConfig } from '../sdk/types.js';
 import { compileResult } from '../result/compile.js';
 import { Scope } from './scope.js';
-import { interpolate, resolveBodyValue, resolveVar } from './resolve.js';
+import { interpolate, resolveBodyValue, resolveVar, resolveTypedRef } from './resolve.js';
 import { evaluate } from './evaluate.js';
 
 export { ExecutionError, NotImplementedError };
@@ -289,13 +289,14 @@ async function executeNode(
       // Resolve channel address (D-014-05)
       const channel = send.to ? resolveChannel(send.to, scope) : null;
 
-      // Resolve participants (D-014-05)
+      // Resolve participants (D-014-05, R-0057)
       const participantIds: string[] = [];
       if (send.for.length > 0) {
         if (!ctx.providers.participant) {
           throw new HostError('SEND FOR requires a ParticipantProvider', send.span);
         }
-        for (const name of send.for) {
+        for (const pRef of send.for) {
+          const name = resolveTypedRef(pRef.ref, scope, pRef.span);
           const info = await ctx.providers.participant.resolve(name);
           if (!info) {
             throw new ExecutionError(`participant @${name} could not be resolved`, send.span);
@@ -339,7 +340,7 @@ async function executeNode(
       const config: ModelCallConfig = {
         via: think.via ? String(resolveVar(think.via.name, think.via.path, scope, think.via.span)) : null,
         as: think.as.map(ref => String(resolveVar(ref.name, ref.path, scope, ref.span))),
-        using: think.using.map(ref => ref.name),
+        using: think.using.map(ref => resolveTypedRef(ref.ref, scope, ref.span)),
         goal: think.goal ? interpolate(think.goal, scope) : null,
         input: think.input ? interpolate(think.input, scope) : null,
         context: think.context ? interpolate(think.context, scope) : null,
@@ -384,7 +385,8 @@ async function executeNode(
       }
 
       // Call tool inline — NOT a yield point (R-0051)
-      const toolResult = await ctx.providers.tool.invoke(exec.tool.name, resolvedArgs);
+      const toolName = resolveTypedRef(exec.tool.ref, scope, exec.tool.span);
+      const toolResult = await ctx.providers.tool.invoke(toolName, resolvedArgs);
 
       // Store promise as resolved (R-0043)
       ctx.promises[exec.name] = { status: 'resolved', origin: 'execute', result: toolResult.output };

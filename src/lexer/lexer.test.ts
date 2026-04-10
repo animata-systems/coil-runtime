@@ -161,10 +161,22 @@ describe('sigil references', () => {
     expect((tokens[0] as any).path).toEqual(['summary', 'text']);
   });
 
-  it('@name → ParticipantRef', () => {
+  it('@name → ParticipantRef (literal)', () => {
     const tokens = significant(tokenize('@expert', enIndex));
     expect(tokens[0].type).toBe('ParticipantRef');
-    expect((tokens[0] as any).name).toBe('expert');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'literal', value: 'expert' });
+  });
+
+  it('@$var → ParticipantRef (dynamic)', () => {
+    const tokens = significant(tokenize('@$target', enIndex));
+    expect(tokens[0].type).toBe('ParticipantRef');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'dynamic', name: 'target', path: [] });
+  });
+
+  it('@$obj.field → ParticipantRef (dynamic with path)', () => {
+    const tokens = significant(tokenize('@$reply.target_handle', enIndex));
+    expect(tokens[0].type).toBe('ParticipantRef');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'dynamic', name: 'reply', path: ['target_handle'] });
   });
 
   it('#name → ChannelRef', () => {
@@ -208,10 +220,22 @@ describe('sigil references', () => {
     expect((tokens[0] as any).name).toBe('plan');
   });
 
-  it('!name → ToolRef', () => {
+  it('!name → ToolRef (literal)', () => {
     const tokens = significant(tokenize('!search', enIndex));
     expect(tokens[0].type).toBe('ToolRef');
-    expect((tokens[0] as any).name).toBe('search');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'literal', value: 'search' });
+  });
+
+  it('!$var → ToolRef (dynamic)', () => {
+    const tokens = significant(tokenize('!$chosen_tool', enIndex));
+    expect(tokens[0].type).toBe('ToolRef');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'dynamic', name: 'chosen_tool', path: [] });
+  });
+
+  it('!$obj.field → ToolRef (dynamic with path)', () => {
+    const tokens = significant(tokenize('!$config.tool_name', enIndex));
+    expect(tokens[0].type).toBe('ToolRef');
+    expect((tokens[0] as any).ref).toEqual({ kind: 'dynamic', name: 'config', path: ['tool_name'] });
   });
 
   it('~name → StreamRef', () => {

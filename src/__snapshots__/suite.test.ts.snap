@@ -49,7 +49,12 @@ exports[`conformance tests > valid/core/actors-block.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "analyst",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "analyst",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -113,7 +118,12 @@ exports[`conformance tests > valid/core/actors-inline.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "client",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "client",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -283,7 +293,10 @@ exports[`conformance tests > valid/core/execute-oneshot.coil 1`] = `
       "kind": "Op.Execute",
       "name": "article",
       "tool": {
-        "name": "load_article",
+        "ref": {
+          "kind": "literal",
+          "value": "load_article",
+        },
       },
     },
     {
@@ -480,8 +493,18 @@ exports[`conformance tests > valid/core/send-await-all.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "reviewer_a",
-        "reviewer_b",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "reviewer_a",
+          },
+        },
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "reviewer_b",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "review_request",
@@ -558,7 +581,12 @@ exports[`conformance tests > valid/core/send-await-any.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "expert",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "expert",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "question",
@@ -635,7 +663,12 @@ exports[`conformance tests > valid/core/send-fire-and-forget.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "user",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "user",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -698,7 +731,12 @@ exports[`conformance tests > valid/core/send-reply-to.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "client",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "client",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -970,7 +1008,10 @@ You are a senior data analyst.
       ],
       "using": [
         {
-          "name": "search",
+          "ref": {
+            "kind": "literal",
+            "value": "search",
+          },
         },
       ],
       "via": {
@@ -1243,10 +1284,16 @@ exports[`conformance tests > valid/core/think-using-tools.coil 1`] = `
       ],
       "using": [
         {
-          "name": "search",
+          "ref": {
+            "kind": "literal",
+            "value": "search",
+          },
         },
         {
-          "name": "calculator",
+          "ref": {
+            "kind": "literal",
+            "value": "calculator",
+          },
         },
       ],
       "via": null,
@@ -3200,7 +3247,10 @@ exports[`conformance tests > valid/extended/signal-context.coil 1`] = `
       "kind": "Op.Execute",
       "name": "results",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -3406,7 +3456,12 @@ User request.
         "type": "template",
       },
       "for": [
-        "expert",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "expert",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "question",
@@ -3455,7 +3510,12 @@ User request.
         "type": "template",
       },
       "for": [
-        "user",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "user",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -3694,7 +3754,12 @@ exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "эксперт",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "эксперт",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "вопрос",
@@ -3743,7 +3808,12 @@ exports[`conformance tests > valid/lexical/multiword-keywords-ru.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "пользователь",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "пользователь",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -4101,7 +4171,12 @@ Customer request text.
         "type": "template",
       },
       "for": [
-        "user",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "user",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -5768,7 +5843,10 @@ Kennung des aktuellen Falls.
       "kind": "Op.Execute",
       "name": "gefunden",
       "tool": {
-        "name": "suche",
+        "ref": {
+          "kind": "literal",
+          "value": "suche",
+        },
       },
     },
     {
@@ -5794,7 +5872,12 @@ Kennung des aktuellen Falls.
         "type": "template",
       },
       "for": [
-        "experte",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "experte",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "meinung",
@@ -5951,7 +6034,12 @@ Kennung des aktuellen Falls.
         "type": "template",
       },
       "for": [
-        "autor",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "autor",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -6140,7 +6228,10 @@ Fügen Sie den Dokumenttext zur Überprüfung ein.
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -6374,7 +6465,12 @@ Fügen Sie den Dokumenttext zur Überprüfung ein.
                 "type": "template",
               },
               "for": [
-                "autor",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "autor",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -6490,7 +6586,12 @@ Fügen Sie den Dokumenttext zur Überprüfung ein.
             "type": "template",
           },
           "for": [
-            "autor",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "autor",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -6879,7 +6980,10 @@ Current case identifier.
       "kind": "Op.Execute",
       "name": "found",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -6905,7 +7009,12 @@ Current case identifier.
         "type": "template",
       },
       "for": [
-        "expert",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "expert",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "opinion",
@@ -7062,7 +7171,12 @@ Current case identifier.
         "type": "template",
       },
       "for": [
-        "author",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "author",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -7251,7 +7365,10 @@ Paste the document text for review.
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -7485,7 +7602,12 @@ Paste the document text for review.
                 "type": "template",
               },
               "for": [
-                "author",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "author",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -7601,7 +7723,12 @@ Paste the document text for review.
             "type": "template",
           },
           "for": [
-            "author",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "author",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -8000,7 +8127,10 @@ Identificador del caso actual.
       "kind": "Op.Execute",
       "name": "encontrado",
       "tool": {
-        "name": "búsqueda",
+        "ref": {
+          "kind": "literal",
+          "value": "búsqueda",
+        },
       },
     },
     {
@@ -8026,7 +8156,12 @@ Identificador del caso actual.
         "type": "template",
       },
       "for": [
-        "experto",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "experto",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "opinión",
@@ -8191,7 +8326,12 @@ Identificador del caso actual.
         "type": "template",
       },
       "for": [
-        "autor",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "autor",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -8380,7 +8520,10 @@ Pegue el texto del documento para revisión.
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -8614,7 +8757,12 @@ Pegue el texto del documento para revisión.
                 "type": "template",
               },
               "for": [
-                "autor",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "autor",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -8730,7 +8878,12 @@ Pegue el texto del documento para revisión.
             "type": "template",
           },
           "for": [
-            "autor",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "autor",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -9125,7 +9278,10 @@ Identifiant du dossier en cours.
       "kind": "Op.Execute",
       "name": "trouvé",
       "tool": {
-        "name": "recherche",
+        "ref": {
+          "kind": "literal",
+          "value": "recherche",
+        },
       },
     },
     {
@@ -9151,7 +9307,12 @@ Identifiant du dossier en cours.
         "type": "template",
       },
       "for": [
-        "expert",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "expert",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "avis",
@@ -9308,7 +9469,12 @@ Identifiant du dossier en cours.
         "type": "template",
       },
       "for": [
-        "auteur",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "auteur",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -9497,7 +9663,10 @@ Collez le texte du document à examiner.
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -9731,7 +9900,12 @@ Collez le texte du document à examiner.
                 "type": "template",
               },
               "for": [
-                "auteur",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "auteur",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -9847,7 +10021,12 @@ Collez le texte du document à examiner.
             "type": "template",
           },
           "for": [
-            "auteur",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "auteur",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -10231,7 +10410,10 @@ exports[`dialect showcases > ja-standard 1`] = `
       "kind": "Op.Execute",
       "name": "検索結果",
       "tool": {
-        "name": "検索",
+        "ref": {
+          "kind": "literal",
+          "value": "検索",
+        },
       },
     },
     {
@@ -10257,7 +10439,12 @@ exports[`dialect showcases > ja-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "専門家",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "専門家",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "意見",
@@ -10414,7 +10601,12 @@ exports[`dialect showcases > ja-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "著者",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "著者",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -10603,7 +10795,10 @@ exports[`dialect showcases > ja-standard 2`] = `
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -10837,7 +11032,12 @@ exports[`dialect showcases > ja-standard 2`] = `
                 "type": "template",
               },
               "for": [
-                "著者",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "著者",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -10953,7 +11153,12 @@ exports[`dialect showcases > ja-standard 2`] = `
             "type": "template",
           },
           "for": [
-            "著者",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "著者",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -11352,7 +11557,10 @@ Identificador do caso atual.
       "kind": "Op.Execute",
       "name": "encontrado",
       "tool": {
-        "name": "busca",
+        "ref": {
+          "kind": "literal",
+          "value": "busca",
+        },
       },
     },
     {
@@ -11378,7 +11586,12 @@ Identificador do caso atual.
         "type": "template",
       },
       "for": [
-        "especialista",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "especialista",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "opinião",
@@ -11543,7 +11756,12 @@ Identificador do caso atual.
         "type": "template",
       },
       "for": [
-        "autor",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "autor",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -11732,7 +11950,10 @@ Cole o texto do documento para revisão.
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -11966,7 +12187,12 @@ Cole o texto do documento para revisão.
                 "type": "template",
               },
               "for": [
-                "autor",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "autor",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -12082,7 +12308,12 @@ Cole o texto do documento para revisão.
             "type": "template",
           },
           "for": [
-            "autor",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "autor",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -12471,7 +12702,10 @@ exports[`dialect showcases > ru-standard 1`] = `
       "kind": "Op.Execute",
       "name": "найденное",
       "tool": {
-        "name": "поиск",
+        "ref": {
+          "kind": "literal",
+          "value": "поиск",
+        },
       },
     },
     {
@@ -12497,7 +12731,12 @@ exports[`dialect showcases > ru-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "эксперт",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "эксперт",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "мнение",
@@ -12654,7 +12893,12 @@ exports[`dialect showcases > ru-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "автор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "автор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -12843,7 +13087,10 @@ exports[`dialect showcases > ru-standard 2`] = `
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -13077,7 +13324,12 @@ exports[`dialect showcases > ru-standard 2`] = `
                 "type": "template",
               },
               "for": [
-                "автор",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "автор",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -13193,7 +13445,12 @@ exports[`dialect showcases > ru-standard 2`] = `
             "type": "template",
           },
           "for": [
-            "автор",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "автор",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -13578,7 +13835,10 @@ exports[`dialect showcases > zh-standard 1`] = `
       "kind": "Op.Execute",
       "name": "已找到",
       "tool": {
-        "name": "搜索",
+        "ref": {
+          "kind": "literal",
+          "value": "搜索",
+        },
       },
     },
     {
@@ -13604,7 +13864,12 @@ exports[`dialect showcases > zh-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "专家",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "专家",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "意见",
@@ -13761,7 +14026,12 @@ exports[`dialect showcases > zh-standard 1`] = `
         "type": "template",
       },
       "for": [
-        "作者",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "作者",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -13946,7 +14216,10 @@ exports[`dialect showcases > zh-standard 2`] = `
       "kind": "Op.Execute",
       "name": "refs",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -14180,7 +14453,12 @@ exports[`dialect showcases > zh-standard 2`] = `
                 "type": "template",
               },
               "for": [
-                "作者",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "作者",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": null,
@@ -14296,7 +14574,12 @@ exports[`dialect showcases > zh-standard 2`] = `
             "type": "template",
           },
           "for": [
-            "作者",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "作者",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -14468,7 +14751,12 @@ exports[`executable examples > anti-patterns/missing-wait.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "пользователь",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "пользователь",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -15152,7 +15440,12 @@ exports[`executable examples > patterns/evaluator-optimizer.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -15700,7 +15993,12 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
             "type": "template",
           },
           "for": [
-            "модератор",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "модератор",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -15797,7 +16095,12 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
             "type": "template",
           },
           "for": [
-            "модератор",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "модератор",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -15862,7 +16165,12 @@ exports[`executable examples > patterns/expression-conditions.coil 1`] = `
             "type": "template",
           },
           "for": [
-            "модератор",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "модератор",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -16437,7 +16745,12 @@ exports[`executable examples > patterns/internal-delegation.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -16576,7 +16889,12 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "архитектор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "архитектор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "plan_request",
@@ -16766,7 +17084,12 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
                 "type": "template",
               },
               "for": [
-                "создатель",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "создатель",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": "work_result",
@@ -16853,7 +17176,12 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
                 "type": "template",
               },
               "for": [
-                "модификатор",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "модификатор",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": "work_result",
@@ -16940,7 +17268,12 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
                 "type": "template",
               },
               "for": [
-                "удалятор",
+                {
+                  "ref": {
+                    "kind": "literal",
+                    "value": "удалятор",
+                  },
+                },
               ],
               "kind": "Op.Send",
               "name": "work_result",
@@ -17039,7 +17372,12 @@ exports[`executable examples > patterns/multi-agent-orchestration.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -17591,7 +17929,12 @@ exports[`executable examples > patterns/parallelization.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -18184,7 +18527,12 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
             "type": "template",
           },
           "for": [
-            "инициатор",
+            {
+              "ref": {
+                "kind": "literal",
+                "value": "инициатор",
+              },
+            },
           ],
           "kind": "Op.Send",
           "name": null,
@@ -18287,7 +18635,12 @@ exports[`executable examples > patterns/prompt-chaining.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -18737,7 +19090,12 @@ exports[`executable examples > patterns/routing.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -18966,7 +19324,10 @@ exports[`executable examples > patterns/stream-feedback.coil 1`] = `
       "kind": "Op.Execute",
       "name": "references",
       "tool": {
-        "name": "search",
+        "ref": {
+          "kind": "literal",
+          "value": "search",
+        },
       },
     },
     {
@@ -18990,7 +19351,10 @@ exports[`executable examples > patterns/stream-feedback.coil 1`] = `
       "kind": "Op.Execute",
       "name": "history",
       "tool": {
-        "name": "database",
+        "ref": {
+          "kind": "literal",
+          "value": "database",
+        },
       },
     },
     {
@@ -19259,7 +19623,12 @@ exports[`executable examples > patterns/stream-feedback.coil 1`] = `
                     "type": "template",
                   },
                   "for": [
-                    "инициатор",
+                    {
+                      "ref": {
+                        "kind": "literal",
+                        "value": "инициатор",
+                      },
+                    },
                   ],
                   "kind": "Op.Send",
                   "name": null,
@@ -19379,7 +19748,12 @@ exports[`executable examples > patterns/stream-feedback.coil 1`] = `
         "type": "template",
       },
       "for": [
-        "инициатор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "инициатор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,
@@ -19727,7 +20101,10 @@ exports[`narrative examples > research-agent.md 1`] = `
       "kind": "Op.Execute",
       "name": "найденное",
       "tool": {
-        "name": "поиск",
+        "ref": {
+          "kind": "literal",
+          "value": "поиск",
+        },
       },
     },
     {
@@ -19753,7 +20130,12 @@ exports[`narrative examples > research-agent.md 1`] = `
         "type": "template",
       },
       "for": [
-        "эксперт",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "эксперт",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": "мнение",
@@ -19910,7 +20292,12 @@ exports[`narrative examples > research-agent.md 1`] = `
         "type": "template",
       },
       "for": [
-        "автор",
+        {
+          "ref": {
+            "kind": "literal",
+            "value": "автор",
+          },
+        },
       ],
       "kind": "Op.Send",
       "name": null,

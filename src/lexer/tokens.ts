@@ -1,7 +1,7 @@
 import type { AbstractId } from '../dialect/types.js';
-import type { SourceSpan, ChannelSegment } from '../common/types.js';
+import type { SourceSpan, ChannelSegment, TypedRef } from '../common/types.js';
 
-export type { SourceSpan, ChannelSegment } from '../common/types.js';
+export type { SourceSpan, ChannelSegment, TypedRef } from '../common/types.js';
 
 // ─── Token types ─────────────────────────────────────────
 
@@ -51,10 +51,10 @@ export interface ValueRefToken {
   span: SourceSpan;
 }
 
-/** @name */
+/** @name or @$dynamic (R-0057) */
 export interface ParticipantRefToken {
   type: 'ParticipantRef';
-  name: string;
+  ref: TypedRef;
   span: SourceSpan;
 }
 
@@ -75,10 +75,10 @@ export interface PromiseRefToken {
   span: SourceSpan;
 }
 
-/** !name */
+/** !name or !$dynamic (R-0057) */
 export interface ToolRefToken {
   type: 'ToolRef';
-  name: string;
+  ref: TypedRef;
   span: SourceSpan;
 }
 

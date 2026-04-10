@@ -123,6 +123,25 @@ EXIT`;
     expect(errors).toHaveLength(0);
   });
 
+  it('SEND FOR @$dynamic → OK (пропуск для динамических ссылок)', () => {
+    const src = `DEFINE reply
+<<
+test
+>>
+END
+
+SEND
+  FOR @$reply.target
+<<
+Hello
+>>
+END
+EXIT`;
+    const result = validateEN(src);
+    const errors = result.diagnostics.filter(d => d.ruleId === 'undeclared-participant');
+    expect(errors).toHaveLength(0);
+  });
+
   it('SEND без FOR → OK (никого не адресует)', () => {
     const src = `RECEIVE msg
 <<

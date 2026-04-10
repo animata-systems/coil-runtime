@@ -1,4 +1,4 @@
-import type { SourceSpan, ChannelSegment } from '../common/types.js';
+import type { SourceSpan, ChannelSegment, TypedRef } from '../common/types.js';
 import type { AbstractId } from '../dialect/types.js';
 
 // ─── Channel reference (AST-level) ──────────────────────
@@ -50,8 +50,15 @@ export interface ValueRef {
   span: SourceSpan;
 }
 
+/** @participant — literal or dynamic (R-0057) */
+export interface ParticipantRef {
+  ref: TypedRef;
+  span: SourceSpan;
+}
+
+/** !tool — literal or dynamic (R-0057) */
 export interface ToolRef {
-  name: string;
+  ref: TypedRef;
   span: SourceSpan;
 }
 
@@ -134,7 +141,7 @@ export interface SendNode {
   kind: 'Op.Send';
   name: string | null;
   to: ChannelRef | null;
-  for: string[];           // participant names
+  for: ParticipantRef[];    // participant refs — literal or dynamic (R-0057)
   replyTo: ChannelRef | null;
   await: 'none' | 'any' | 'all' | null;
   timeout: DurationValue | null;
