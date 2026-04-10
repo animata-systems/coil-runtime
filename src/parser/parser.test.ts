@@ -65,8 +65,18 @@ describe('parseReceive', () => {
     expect(() => parseEN('RECEIVE\nEND')).toThrow(ParseError);
   });
 
-  it('RECEIVE без END → ParseError', () => {
-    expect(() => parseEN('RECEIVE name\nEXIT')).toThrow(ParseError);
+  it('RECEIVE name (inline, без END) → ReceiveNode', () => {
+    const ast = parseEN('RECEIVE name\nEXIT');
+    expect(ast.nodes).toHaveLength(2);
+    const node = ast.nodes[0] as ReceiveNode;
+    expect(node.kind).toBe('Op.Receive');
+    expect(node.name).toBe('name');
+    expect(node.prompt).toBeNull();
+    expect(node.timeout).toBeNull();
+  });
+
+  it('RECEIVE с модификатором без END → ParseError', () => {
+    expect(() => parseEN('RECEIVE name\nNO MORE THAN 5m\nEXIT')).toThrow(ParseError);
   });
 });
 
@@ -1128,4 +1138,35 @@ END
     const exitRequired = result.diagnostics.find(d => d.ruleId === 'exit-required');
     expect(exitRequired).toBeDefined();
   });
+});
+
+// ─── Safety net: error types ────────────────────────────
+
+describe('error types', () => {
+  const garbage = [
+    '!!!',
+    '{{{}}}',
+    '123 abc *** ???',
+    '$$$',
+    'RECEIVE\n',
+    '<<>>',
+    'IF IF IF',
+  ];
+
+  for (const input of garbage) {
+    it(`garbage input "${input.slice(0, 20)}" → only LexerError or ParseError`, () => {
+      let threw = false;
+      try {
+        const tokens = tokenize(input, enIndex);
+        parse(tokens, enTable, input);
+      } catch (e) {
+        threw = true;
+        const isTyped =
+          (e as Error).name === 'LexerError' ||
+          (e as Error).name === 'ParseError';
+        expect(isTyped, `got ${(e as Error).name}: ${(e as Error).message}`).toBe(true);
+      }
+      expect(threw).toBe(true);
+    });
+  }
 });

@@ -69,6 +69,22 @@ const WAIT_MODIFIERS: readonly AbstractId[] = [
 
 /** R-0019: parse() accepts source for raw-text condition reconstruction */
 export function parse(tokens: Token[], dialect: DialectTable, source: string): ScriptNode {
+  try {
+    return parseImpl(tokens, dialect, source);
+  } catch (e) {
+    if (e instanceof ParseError) throw e;
+    const span = tokens.length > 0
+      ? tokens[Math.min(tokens.length - 1, 0)].span
+      : { line: 1, col: 1, offset: 0, length: 0 };
+    throw new ParseError(
+      `internal parser error: ${(e as Error).message}`,
+      span,
+      'internal-error',
+    );
+  }
+}
+
+function parseImpl(tokens: Token[], dialect: DialectTable, source: string): ScriptNode {
   const nodes: (OperatorNode | CommentNode)[] = [];
   let pos = 0;
 
@@ -457,8 +473,25 @@ export function parse(tokens: Token[], dialect: DialectTable, source: string): S
       }
     }
 
+    // Block form: modifiers or body present → END required.
+    // Otherwise: END present → consume it (explicit block). END absent → inline form.
+    const hasModifiersOrBody = timeout !== null || prompt !== null;
     skipTrivia();
-    expectKeyword('Kw.End');
+    if (hasModifiersOrBody) {
+      const t = peek();
+      if (t.type !== 'Keyword' || !(t as KeywordToken).ids.includes('Kw.End')) {
+        throw new ParseError(
+          'RECEIVE with modifier or body requires END',
+          t.span,
+          'receive-unexpected-token',
+          'Op.Receive',
+        );
+      }
+      advance();
+    } else if (isKeyword('Kw.End')) {
+      advance(); // explicit block form without body
+    }
+    // else: inline form — no END consumed
 
     return {
       kind: 'Op.Receive',

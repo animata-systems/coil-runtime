@@ -259,12 +259,12 @@ async function executeNode(
       const recv = node as ReceiveNode;
       const promptText = recv.prompt
         ? interpolate(recv.prompt, scope)
-        : `${recv.name}: `;
+        : null;
 
       // Yield to the host for input
       return {
         type: 'yield',
-        detail: { type: 'receive', prompt: promptText },
+        detail: { type: 'receive', variableName: recv.name, prompt: promptText },
       };
     }
 

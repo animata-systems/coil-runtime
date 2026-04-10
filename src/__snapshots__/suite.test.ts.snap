@@ -339,6 +339,47 @@ exports[`conformance tests > valid/core/exit.coil 1`] = `
 }
 `;
 
+exports[`conformance tests > valid/core/receive-inline.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Op.Receive",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RECEIVE inline form: no body, no modifiers, no END",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "config_value",
+      "prompt": null,
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`conformance tests > valid/core/receive-with-prompt.coil 1`] = `
 {
   "dialect": "en-standard",

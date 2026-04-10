@@ -25,6 +25,19 @@ const ID_CONT = /[\p{L}\p{N}_]/u;
  * R-0004: template mode splits << >> into TextFragment + ValueRef.
  */
 export function tokenize(source: string, keywords: KeywordIndex): Token[] {
+  try {
+    return tokenizeImpl(source, keywords);
+  } catch (e) {
+    if (e instanceof LexerError) throw e;
+    throw new LexerError(
+      `internal lexer error: ${(e as Error).message}`,
+      { line: 1, col: 1, offset: 0, length: 0 },
+      'internal-error',
+    );
+  }
+}
+
+function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
   const tokens: Token[] = [];
   let pos = 0;
   let line = 1;

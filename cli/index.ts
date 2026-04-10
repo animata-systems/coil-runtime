@@ -217,7 +217,7 @@ async function main(): Promise<void> {
     while (result.type === 'yield') {
       const yr = result as YieldRequest;
       if (yr.detail.type === 'receive') {
-        const value = await cliReceive(yr.detail.prompt);
+        const value = await cliReceive(yr.detail.prompt ?? `${yr.detail.variableName}: `);
         result = await resume(yr.snapshot, { type: 'ReceiveValue', value }, ast, providers);
       } else {
         console.error(`error: unhandled yield type: ${yr.detail.type}`);

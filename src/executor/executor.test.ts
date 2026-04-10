@@ -400,6 +400,30 @@ describe('pause/resume', () => {
     expect(sentText(channel)).toEqual(['Alice and Bob']);
   });
 
+  it('RECEIVE yield detail: block form → variableName + prompt string', async () => {
+    const ast = parseEN(`RECEIVE name\n<<\nEnter name:\n>>\nEND\nEXIT`);
+    const result = await execute(ast);
+    expect(result.type).toBe('yield');
+    const yr = result as YieldRequest;
+    expect(yr.detail).toEqual(expect.objectContaining({
+      type: 'receive',
+      variableName: 'name',
+    }));
+    expect(typeof (yr.detail as { prompt: string | null }).prompt).toBe('string');
+  });
+
+  it('RECEIVE yield detail: inline form → variableName + prompt null', async () => {
+    const ast = parseEN(`RECEIVE config\nEXIT`);
+    const result = await execute(ast);
+    expect(result.type).toBe('yield');
+    const yr = result as YieldRequest;
+    expect(yr.detail).toEqual({
+      type: 'receive',
+      variableName: 'config',
+      prompt: null,
+    });
+  });
+
   it('snapshot is JSON-serializable', async () => {
     const ast = parseEN(`DEFINE x\n42\nEND\nRECEIVE y\nEND\nEXIT`);
     const result = await execute(ast);

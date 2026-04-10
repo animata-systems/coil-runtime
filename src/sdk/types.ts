@@ -140,7 +140,7 @@ export interface Timeout {
 
 /** Detail carried by each yield request type. */
 export type YieldDetail =
-  | { type: 'receive'; prompt: string }
+  | { type: 'receive'; variableName: string; prompt: string | null }
   | { type: 'wait-promises'; promiseNames: string[]; mode: 'any' | 'all' }
   | { type: 'await-replies'; correlationId: string; awaitPolicy: 'any' | 'all'; promiseName: string };
 
