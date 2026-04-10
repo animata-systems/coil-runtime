@@ -62,7 +62,9 @@ export function interpolate(template: TemplateNode, scope: Scope): string {
     } else {
       const ref = part as RefPart;
       const value = resolveVar(ref.name, ref.path, scope, ref.span);
-      result += String(value);
+      result += typeof value === 'object' && value !== null
+        ? JSON.stringify(value, null, 2)
+        : String(value);
     }
   }
   return result.trim();
