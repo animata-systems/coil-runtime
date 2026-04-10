@@ -264,7 +264,12 @@ async function executeNode(
       // Yield to the host for input
       return {
         type: 'yield',
-        detail: { type: 'receive', variableName: recv.name, prompt: promptText },
+        detail: {
+          type: 'receive',
+          variableName: recv.name,
+          prompt: promptText,
+          timeoutMs: recv.timeout ? durationToMs(recv.timeout) : null,
+        },
       };
     }
 

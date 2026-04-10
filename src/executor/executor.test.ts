@@ -421,6 +421,7 @@ describe('pause/resume', () => {
       type: 'receive',
       variableName: 'config',
       prompt: null,
+      timeoutMs: null,
     });
   });
 
