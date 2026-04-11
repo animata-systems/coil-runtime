@@ -510,6 +510,16 @@ END`;
     expect(node.body!.type).toBe('template');
   });
 
+  it('RESULT description with dots, @, !, brackets (D-0051)', () => {
+    const src = `THINK plan\n  GOAL << analyze >>\n  RESULT\n  * path: TEXT - file config.json\n  * who: TEXT - ask @ivan\n  * tool: TEXT - use !search (required)\nEND`;
+    const ast = parseEN(src);
+    const node = ast.nodes[0] as ThinkNode;
+    expect(node.result).toHaveLength(3);
+    expect(node.result[0].description).toBe('file config.json');
+    expect(node.result[1].description).toBe('ask @ivan');
+    expect(node.result[2].description).toBe('use !search (required)');
+  });
+
   it('error: GOAL (formulation) before AS (rigging)', () => {
     const src = `DEFINE role\n<< analyst >>\nEND\nTHINK plan\n  GOAL <<\n  Find problem.\n  >>\n  AS $role\nEND`;
     expect(() => parseEN(src)).toThrow(ParseError);
@@ -1140,6 +1150,72 @@ END
     const result = validate(ast, enTable);
     const exitRequired = result.diagnostics.find(d => d.ruleId === 'exit-required');
     expect(exitRequired).toBeDefined();
+  });
+});
+
+// ─── Heredoc templates (D-0050) ─────────────────────────
+
+describe('heredoc templates (D-0050)', () => {
+  it('heredoc as GOAL modifier in THINK', () => {
+    const src = `THINK plan\n  GOAL <<END\nAnalyze the $input data.\nEND\nEND`;
+    const ast = parseEN(src);
+    const think = ast.nodes[0] as any;
+    expect(think.kind).toBe('Op.Think');
+    expect(think.goal).not.toBeNull();
+    expect(think.goal.type).toBe('template');
+    expect(think.goal.delimiter).toBe('END');
+    expect(think.goal.parts).toHaveLength(3);
+    expect(think.goal.parts[0].type).toBe('text');
+    expect(think.goal.parts[0].value).toBe('Analyze the ');
+    expect(think.goal.parts[1].type).toBe('ref');
+    expect(think.goal.parts[1].name).toBe('input');
+    expect(think.goal.parts[2].type).toBe('text');
+    expect(think.goal.parts[2].value).toBe(' data.\n');
+  });
+
+  it('raw heredoc has no delimiter in parts, entire content is text', () => {
+    const src = `THINK plan\n  GOAL <<'RAW'\n$name >> @agent\nRAW\nEND`;
+    const ast = parseEN(src);
+    const think = ast.nodes[0] as any;
+    expect(think.goal.delimiter).toBe('RAW');
+    expect(think.goal.parts).toHaveLength(1);
+    expect(think.goal.parts[0].type).toBe('text');
+    expect(think.goal.parts[0].value).toContain('$name');
+    expect(think.goal.parts[0].value).toContain('>>');
+  });
+
+  it('heredoc as anonymous body in THINK (D-0032)', () => {
+    const src = `THINK plan\n  <<BODY\nDo the work with $data.\nBODY\nEND`;
+    const ast = parseEN(src);
+    const think = ast.nodes[0] as any;
+    expect(think.body).not.toBeNull();
+    expect(think.body.delimiter).toBe('BODY');
+    expect(think.body.parts.some((p: any) => p.type === 'ref' && p.name === 'data')).toBe(true);
+  });
+
+  it('heredoc as body value in DEFINE', () => {
+    const src = `DEFINE msg <<TPL\nHello, $name!\nTPL\nEND`;
+    const ast = parseEN(src);
+    const define = ast.nodes[0] as any;
+    expect(define.kind).toBe('Op.Define');
+    expect(define.body.type).toBe('template');
+    expect(define.body.delimiter).toBe('TPL');
+  });
+
+  it('heredoc in SEND body', () => {
+    const src = `SEND\n  <<MSG\nContent with >> and $var.\nMSG\nEND`;
+    const ast = parseEN(src);
+    const send = ast.nodes[0] as any;
+    expect(send.kind).toBe('Op.Send');
+    expect(send.body).not.toBeNull();
+    expect(send.body.delimiter).toBe('MSG');
+  });
+
+  it('standard template does NOT have delimiter field', () => {
+    const src = `THINK plan\n  GOAL <<\nstandard.\n>>\nEND`;
+    const ast = parseEN(src);
+    const think = ast.nodes[0] as any;
+    expect(think.goal.delimiter).toBeUndefined();
   });
 });
 

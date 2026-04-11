@@ -42,6 +42,7 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
   let pos = 0;
   let line = 1;
   let col = 1;
+  let inResultBlock = false;
 
   function makeSpan(startLine: number, startCol: number, startOffset: number, length: number): SourceSpan {
     return { line: startLine, col: startCol, offset: startOffset, length };
@@ -95,12 +96,10 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
       throw new LexerError('expected identifier after $', makeSpan(startLine, startCol, startOffset, 1), 'expected-identifier-after-sigil');
     }
     const path: string[] = [];
-    while (!atEnd() && peek() === '.') {
+    while (!atEnd() && peek() === '.' && ID_START.test(peekAt(1))) {
       advance(); // skip .
       const field = readIdentifier();
-      if (field === '') {
-        throw new LexerError('expected field name after .', makeSpan(line, col - 1, pos - 1, 1), 'expected-field-after-dot');
-      }
+      if (field === '') break;
       path.push(field);
     }
     return {
@@ -291,6 +290,106 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     throw new LexerError('unterminated template: expected >>', makeSpan(textStartLine, textStartCol, textStart, 0), 'unterminated-template');
   }
 
+  // ─── Result description mode (D-0051) ──────────────────
+
+  /** Read result description as one TextFragment until end of line */
+  function tokenizeResultDescription(): void {
+    skipWhitespace();
+    if (atEnd() || peek() === '\n') return;
+
+    const textStart = pos;
+    const textStartLine = line;
+    const textStartCol = col;
+    let textBuf = '';
+
+    while (!atEnd() && peek() !== '\n') {
+      textBuf += peek();
+      advance();
+    }
+
+    if (textBuf.length > 0) {
+      tokens.push({
+        type: 'TextFragment',
+        value: textBuf,
+        span: makeSpan(textStartLine, textStartCol, textStart, textBuf.length),
+      });
+    }
+  }
+
+  // ─── Heredoc mode (D-0050) ──────────────────────────────
+
+  /** Tokenize heredoc body until closing marker line */
+  function tokenizeHeredoc(marker: string, raw: boolean): void {
+    let textStart = pos;
+    let textStartLine = line;
+    let textStartCol = col;
+    let textBuf = '';
+
+    function flushText(): void {
+      if (textBuf.length > 0) {
+        tokens.push({
+          type: 'TextFragment',
+          value: textBuf,
+          span: makeSpan(textStartLine, textStartCol, textStart, textBuf.length),
+        });
+        textBuf = '';
+      }
+      textStart = pos;
+      textStartLine = line;
+      textStartCol = col;
+    }
+
+    while (!atEnd()) {
+      // At start of line, check for closing marker
+      if (col === 1) {
+        let wsLen = 0;
+        while (pos + wsLen < source.length && (source[pos + wsLen] === ' ' || source[pos + wsLen] === '\t')) {
+          wsLen++;
+        }
+        const afterWs = pos + wsLen;
+        if (source.substring(afterWs, afterWs + marker.length) === marker) {
+          const chAfter = source[afterWs + marker.length] ?? '';
+          if (chAfter === '' || chAfter === '\n' || chAfter === '\r') {
+            flushText();
+            const closeLine = line;
+            const closeCol = col;
+            const closeOffset = pos;
+            const totalLen = wsLen + marker.length;
+            advance(totalLen);
+            tokens.push({
+              type: 'HeredocClose',
+              marker,
+              span: makeSpan(closeLine, closeCol, closeOffset, totalLen),
+            });
+            return;
+          }
+        }
+      }
+
+      // $-reference inside heredoc (only if not raw)
+      if (!raw && peek() === '$' && peekAt(1) !== '' && ID_START.test(peekAt(1))) {
+        flushText();
+        const refLine = line;
+        const refCol = col;
+        const refOffset = pos;
+        tokens.push(readValueRef(refLine, refCol, refOffset));
+        textStart = pos;
+        textStartLine = line;
+        textStartCol = col;
+        continue;
+      }
+
+      textBuf += peek();
+      advance();
+    }
+
+    throw new LexerError(
+      `unterminated heredoc: expected closing marker ${marker}`,
+      makeSpan(textStartLine, textStartCol, textStart, 0),
+      'unterminated-heredoc',
+    );
+  }
+
   // ─── Main loop ─────────────────────────────────────────
 
   while (!atEnd()) {
@@ -325,12 +424,57 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
       continue;
     }
 
-    // Template open: <<
+    // Template open: << (standard, heredoc, or raw heredoc — D-0050)
     if (ch === '<' && peekAt(1) === '<') {
+      inResultBlock = false;
+      const nextCh = source[pos + 2] ?? '';
+
+      // Raw heredoc: <<'TAG'
+      if (nextCh === "'") {
+        const hdStartOffset = pos;
+        advance(3); // skip << and '
+        const marker = readIdentifier();
+        if (marker === '') {
+          throw new LexerError("expected identifier after <<'", makeSpan(startLine, startCol, hdStartOffset, pos - hdStartOffset), 'heredoc-expected-marker');
+        }
+        if (atEnd() || peek() !== "'") {
+          throw new LexerError("expected closing ' in heredoc marker", makeSpan(line, col, pos, 1), 'heredoc-unclosed-quote');
+        }
+        advance(); // skip closing '
+        tokens.push({
+          type: 'HeredocOpen',
+          marker,
+          raw: true,
+          span: makeSpan(startLine, startCol, hdStartOffset, pos - hdStartOffset),
+        });
+        // Skip rest of opening line; content starts on next line
+        while (!atEnd() && peek() !== '\n') advance();
+        if (!atEnd()) advance(); // skip newline
+        tokenizeHeredoc(marker, true);
+        continue;
+      }
+
+      // Heredoc with substitutions: <<TAG
+      if (ID_START.test(nextCh)) {
+        const hdStartOffset = pos;
+        advance(2); // skip <<
+        const marker = readIdentifier();
+        tokens.push({
+          type: 'HeredocOpen',
+          marker,
+          raw: false,
+          span: makeSpan(startLine, startCol, hdStartOffset, pos - hdStartOffset),
+        });
+        // Skip rest of opening line; content starts on next line
+        while (!atEnd() && peek() !== '\n') advance();
+        if (!atEnd()) advance(); // skip newline
+        tokenizeHeredoc(marker, false);
+        continue;
+      }
+
+      // Standard template: << ... >>
       tokens.push({ type: 'TemplateOpen', span: makeSpan(startLine, startCol, startOffset, 2) });
       advance(2);
-      // Skip optional whitespace/newline after <<
-      // Actually, enter template mode — template content starts immediately
       tokenizeTemplate();
       continue;
     }
@@ -421,6 +565,12 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
           span: makeSpan(startLine, startCol, startOffset, kwMatch.length),
         });
         advance(kwMatch.length);
+        // Track РЕЗУЛЬТАТ block for text-mode descriptions (D-0051)
+        if (kwMatch.match.ids.some(id => id === 'Mod.Result')) {
+          inResultBlock = true;
+        } else if (kwMatch.match.ids.some(id => id === 'Kw.End' || id.startsWith('Mod.') || id.startsWith('Op.'))) {
+          inResultBlock = false;
+        }
         continue;
       }
 
@@ -444,6 +594,9 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     if (ch === '-') {
       tokens.push({ type: 'Dash', span: makeSpan(startLine, startCol, startOffset, 1) });
       advance();
+      if (inResultBlock) {
+        tokenizeResultDescription();
+      }
       continue;
     }
 

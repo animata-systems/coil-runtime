@@ -342,6 +342,158 @@ describe('errors', () => {
   });
 });
 
+// ─── Result description text mode (D-0051) ─────────────
+
+describe('result description text mode (D-0051)', () => {
+  it('RESULT field with dot in description does not crash', () => {
+    const src = `THINK plan\n  RESULT\n  * path: TEXT - file config.json\nEND`;
+    const tokens = tokenize(src, enIndex);
+    expect(tokens.some(t => t.type === 'EOF')).toBe(true);
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.length).toBeGreaterThanOrEqual(1);
+    expect((textFragments[0] as any).value).toContain('config.json');
+  });
+
+  it('RESULT field with @ in description', () => {
+    const src = `THINK plan\n  RESULT\n  * assignee: TEXT - responsible @ivan\nEND`;
+    const tokens = tokenize(src, enIndex);
+    expect(tokens.some(t => t.type === 'EOF')).toBe(true);
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.some(t => (t as any).value.includes('@ivan'))).toBe(true);
+  });
+
+  it('RESULT field with !, brackets, quotes in description', () => {
+    const src = `THINK plan\n  RESULT\n  * note: TEXT - use !search tool (important) "quoted"\nEND`;
+    const tokens = tokenize(src, enIndex);
+    expect(tokens.some(t => t.type === 'EOF')).toBe(true);
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.some(t => (t as any).value.includes('!search'))).toBe(true);
+    expect(textFragments.some(t => (t as any).value.includes('(important)'))).toBe(true);
+  });
+
+  it('RESULT field with << in description', () => {
+    const src = `THINK plan\n  RESULT\n  * tmpl: TEXT - template << example >>\nEND`;
+    const tokens = tokenize(src, enIndex);
+    expect(tokens.some(t => t.type === 'EOF')).toBe(true);
+  });
+
+  it('dash outside RESULT still produces only Dash token', () => {
+    const src = `EXECUTE task\n  !tool\n  - key: $value\nEND`;
+    const tokens = tokenize(src, enIndex);
+    const dashes = tokens.filter(t => t.type === 'Dash');
+    expect(dashes.length).toBe(1);
+    // No TextFragment after dash outside RESULT
+    const dashIdx = tokens.indexOf(dashes[0]);
+    const nextSignificant = tokens.slice(dashIdx + 1).find(
+      t => t.type !== 'Newline' && t.type !== 'Comment' && t.type !== 'EOF',
+    );
+    expect(nextSignificant?.type).toBe('Identifier');
+  });
+
+  it('RU: РЕЗУЛЬТАТ with special chars in description', () => {
+    const src = `ДУМАЙ план\n  РЕЗУЛЬТАТ\n  * путь: ТЕКСТ - файл config.json (важно)\nКОНЕЦ`;
+    const tokens = tokenize(src, ruIndex);
+    expect(tokens.some(t => t.type === 'EOF')).toBe(true);
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.some(t => (t as any).value.includes('config.json'))).toBe(true);
+  });
+});
+
+// ─── Heredoc templates (D-0050) ─────────────────────────
+
+describe('heredoc templates (D-0050)', () => {
+  it('heredoc with interpolation: <<TAG ... $var ... TAG', () => {
+    const src = `THINK plan\n  GOAL <<END\nHello $name, welcome.\nEND\nEND`;
+    const tokens = tokenize(src, enIndex);
+    const types = tokens.map(t => t.type);
+    expect(types).toContain('HeredocOpen');
+    expect(types).toContain('HeredocClose');
+    const hdOpen = tokens.find(t => t.type === 'HeredocOpen') as any;
+    expect(hdOpen.marker).toBe('END');
+    expect(hdOpen.raw).toBe(false);
+    // Content: TextFragment "Hello " + ValueRef "name" + TextFragment ", welcome.\n"
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.length).toBeGreaterThanOrEqual(2);
+    expect((textFragments[0] as any).value).toBe('Hello ');
+    const valueRefs = tokens.filter(t => t.type === 'ValueRef');
+    expect(valueRefs.some(v => (v as any).name === 'name')).toBe(true);
+  });
+
+  it('raw heredoc: <<\'TAG\' ... TAG — no substitutions', () => {
+    const src = `THINK plan\n  GOAL <<'RAW'\n$name is not a ref here.\nRAW\nEND`;
+    const tokens = tokenize(src, enIndex);
+    const hdOpen = tokens.find(t => t.type === 'HeredocOpen') as any;
+    expect(hdOpen.marker).toBe('RAW');
+    expect(hdOpen.raw).toBe(true);
+    // $name should NOT be a ValueRef — entire line is one TextFragment
+    const valueRefs = tokens.filter(t => t.type === 'ValueRef');
+    expect(valueRefs.length).toBe(0);
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.length).toBeGreaterThanOrEqual(1);
+    expect((textFragments[0] as any).value).toContain('$name');
+  });
+
+  it('heredoc with >> inside content (no premature close)', () => {
+    const src = `THINK plan\n  GOAL <<COIL\nSend with << and >> inside.\nCOIL\nEND`;
+    const tokens = tokenize(src, enIndex);
+    const types = tokens.map(t => t.type);
+    expect(types).toContain('HeredocOpen');
+    expect(types).toContain('HeredocClose');
+    // >> should be part of text, not TemplateClose
+    expect(types).not.toContain('TemplateClose');
+    const textFragments = tokens.filter(t => t.type === 'TextFragment');
+    expect(textFragments.some(t => (t as any).value.includes('>>'))).toBe(true);
+  });
+
+  it('disambiguation: << followed by space is standard template', () => {
+    const src = `THINK plan\n  GOAL <<\nstandard template\n>>\nEND`;
+    const tokens = tokenize(src, enIndex);
+    const types = tokens.map(t => t.type);
+    expect(types).toContain('TemplateOpen');
+    expect(types).toContain('TemplateClose');
+    expect(types).not.toContain('HeredocOpen');
+  });
+
+  it('heredoc with multiple $refs', () => {
+    const src = `DEFINE msg <<TPL\n$greeting, $name!\nTPL`;
+    const tokens = tokenize(src, enIndex);
+    const valueRefs = tokens.filter(t => t.type === 'ValueRef');
+    expect(valueRefs).toHaveLength(2);
+    expect((valueRefs[0] as any).name).toBe('greeting');
+    expect((valueRefs[1] as any).name).toBe('name');
+  });
+
+  it('unterminated heredoc throws LexerError', () => {
+    const src = `THINK plan\n  GOAL <<END\nNo closing marker here.`;
+    expect(() => tokenize(src, enIndex)).toThrow(LexerError);
+    try {
+      tokenize(src, enIndex);
+    } catch (e) {
+      expect((e as LexerError).errorCode).toBe('unterminated-heredoc');
+    }
+  });
+
+  it('raw heredoc missing closing quote throws LexerError', () => {
+    const src = `THINK plan\n  GOAL <<'TAG\nContent\nTAG`;
+    expect(() => tokenize(src, enIndex)).toThrow(LexerError);
+  });
+
+  it('heredoc marker at EOF without newline', () => {
+    const src = `DEFINE msg <<END\nHello\nEND`;
+    const tokens = tokenize(src, enIndex);
+    expect(tokens.some(t => t.type === 'HeredocClose')).toBe(true);
+  });
+
+  it('RU: heredoc in ДУМАЙ ЦЕЛЬ', () => {
+    const src = `ДУМАЙ план\n  ЦЕЛЬ <<КОНТ\nПривет, $имя!\nКОНТ\nКОНЕЦ`;
+    const tokens = tokenize(src, ruIndex);
+    expect(tokens.some(t => t.type === 'HeredocOpen')).toBe(true);
+    expect(tokens.some(t => t.type === 'HeredocClose')).toBe(true);
+    const valueRefs = tokens.filter(t => t.type === 'ValueRef');
+    expect(valueRefs.some(v => (v as any).name === 'имя')).toBe(true);
+  });
+});
+
 // ─── Integration: full acceptance script ────────────────
 
 describe('integration', () => {

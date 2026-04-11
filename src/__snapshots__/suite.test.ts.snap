@@ -352,6 +352,181 @@ exports[`conformance tests > valid/core/exit.coil 1`] = `
 }
 `;
 
+exports[`conformance tests > valid/core/heredoc-raw.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Goal",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Raw heredoc template — no substitution (D-0050)",
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "delimiter": "COIL",
+        "parts": [
+          {
+            "type": "text",
+            "value": "Generate a COIL script like this:
+RECEIVE input
+<<
+Hello, $name!
+>>
+END
+EXIT
+",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "generation",
+      "result": [
+        {
+          "depth": 0,
+          "description": "generated COIL code",
+          "name": "script",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "generation",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/heredoc-template.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Goal",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description Heredoc template with interpolation (D-0050)",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "source",
+      "prompt": null,
+      "timeout": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "delimiter": "END",
+        "parts": [
+          {
+            "type": "text",
+            "value": "Analyze the following data from ",
+          },
+          {
+            "name": "source",
+            "path": [],
+            "type": "ref",
+          },
+          {
+            "type": "text",
+            "value": ":
+- Look for patterns
+- Use >> and << freely in text
+",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "analysis summary",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
 exports[`conformance tests > valid/core/receive-inline.coil 1`] = `
 {
   "dialect": "en-standard",
@@ -435,6 +610,120 @@ Enter the contract number.
         ],
         "type": "template",
       },
+      "timeout": null,
+    },
+    {
+      "kind": "Op.Exit",
+    },
+  ],
+}
+`;
+
+exports[`conformance tests > valid/core/result-prose-description.coil 1`] = `
+{
+  "dialect": "en-standard",
+  "nodes": [
+    {
+      "kind": "Comment",
+      "text": "@test valid",
+    },
+    {
+      "kind": "Comment",
+      "text": "@role test",
+    },
+    {
+      "kind": "Comment",
+      "text": "@status stable",
+    },
+    {
+      "kind": "Comment",
+      "text": "@dialect en-standard",
+    },
+    {
+      "kind": "Comment",
+      "text": "@covers Mod.Result",
+    },
+    {
+      "kind": "Comment",
+      "text": "@description RESULT descriptions with arbitrary prose: dots, @, !, brackets, quotes (D-0051)",
+    },
+    {
+      "kind": "Op.Receive",
+      "name": "request",
+      "prompt": null,
+      "timeout": null,
+    },
+    {
+      "as": [],
+      "body": null,
+      "context": null,
+      "goal": {
+        "parts": [
+          {
+            "type": "text",
+            "value": "
+  Analyze the request.
+  ",
+          },
+        ],
+        "type": "template",
+      },
+      "input": null,
+      "kind": "Op.Think",
+      "name": "analysis",
+      "result": [
+        {
+          "depth": 0,
+          "description": "brief summary of config.json analysis",
+          "name": "summary",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "responsible person @ivan",
+          "name": "assignee",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "analysis via !search tool",
+          "name": "tool_used",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "important (see details) for "production"",
+          "name": "note",
+          "typeArgs": [],
+          "typeId": "Typ.Text",
+        },
+        {
+          "depth": 0,
+          "description": "severity level 1.0+",
+          "name": "priority",
+          "typeArgs": [
+            "low",
+            "medium",
+            "high",
+          ],
+          "typeId": "Typ.Choice",
+        },
+      ],
+      "using": [],
+      "via": null,
+    },
+    {
+      "kind": "Op.Wait",
+      "mode": null,
+      "name": null,
+      "on": [
+        {
+          "name": "analysis",
+        },
+      ],
       "timeout": null,
     },
     {

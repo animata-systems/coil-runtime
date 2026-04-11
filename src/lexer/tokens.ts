@@ -16,6 +16,8 @@ export type Token =
   | StreamRefToken
   | TemplateOpenToken
   | TemplateCloseToken
+  | HeredocOpenToken
+  | HeredocCloseToken
   | TextFragmentToken
   | DurationLiteralToken
   | NumberLiteralToken
@@ -96,6 +98,21 @@ export interface TemplateOpenToken {
 
 export interface TemplateCloseToken {
   type: 'TemplateClose';
+  span: SourceSpan;
+}
+
+/** Heredoc open: <<TAG (interpolated) or <<'TAG' (raw) — D-0050 */
+export interface HeredocOpenToken {
+  type: 'HeredocOpen';
+  marker: string;
+  raw: boolean;
+  span: SourceSpan;
+}
+
+/** Heredoc close: TAG on its own line — D-0050 */
+export interface HeredocCloseToken {
+  type: 'HeredocClose';
+  marker: string;
   span: SourceSpan;
 }
 

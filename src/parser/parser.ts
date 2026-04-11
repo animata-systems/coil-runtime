@@ -2,7 +2,7 @@ import type {
   Token, KeywordToken, IdentifierToken, ChannelRefToken,
   ParticipantRefToken, DurationLiteralToken, TextFragmentToken, ValueRefToken,
   ToolRefToken, PromiseRefToken, StreamRefToken, NumberLiteralToken,
-  StringLiteralToken, CommentToken, TypedRef,
+  StringLiteralToken, CommentToken, TypedRef, HeredocOpenToken,
 } from '../lexer/tokens.js';
 import type { SourceSpan } from '../common/types.js';
 import type { DialectTable, AbstractId } from '../dialect/types.js';
@@ -175,6 +175,12 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
     return { segments: token.segments, span: token.span };
   }
 
+  /** Check if current token starts a template (standard or heredoc — D-0050) */
+  function isTemplateStart(): boolean {
+    const t = peek().type;
+    return t === 'TemplateOpen' || t === 'HeredocOpen';
+  }
+
   // ─── Shared helpers (C1–C8) ─────────────────────────────
 
   /** C1: Parse comma-separated reference list of a given token type (R-0018) */
@@ -258,8 +264,8 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
     while (true) {
       skipTrivia();
       if (isKeyword('Kw.End') || peek().type === 'EOF') break;
-      if (peek().type === 'TemplateOpen') {
-        throw new ParseError('template body << >> is not allowed in EXECUTE', peek().span, 'execute-template-forbidden', 'Op.Execute');
+      if (isTemplateStart()) {
+        throw new ParseError('template body is not allowed in EXECUTE', peek().span, 'execute-template-forbidden', 'Op.Execute');
       }
       if (peek().type !== 'Dash') break;
 
@@ -301,7 +307,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
 
     while (true) {
       skipTrivia();
-      if (isKeyword('Kw.End') || peek().type === 'EOF' || peek().type === 'TemplateOpen') break;
+      if (isKeyword('Kw.End') || peek().type === 'EOF' || isTemplateStart()) break;
       if (peek().type !== 'Star') break;
 
       const starToken = advance(); // consume *
@@ -359,17 +365,13 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
         if (peek().type === 'ParenClose') advance();
       }
 
-      // Optional description: - text until end of line
+      // Optional description: - text until end of line (D-0051: lexer emits TextFragment)
       let description = '';
       if (peek().type === 'Dash') {
         advance(); // consume -
-        // Collect rest of line as description using source
-        const descStart = peek().span.offset;
-        while (peek().type !== 'Newline' && peek().type !== 'EOF') {
-          advance();
+        if (peek().type === 'TextFragment') {
+          description = (advance() as TextFragmentToken).value.trim();
         }
-        const descEnd = tokens[pos - 1].span.offset + tokens[pos - 1].span.length;
-        description = source.slice(descStart, descEnd).trim();
       }
 
       fields.push({
@@ -388,10 +390,23 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
   // ─── Template parsing ──────────────────────────────────
 
   function parseTemplate(): TemplateNode {
-    const openToken = expect('TemplateOpen');
+    let delimiter: string | undefined;
+    let closeType: Token['type'];
+    let openSpan: SourceSpan;
+
+    if (peek().type === 'HeredocOpen') {
+      const hdOpen = advance() as HeredocOpenToken;
+      delimiter = hdOpen.marker;
+      openSpan = hdOpen.span;
+      closeType = 'HeredocClose';
+    } else {
+      openSpan = expect('TemplateOpen').span;
+      closeType = 'TemplateClose';
+    }
+
     const parts: (TextPart | RefPart)[] = [];
 
-    while (peek().type !== 'TemplateClose' && peek().type !== 'EOF') {
+    while (peek().type !== closeType && peek().type !== 'EOF') {
       const t = peek();
       if (t.type === 'TextFragment') {
         advance();
@@ -405,8 +420,10 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
       }
     }
 
-    expect('TemplateClose');
-    return { type: 'template', parts, span: makeSpanFrom(openToken.span) };
+    expect(closeType);
+    const node: TemplateNode = { type: 'template', parts, span: makeSpanFrom(openSpan) };
+    if (delimiter !== undefined) node.delimiter = delimiter;
+    return node;
   }
 
   // ─── Body value parsing (DEFINE/SET) ───────────────────
@@ -414,7 +431,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
   function parseBodyValue(): BodyValue {
     skipTrivia();
     const t = peek();
-    if (t.type === 'TemplateOpen') {
+    if (t.type === 'TemplateOpen' || t.type === 'HeredocOpen') {
       return parseTemplate();
     }
     if (t.type === 'ValueRef') {
@@ -466,7 +483,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
         advance(); // consume TIMEOUT / NO MORE THAN
         skipTrivia();
         timeout = parseDuration();
-      } else if (peek().type === 'TemplateOpen') {
+      } else if (isTemplateStart()) {
         prompt = parseTemplate();
       } else {
         break;
@@ -527,7 +544,7 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
       if (isKeyword('Kw.End') || peek().type === 'EOF') break;
 
       // Template body
-      if (peek().type === 'TemplateOpen') {
+      if (isTemplateStart()) {
         if (bodyParsed) {
           throw new ParseError('duplicate body in SEND block', peek().span, 'send-duplicate-body', 'Op.Send');
         }
@@ -700,8 +717,8 @@ function parseImpl(tokens: Token[], dialect: DialectTable, source: string): Scri
       skipTrivia();
       if (isKeyword('Kw.End') || peek().type === 'EOF') break;
 
-      // Anonymous body: TemplateOpen not preceded by a modifier keyword (D-0032)
-      if (peek().type === 'TemplateOpen') {
+      // Anonymous body: template not preceded by a modifier keyword (D-0032)
+      if (isTemplateStart()) {
         if (body !== null) {
           throw new ParseError('duplicate anonymous body in THINK block', peek().span, 'think-duplicate-body', 'Op.Think');
         }

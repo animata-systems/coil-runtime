@@ -30,6 +30,7 @@ export interface RefPart extends TemplatePart {
 export interface TemplateNode {
   type: 'template';
   parts: (TextPart | RefPart)[];
+  delimiter?: string; // heredoc marker for round-trip (D-0050)
   span: SourceSpan;
 }
 
