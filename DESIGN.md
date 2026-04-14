@@ -1110,3 +1110,27 @@ Implementation:
 **Rationale.** `ChannelRef` already proves the pattern works. Extending to `@` and `!` uses the same lexer/executor model. Doing both in one pass avoids a second refactoring cycle. `~` and `?` excluded by founder decision — no observed use case.
 
 **Cost.** AST breaking change: `SendNode.for` and tool ref fields change type. All code that reads these fields (executor, validator, serializer, IDE) must be updated. Manageable — the change is mechanical.
+
+---
+
+## R-0058 — Typographic normalization: inline at syntax-recognition points only
+
+| | |
+|---|---|
+| **Status** | accepted |
+| **Decided** | 2026-04-14 |
+| **Scope** | `src/lexer/tokenizer.ts` |
+
+**Context.** Spec D-0052 introduces typographic normalization (§ 1.10) with a closed table of 7 character mappings. The first implementation attempt used a source-wide preprocessor, which corrupted content zones (templates, RESULT descriptions). Spec § 1.9 now defines content zones where normalization is forbidden.
+
+**Decision.** Inline normalization at exactly three syntax-recognition points in the tokenizer:
+
+1. **Dash** (`-`): also match U+2013 (en dash), U+2014 (em dash), U+2212 (minus sign).
+2. **Comment marker** (`'`): also match U+2018 (left single quote), U+2019 (right single quote).
+3. **String literal boundaries** (`"`): also match U+201C (left double quote), U+201D (right double quote) — both as opening AND closing delimiters.
+
+Content inside content zones (templates, heredocs, string literal bodies, comments, RESULT descriptions) is never normalized.
+
+**Why.** Inline approach is the only way to normalize syntax boundaries without touching content. Preprocessor is ruled out because 1→1 replacement changes content zones. Per-character checks at recognition points are more edit points but semantically correct.
+
+**Cost.** Three edit points instead of one. Each new syntax-bearing character (if any) requires a new edit point. Acceptable for a closed table of 7 chars.

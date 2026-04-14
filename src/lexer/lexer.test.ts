@@ -558,3 +558,115 @@ EXIT`;
     expect(tokens.some(t => t.type === 'EOF')).toBe(true);
   });
 });
+
+// ─── Typographic normalization (D-0052 / R-0058) ───
+
+describe('Typographic normalization — syntax zone', () => {
+  // --- Dash variants as RESULT separator ---
+
+  it('em dash (U+2014) recognized as Dash token', () => {
+    const tokens = tokenize('RESULT analysis\n\u2014 name - string', enIndex);
+    const dashes = tokens.filter(t => t.type === 'Dash');
+    expect(dashes.length).toBe(1);
+  });
+
+  it('en dash (U+2013) recognized as Dash token', () => {
+    const tokens = tokenize('RESULT analysis\n\u2013 name - string', enIndex);
+    const dashes = tokens.filter(t => t.type === 'Dash');
+    expect(dashes.length).toBe(1);
+  });
+
+  it('minus sign (U+2212) recognized as Dash token', () => {
+    const tokens = tokenize('RESULT analysis\n\u2212 name - string', enIndex);
+    const dashes = tokens.filter(t => t.type === 'Dash');
+    expect(dashes.length).toBe(1);
+  });
+
+  // --- Curly apostrophes as comment marker ---
+
+  it('left single quote (U+2018) starts a comment', () => {
+    const tokens = tokenize('\u2018 this is a comment\n', enIndex);
+    const comments = tokens.filter(t => t.type === 'Comment');
+    expect(comments.length).toBe(1);
+    expect(comments[0].text).toBe('this is a comment');
+  });
+
+  it('right single quote (U+2019) starts a comment', () => {
+    const tokens = tokenize('\u2019 this is a comment\n', enIndex);
+    const comments = tokens.filter(t => t.type === 'Comment');
+    expect(comments.length).toBe(1);
+    expect(comments[0].text).toBe('this is a comment');
+  });
+
+  // --- Curly double quotes as string boundaries ---
+
+  it('left double quote (U+201C) opens a string literal', () => {
+    const tokens = tokenize('\u201Chello world"', enIndex);
+    const strings = tokens.filter(t => t.type === 'StringLiteral');
+    expect(strings.length).toBe(1);
+    expect(strings[0].value).toBe('hello world');
+  });
+
+  it('right double quote (U+201D) closes a string literal', () => {
+    const tokens = tokenize('"hello world\u201D', enIndex);
+    const strings = tokens.filter(t => t.type === 'StringLiteral');
+    expect(strings.length).toBe(1);
+    expect(strings[0].value).toBe('hello world');
+  });
+
+  it('curly open + curly close quotes together', () => {
+    const tokens = tokenize('\u201Chello\u201D', enIndex);
+    const strings = tokens.filter(t => t.type === 'StringLiteral');
+    expect(strings.length).toBe(1);
+    expect(strings[0].value).toBe('hello');
+  });
+});
+
+describe('Typographic normalization — content zones preserved', () => {
+  it('em dash inside template << >> is preserved', () => {
+    const src = 'THINK analysis\n  GOAL <<\nWelcome \u2014 glad to see you!\n>>\nEND\n';
+    const tokens = tokenize(src, enIndex);
+    const tpl = tokens.find(t => t.type === 'TextFragment' && (t as any).value?.includes('\u2014'));
+    expect(tpl).toBeDefined();
+  });
+
+  it('curly quotes inside template << >> are preserved', () => {
+    const src = 'THINK analysis\n  GOAL <<\nHe said \u201Chello\u201D to me\n>>\nEND\n';
+    const tokens = tokenize(src, enIndex);
+    const fragments = tokens.filter(t => t.type === 'TextFragment');
+    const allText = fragments.map(t => (t as any).value).join('');
+    expect(allText).toContain('\u201C');
+    expect(allText).toContain('\u201D');
+  });
+
+  it('curly apostrophes inside template << >> are preserved', () => {
+    const src = 'THINK analysis\n  GOAL <<\nIt\u2019s a test with \u2018quotes\u2019\n>>\nEND\n';
+    const tokens = tokenize(src, enIndex);
+    const fragments = tokens.filter(t => t.type === 'TextFragment');
+    const allText = fragments.map(t => (t as any).value).join('');
+    expect(allText).toContain('\u2019');
+    expect(allText).toContain('\u2018');
+  });
+
+  it('em dash inside string literal is preserved', () => {
+    const tokens = tokenize('"hello \u2014 world"', enIndex);
+    const strings = tokens.filter(t => t.type === 'StringLiteral');
+    expect(strings.length).toBe(1);
+    expect(strings[0].value).toContain('\u2014');
+  });
+
+  it('em dash in comment text is preserved', () => {
+    const tokens = tokenize("' comment with \u2014 em dash\n", enIndex);
+    const comments = tokens.filter(t => t.type === 'Comment');
+    expect(comments.length).toBe(1);
+    expect(comments[0].text).toContain('\u2014');
+  });
+
+  it('em dash in RESULT description is preserved', () => {
+    const src = 'RESULT analysis\n- name \u2014 a description with em dash\n';
+    const tokens = tokenize(src, enIndex);
+    const fragments = tokens.filter(t => t.type === 'TextFragment');
+    const allText = fragments.map(t => (t as any).value).join('');
+    expect(allText).toContain('\u2014');
+  });
+});

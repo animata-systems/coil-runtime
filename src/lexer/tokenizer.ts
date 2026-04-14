@@ -409,7 +409,7 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     }
 
     // Comment: ' to end of line
-    if (ch === "'") {
+    if (ch === "'" || ch === '\u2018' || ch === '\u2019') {
       advance(); // skip '
       let text = '';
       while (!atEnd() && peek() !== '\n') {
@@ -591,7 +591,7 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
       continue;
     }
 
-    if (ch === '-') {
+    if (ch === '-' || ch === '\u2013' || ch === '\u2014' || ch === '\u2212') {
       tokens.push({ type: 'Dash', span: makeSpan(startLine, startCol, startOffset, 1) });
       advance();
       if (inResultBlock) {
@@ -620,14 +620,14 @@ function tokenizeImpl(source: string, keywords: KeywordIndex): Token[] {
     }
 
     // String literal: "..." (used in some test files)
-    if (ch === '"') {
+    if (ch === '"' || ch === '\u201C' || ch === '\u201D') {
       advance(); // skip opening "
       let value = '';
-      while (!atEnd() && peek() !== '"' && peek() !== '\n') {
+      while (!atEnd() && peek() !== '"' && peek() !== '\u201C' && peek() !== '\u201D' && peek() !== '\n') {
         value += peek();
         advance();
       }
-      if (!atEnd() && peek() === '"') {
+      if (!atEnd() && (peek() === '"' || peek() === '\u201C' || peek() === '\u201D')) {
         advance(); // skip closing "
       }
       tokens.push({
