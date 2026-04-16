@@ -378,7 +378,7 @@ Rules:
 |---|---|
 | **Status** | accepted |
 | **Decided** | 2026-03-29 |
-| **Context** | Spec 02-core.md § 2.10 defines a bound form `WAIT data ON ?x END` where the resolved value is available as `$data`. The parser and AST did not support this — an implementation gap from STORY-010 (D-010-06). |
+| **Context** | Spec 02-core.md § 2.10 defines a bound form `WAIT data ON ?x END` where the resolved value is available as `$data`. The parser and AST did not support this — an implementation gap identified in D-010-06. |
 | **Decision** | `WaitNode` gains `name: string | null`. The parser reads an optional `Identifier` token after the WAIT keyword and before modifiers. No ambiguity: modifiers (`ON`, `MODE`, `TIMEOUT`) and `END` lex as `Keyword`, not `Identifier`. Scope model and `use-before-wait` rule register the bound name as a `'defined'` variable. No MODE restriction in this phase (open question deferred to language review). |
 | **Alternatives** | (A) Store binding as a separate wrapper node — over-engineering for a single optional field. (B) Require sigil (`$data`) in syntax — contradicts spec, which uses bare identifier. |
 | **Consequences** | Scope: `src/ast/nodes.ts`, `src/parser/parser.ts`, `src/validator/scope.ts`, `src/validator/rules/use-before-wait.ts`. Existing tests updated with `name: null` regression assertions. New tests: EN bound (MODE ANY, single), RU bound. Integration test: `coil/tests/valid/core/wait-bound.coil`. |
@@ -410,9 +410,9 @@ Rules:
 
 **Context.** Originally, invalid tests for parse errors used only `instanceof` check — `abstractId` on `ParseError` was optional (R-0005) and not consistently set. Validate tests already matched by `ruleId`. This was a deliberate transitional compromise.
 
-**Decision.** (1) `ParseError` and `LexerError` gain a mandatory `errorCode: string` field — kebab-case, stable, machine-readable, by analogy with validator `ruleId`. (2) All 37 `throw new ParseError(...)` and all 6 `throw new LexerError(...)` sites carry a specific code from the registry in STORY-011 phase 4. (3) `@error parse <code>` in invalid tests is now mandatory — every parse/lexer invalid test specifies the expected code. (4) `runInvalidChecks` matches by `errorCode` unconditionally; the `instanceof`-only fallback is removed. (5) `ParseError.abstractId` remains as an optional fourth parameter for dialect-aware diagnostic formatting (R-0005) — it is orthogonal to `errorCode`.
+**Decision.** (1) `ParseError` and `LexerError` gain a mandatory `errorCode: string` field — kebab-case, stable, machine-readable, by analogy with validator `ruleId`. (2) All 37 `throw new ParseError(...)` and all 6 `throw new LexerError(...)` sites carry a specific code from the error code registry. (3) `@error parse <code>` in invalid tests is now mandatory — every parse/lexer invalid test specifies the expected code. (4) `runInvalidChecks` matches by `errorCode` unconditionally; the `instanceof`-only fallback is removed. (5) `ParseError.abstractId` remains as an optional fourth parameter for dialect-aware diagnostic formatting (R-0005) — it is orthogonal to `errorCode`.
 
-**Rationale.** STORY-011 phase 3 (parser hardening) added 5 new error points. With 37 parser + 6 lexer throw sites, the cost of auditing all sites is justified and the transitional regime is no longer needed. Uniform mandatory codes enable downstream tooling (IDE diagnostics, `coil check --json`) to match errors programmatically.
+**Rationale.** The parser hardening work added 5 new error points. With 37 parser + 6 lexer throw sites, the cost of auditing all sites is justified and the transitional regime is no longer needed. Uniform mandatory codes enable downstream tooling (IDE diagnostics, `coil check --json`) to match errors programmatically.
 
 **Cost.** Every new `throw new ParseError(...)` or `throw new LexerError(...)` must assign a code and register it. Minor overhead, large gain in test precision and tooling support.
 
@@ -471,7 +471,7 @@ interface VisitorRule {
 | **Decided** | 2026-03-31 |
 | **Scope** | `src/lexer/tokens.ts`, `src/lexer/tokenizer.ts`, `src/parser/parser.ts` |
 
-**Context.** R-0022 recorded that `=`, `<`, `>`, `<=`, `>=` are tokenized as `Identifier` until an expression parser is implemented. STORY-012 phase 6 introduces the expression parser; the tokenizer must emit typed tokens for these operators.
+**Context.** R-0022 recorded that `=`, `<`, `>`, `<=`, `>=` are tokenized as `Identifier` until an expression parser is implemented. The expression parser work introduces the need for the tokenizer to emit typed tokens for these operators.
 
 **Decision.** New token type `ComparisonToken { type: 'Comparison'; operator: string; span: SourceSpan }`. The lexer emits it for: `=`, `==`, `!=`, `<`, `>`, `<=`, `>=`. Seven symbols total.
 
@@ -493,7 +493,7 @@ Key points:
 | **Decided** | 2026-03-31 |
 | **Scope** | `src/ast/nodes.ts`, `src/parser/expression.ts`, `src/parser/parser.ts` |
 
-**Context.** STORY-012 phase 6.1 requires an expression parser for IF conditions and REPEAT UNTIL. The existing `parser.ts` is 1043 lines. The expression grammar is self-contained. A decision on code placement and AST shape is needed.
+**Context.** IF conditions and REPEAT UNTIL require an expression parser. The existing `parser.ts` is 1043 lines. The expression grammar is self-contained. A decision on code placement and AST shape is needed.
 
 **Decision.**
 
@@ -795,7 +795,7 @@ No intermediate states in the snapshot. Between `deliver` and resume, the snapsh
 | **Decided** | 2026-03-31 |
 | **Scope** | `src/ast/nodes.ts`, `src/sdk/helpers.ts`, `src/executor/executor.ts`, `src/validator/rules/*` |
 
-**Context.** The parser currently sets `SendNode.await = null` when the AWAIT modifier is absent. D-0036 defines: "if AWAIT is omitted, AWAIT NONE is implied". STORY-014 phase 3 asks: should the parser start setting `'none'` instead of `null`, or should consumers handle the default?
+**Context.** The parser currently sets `SendNode.await = null` when the AWAIT modifier is absent. D-0036 defines: "if AWAIT is omitted, AWAIT NONE is implied". The question: should the parser start setting `'none'` instead of `null`, or should consumers handle the default?
 
 This matters for COIL-H round-trip (D-0046): the table view must distinguish "author explicitly wrote AWAIT NONE" from "author wrote nothing" — they render differently (explicit cell value vs empty cell).
 
@@ -903,7 +903,7 @@ Cross-instance and multi-consumer scenarios (deferred per D-0039) will introduce
 | **Decided** | 2026-04-01 |
 | **Scope** | `src/sdk/providers.ts`, `src/executor/executor.ts` |
 
-**Context.** STORY-014 phase 1 defines BudgetPolicy interface. Two approaches: (A) pull model — executor asks `check(kind)` before each cognitive step, host tracks accounting internally; (B) stateful model — executor calls `consume(amount)` / `remaining()`, managing budget counters. The question: which model fits the executor boundary (R-0046: snapshot = executor state only)?
+**Context.** The SDK provider architecture defines BudgetPolicy interface. Two approaches: (A) pull model — executor asks `check(kind)` before each cognitive step, host tracks accounting internally; (B) stateful model — executor calls `consume(amount)` / `remaining()`, managing budget counters. The question: which model fits the executor boundary (R-0046: snapshot = executor state only)?
 
 **Decision.** Pull model. `BudgetPolicy { check(kind: 'think' | 'execute' | 'send'): BudgetVerdict }`. `BudgetVerdict = { allowed: true } | { allowed: false; reason: string }`. The executor calls `check()` before each THINK, EXECUTE, and SEND-with-AWAIT. If `allowed: false`, executor throws `ExecutionError` with the reason and the operator's source span.
 
@@ -921,7 +921,7 @@ Budget accounting (token counting, cost tracking, step counting) is the host's r
 | **Decided** | 2026-04-01 |
 | **Scope** | `src/executor/errors.ts`, `src/sdk/providers.ts` |
 
-**Context.** STORY-014 phase 1 defines three error types: PreparationError, ExecutionError, HostError. The codebase already has `ExecutionError` and `NotImplementedError` as classes extending `Error`. Two approaches: (A) class hierarchy (throw/catch); (B) discriminated union data objects (return values). Errors are not serialized in snapshots (R-0046).
+**Context.** The SDK provider architecture defines three error types: PreparationError, ExecutionError, HostError. The codebase already has `ExecutionError` and `NotImplementedError` as classes extending `Error`. Two approaches: (A) class hierarchy (throw/catch); (B) discriminated union data objects (return values). Errors are not serialized in snapshots (R-0046).
 
 **Decision.** Class hierarchy extending Error.
 
@@ -946,7 +946,7 @@ All carry `span: SourceSpan | null`. HostError may have null span when the error
 | **Decided** | 2026-04-01 |
 | **Scope** | `src/executor/executor.ts`, `src/executor/snapshot.ts` |
 
-**Context.** STORY-014 needs a definitive list of yield points. Async provider calls (THINK → ModelProvider.call, EXECUTE → ToolProvider.invoke) are async but not yield points — the executor awaits them inline. Yield points are where the executor saves a snapshot and returns control to the host for external resolution.
+**Context.** The executor needs a definitive list of yield points. Async provider calls (THINK → ModelProvider.call, EXECUTE → ToolProvider.invoke) are async but not yield points — the executor awaits them inline. Yield points are where the executor saves a snapshot and returns control to the host for external resolution.
 
 **Decision.** Yield points in v0.4:
 
